@@ -8,6 +8,7 @@ import { BillingProvider } from '@/features/billing/PaddleProvider';
 import { NotificationProvider } from '@/features/notifications/NotificationProvider';
 import { Paywall, TrialBanner } from '@/features/billing/Paywall';
 import { MobileNav } from '@/components/layout/MobileNav';
+import { GpsTracker } from '@/components/ui/GpsTracker';
 import { useLanguage } from '@/hooks/useLanguage';
 import dynamic from 'next/dynamic';
 const SetupWizard = dynamic(() => import('@/components/onboarding/SetupWizard'), { ssr: false });
@@ -66,6 +67,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
         </Paywall>
       </AppShell>
       <MobileNav />
+          <GpsTracker />
     </>
   );
 }

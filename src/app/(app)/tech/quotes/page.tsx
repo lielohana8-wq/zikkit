@@ -94,7 +94,7 @@ export default function TechQuotesPage() {
       quotesList.push(quoteData);
     }
     await saveData({ ...db, quotes: quotesList });
-    toast(editQuote.id ? 'Quote updated!' : '✅ Quote created!');
+    toast(editQuote.id ? '✅ הצעה עודכנה' : '✅ הצעה נוצרה');
     setShowModal(false);
   };
 

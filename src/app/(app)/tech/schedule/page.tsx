@@ -181,7 +181,7 @@ export default function TechSchedulePage() {
           } />
           <CardContent>
             {dayJobs.length === 0 ? (
-              <EmptyState icon="📅" title={L("No Jobs Scheduled","אין עבודות מתוכננות")} subtitle={isToday ? 'Your day is clear!' : 'No jobs on this date.'} />
+              <EmptyState icon="📅" title={L("No Jobs Scheduled","אין עבודות מתוכננות")} subtitle={isToday ? 'היום שלך פנוי!' : 'אין עבודות בתאריך הזה.'} />
             ) : dayJobs.map((j) => <JobCard key={j.id} job={j} />)}
           </CardContent>
         </Card>

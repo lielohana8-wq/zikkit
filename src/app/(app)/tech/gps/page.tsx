@@ -88,7 +88,7 @@ export default function TechGPSPage() {
           status: type === 'checkin' ? 'in_progress' : jobsList[idx].status,
         };
         await saveData({ ...db, jobs: jobsList });
-        toast(`📍 ${type === 'checkin' ? 'Checked in' : 'Checked out'} — ${job.client}`);
+        toast(`📍 ${type === 'checkin' ? 'צ׳ק-אין' : 'צ׳ק-אאוט'} — ${job.client}`);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'GPS error';
@@ -106,7 +106,7 @@ export default function TechGPSPage() {
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: '10px', mb: '16px' }}>
         <KpiCard label={L("Today Check-ins","היום")} value={String(todayCheckins.length)} variant="accent" />
         <KpiCard label={L("Active Jobs","עבודות פעילות")} value={String(activeJobs.length)} variant="blue" />
-        <KpiCard label={L("Current Job","עבודה נוכחית")} value={currentJob ? currentJob.client : 'None'} variant={currentJob ? 'green' : 'grey'} />
+        <KpiCard label={L("Current Job","עבודה נוכחית")} value={currentJob ? currentJob.client : 'אין'} variant={currentJob ? 'green' : 'grey'} />
         <KpiCard label={"סה״כ צ׳ק-אינים"} value={String(allMyCheckins.length)} subtitle={'כל הזמן'} variant="teal" />
       </Box>
 
