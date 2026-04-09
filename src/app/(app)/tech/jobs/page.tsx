@@ -265,6 +265,33 @@ export default function TechJobsPage() {
                       sx={{ borderRadius: '20px', fontSize: 12, bgcolor: '#4F46E510', color: '#4F46E5', fontWeight: 600, border: '1px solid #4F46E520', flex: 1 }}>
                       💰 צור הצעת מחיר
                     </Button>
+                    {items.length > 0 && (
+                      <Button size="small" onClick={async () => {
+                        if (!selected) return;
+                        const token = 'qt_' + Date.now();
+                        try {
+                          const firestore = getFirestoreDb();
+                          await fbSetDoc(fbDoc(firestore, 'public_portals', token), {
+                            type: 'quote', bizName, bizPhone: cfg.biz_phone || '', bizLogo: cfg.biz_logo || '',
+                            client: selected.client, phone: selected.phone || '', email: selected.email || '',
+                            address: selected.address || '', desc: selected.desc || '',
+                            num: selected.num || formatJobNumber(selected.id), jobId: selected.id,
+                            items, currency: cfg.currency || (cfg.region === 'IL' ? 'ILS' : 'USD'),
+                            created: new Date().toISOString(), status: 'pending',
+                          });
+                          const url = window.location.origin + '/quote/' + token;
+                          if (selected.phone) {
+                            window.open(waLink(selected.phone, 'היי ' + selected.client + ', הנה הצעת המחיר שלך מ-' + bizName + ': ' + url), '_blank');
+                          } else {
+                            navigator.clipboard?.writeText(url);
+                            toast('לינק הצעה הועתק');
+                          }
+                        } catch (e) { console.warn(e); toast('שגיאה'); }
+                      }}
+                        sx={{ borderRadius: '10px', fontSize: 12, bgcolor: '#4F46E510', color: '#4F46E5', fontWeight: 700, border: '1px solid #4F46E520', flex: 1, py: '10px' }}>
+                        📄 שלח הצעת מחיר (PDF + חתימה)
+                      </Button>
+                    )}
                     {selected.phone && items.length > 0 && (
                       <Button size="small" onClick={() => { const lines = items.map(i => i.name + ' x' + i.qty + ' - ' + formatCurrency(i.price * i.qty, currency)); const total = formatCurrency(itemsTotal, currency); const phone = selected.phone || ''; window.open(waLink(phone, ['היי ' + selected.client + ',', 'הצעת מחיר מ-' + bizName + ':', ...lines, '', 'סה״כ: ' + total].join(String.fromCharCode(10))), '_blank'); }}
                         sx={{ borderRadius: '20px', fontSize: 12, bgcolor: '#25D36610', color: '#25D366', fontWeight: 600, border: '1px solid #25D36620', flex: 1 }}>
