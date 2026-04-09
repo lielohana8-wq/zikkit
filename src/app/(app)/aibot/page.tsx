@@ -49,7 +49,7 @@ const defaultBot: BotConfig = {
 function CardHeader({ icon, title, action }: { icon: string; title: string; action?: React.ReactNode }) {
   return (
     <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-      <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
+      <Typography sx={{ fontFamily: "'Rubik', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
         {icon} {title}
       </Typography>
       {action}
@@ -275,7 +275,7 @@ export default function AIBotPage() {
                 <>
                   <Box sx={{ bgcolor: 'rgba(0,229,176,0.06)', border: '1px solid rgba(79,70,229,0.12)', borderRadius: '12px', p: '18px 20px', textAlign: 'center' }}>
                     <Typography sx={{ fontSize: 36, mb: '8px' }}>🤖📞</Typography>
-                    <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, mb: '6px' }}>
+                    <Typography sx={{ fontFamily: "'Rubik', sans-serif", fontSize: 16, fontWeight: 800, mb: '6px' }}>
                       {region === 'IL' ? 'הפעל בוט טלפוני' : 'Activate AI Phone Bot'}
                     </Typography>
                     <Typography sx={{ fontSize: 12, color: '#A8A29E', lineHeight: 1.7, maxWidth: 380, mx: 'auto' }}>

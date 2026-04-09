@@ -55,7 +55,7 @@ export default function ProductsPage() {
   };
 
   const handleSave = async () => {
-    if (!editProduct.name?.trim()) { toast('Enter product name', c.hot); return; }
+    if (!editProduct.name?.trim()) { toast('הכנס שם מוצר', c.hot); return; }
     const prods = [...(db.products || [])];
     if (editProduct.id) {
       const idx = prods.findIndex((p) => p.id === editProduct.id);
@@ -81,7 +81,7 @@ export default function ProductsPage() {
   const [bulkCategory, setBulkCategory] = useState<string>('all');
 
   const handleBulkPriceUpdate = async () => {
-    if (bulkPercent === 0) { toast('Enter a percentage', c.hot); return; }
+    if (bulkPercent === 0) { toast('הכנס אחוז', c.hot); return; }
     const prods = [...(db.products || [])];
     let updated = 0;
     prods.forEach((p, idx) => {
@@ -169,7 +169,7 @@ export default function ProductsPage() {
             sx={{ px: '10px', py: '4px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto', textTransform: 'capitalize',
               bgcolor: catFilter === cat ? c.accentDim : c.glass2, color: catFilter === cat ? c.accent : c.text3,
               border: '1px solid ' + (catFilter === cat ? 'rgba(79,70,229,0.25)' : c.border2) }}>
-            {cat === 'all' ? 'All' : cat}
+            {cat === 'all' ? 'הכל' : ({'service':'שירות','part':'חלק','labor':'עבודה','material':'חומר','other':'אחר'}[cat] || cat)}
           </Button>
         ))}
       </Box>

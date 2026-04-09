@@ -18,14 +18,14 @@ export default function FinancingPage() {
   const [installmentsEnabled, setInstallmentsEnabled] = useState(true);
   const [maxInstallments, setMaxInstallments] = useState(12);
 
-  const payments = useMemo(() => ((db as any).payments || []).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()), [(db as any).payments]);
+  const payments = useMemo(() => (db.payments || []).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()), [db.payments]);
   const totalCollected = payments.filter((p: any) => p.status === 'paid').reduce((s: number, p: any) => s + p.amount, 0);
   const pending = payments.filter((p: any) => p.status === 'pending');
 
   const Stat = ({ label, value, color, icon }: any) => (
     <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', flex: 1, minWidth: 140 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>{icon}<Typography variant="caption" color="text.secondary">{label}</Typography></Box>
-      <Typography variant="h5" fontWeight={900} sx={{ fontFamily: 'Syne', color }}>{value}</Typography>
+      <Typography variant="h5" fontWeight={900} sx={{ fontFamily: 'Rubik', color }}>{value}</Typography>
     </Box>
   );
 

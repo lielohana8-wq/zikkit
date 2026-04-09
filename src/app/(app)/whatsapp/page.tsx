@@ -46,7 +46,7 @@ export default function WhatsAppPage() {
 
   const Stat = ({ label, value, color }: { label: string; value: number; color: string }) => (
     <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', flex: 1, minWidth: 110 }}>
-      <Typography variant="h4" fontWeight={900} sx={{ color, fontFamily: 'Syne' }}>{value.toLocaleString()}</Typography>
+      <Typography variant="h4" fontWeight={900} sx={{ color, fontFamily: 'Rubik' }}>{value.toLocaleString()}</Typography>
       <Typography variant="caption" color="text.secondary">{label}</Typography>
     </Box>
   );

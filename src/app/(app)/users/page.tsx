@@ -248,12 +248,12 @@ export default function UsersPage() {
                 </Box>
               )},
               { key: 'phone', label: 'טלפון', render: (u) => u.phone || '—' },
-              { key: 'role', label: L('Role','05EA05E405E705D905D3'), render: (u) => {
+              { key: 'role', label: L('Role','תפקיד'), render: (u) => {
                 const label = getRoleLabel(u);
                 const r = ROLE_CONFIG[u.role] || ROLE_CONFIG.custom;
                 return <Badge label={`${r.icon} ${label}`} variant={r.color} />;
               }},
-              { key: 'permissions', label: L('Permissions','05D405E805E905D005D505EA'), render: (u) => {
+              { key: 'permissions', label: L('Permissions','הרשאות'), render: (u) => {
                 const count = countPerms(u);
                 const isCustom = !!u.customPermissions;
                 return (
@@ -288,7 +288,7 @@ export default function UsersPage() {
         </MenuItem>
         <MenuItem onClick={() => { if (menuUser) handleResetPassword(menuUser); }}
           sx={{ fontSize: 12, gap: '8px', color: '#a78bfa', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' } }}>
-          {L('{1F511} Reset Password','{1F511} 05D005D905E405D505E1 05E105D905E105DE05D4')}
+          {L('{1F511} Reset Password','{1F511} איפוס סיסמה')}
         </MenuItem>
         <MenuItem onClick={() => { if (menuUser) handleDelete(menuUser); }}
           sx={{ fontSize: 12, gap: '8px', color: '#ff4d6d', '&:hover': { bgcolor: 'rgba(255,77,109,0.1)' } }}>
@@ -300,7 +300,7 @@ export default function UsersPage() {
       <ModalBase open={showModal} onClose={() => setShowModal(false)} title={editUser.id ? L('עריכת משתמש','ערוך משתמש') : L('משתמש חדש','משתמש חדש')}
         footer={<>
           <Button variant="outlined" size="small" onClick={() => setShowModal(false)}>{L('Cancel','ביטול')}</Button>
-          <Button variant="contained" size="small" onClick={handleSave}>{editUser.id ? L('עדכן','05E205D305DB05DF') : L('Create User','05E605D505E8 05DE05E905EA05DE05E9')}</Button>
+          <Button variant="contained" size="small" onClick={handleSave}>{editUser.id ? L('עדכן','עדכן') : L('Create User','צור משתמש')}</Button>
         </>}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
@@ -426,8 +426,8 @@ export default function UsersPage() {
           {/* First login note */}
           {!editUser.id && (
             <Box sx={{ bgcolor: 'rgba(0,229,176,0.04)', border: '1px solid rgba(79,70,229,0.12)', borderRadius: '10px', p: '11px 14px', fontSize: 12, color: '#A8A29E', lineHeight: 1.7 }}>
-              💡 L('Login with email. Default password:','05DB05E005D905E105D4 05E205DD 05DE05D905D905DC. 05E105D905E105DE05D4 05E805D005E905D505E005D905EA:') + ' <strong>Tech1234!</strong><br />
-              🔐 {L('Must change password on first login.','05D705D905D905D1 05DC05E905E005D505EA 05E105D905E105DE05D4 05D105DB05E005D905E105D4 05E805D005E905D505E005D4.')}
+              💡 L('Login with email. Default password:','כניסה עם מייל. סיסמה ראשונית:') + ' <strong>Tech1234!</strong><br />
+              🔐 {L('Must change password on first login.','חייב לשנות סיסמה בכניסה ראשונה.')}
             </Box>
           )}
         </Box>

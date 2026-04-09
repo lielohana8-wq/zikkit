@@ -205,7 +205,7 @@ export default function TechQuotesPage() {
           <Button variant="outlined" size="small" onClick={() => setShowModal(false)}>{L('Cancel','ביטול')}</Button>
           <Button size="small" onClick={handleSave}
             sx={{ bgcolor: 'rgba(0,229,176,0.1)', color: '#4F46E5', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', fontWeight: 700, '&:hover': { bgcolor: '#4F46E5', color: '#000' } }}>
-            💾 {editQuote.id ? 'עדכן' : 'Create'} Quote
+            💾 {editQuote.id ? 'עדכן' : 'צור'} הצעה
           </Button>
         </>}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>

@@ -22,7 +22,7 @@ export default function CheckoutPage() {
 
   return (
     <Box sx={{ p: { xs: '16px', md: '24px 28px' }, maxWidth: 800, mx: 'auto' }}>
-      <Typography sx={{ fontSize: 24, fontWeight: 900, fontFamily: 'Syne', textAlign: 'center', mb: 1 }}>
+      <Typography sx={{ fontSize: 24, fontWeight: 900, fontFamily: 'Rubik', textAlign: 'center', mb: 1 }}>
         {isIL ? 'בחר תוכנית' : 'Choose Your Plan'}
       </Typography>
       <Typography sx={{ fontSize: 13, color: c.text3, textAlign: 'center', mb: 4 }}>
@@ -33,7 +33,7 @@ export default function CheckoutPage() {
           <Box key={p.id} sx={{ p: 3.5, borderRadius: '16px', bgcolor: p.popular ? 'rgba(0,229,176,0.04)' : c.glass, border: p.popular ? '2px solid rgba(0,229,176,0.15)' : '1px solid '+c.border, position: 'relative' }}>
             {p.popular && <Box sx={{ position: 'absolute', top: -12, right: 20, px: 2, py: 0.4, borderRadius: '8px', bgcolor: c.accent, color: '#000', fontSize: 11, fontWeight: 700 }}>{isIL ? 'מומלץ' : 'Recommended'}</Box>}
             <Typography sx={{ fontSize: 13, fontWeight: 600, color: c.accent }}>{p.name}</Typography>
-            <Typography sx={{ fontSize: 36, fontWeight: 900, fontFamily: 'Syne', mt: 0.5 }}>{p.price}<Box component='span' sx={{ fontSize: 14, color: c.text3 }}>{p.period}</Box></Typography>
+            <Typography sx={{ fontSize: 36, fontWeight: 900, fontFamily: 'Rubik', mt: 0.5 }}>{p.price}<Box component='span' sx={{ fontSize: 14, color: c.text3 }}>{p.period}</Box></Typography>
             <Typography sx={{ fontSize: 12, color: c.text3, mb: 0.5 }}>{p.desc}</Typography>
             <Typography sx={{ fontSize: 11, color: c.warm, mb: 2 }}>{isIL ? 'או ' : 'or '}{p.annual}</Typography>
             {p.features.map((f) => <Box key={f} sx={{ display: 'flex', gap: 1, py: 0.4, fontSize: 13, color: c.text2 }}><span style={{ color: c.green }}>✓</span>{f}</Box>)}

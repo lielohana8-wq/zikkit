@@ -35,7 +35,7 @@ export default function ReviewsPage() {
   const Stat = ({ label, value, color, icon }: any) => (
     <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', flex: 1, minWidth: 120, display: 'flex', alignItems: 'center', gap: 1.5 }}>
       <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>{icon}</Box>
-      <Box><Typography variant="h5" fontWeight={900} sx={{ fontFamily: 'Syne' }}>{value}</Typography><Typography variant="caption" color="text.secondary">{label}</Typography></Box>
+      <Box><Typography variant="h5" fontWeight={900} sx={{ fontFamily: 'Rubik' }}>{value}</Typography><Typography variant="caption" color="text.secondary">{label}</Typography></Box>
     </Box>
   );
 

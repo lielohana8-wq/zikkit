@@ -20,15 +20,15 @@ export default function PhotosPage() {
       <SectionHeader title="תמונות לפני/אחרי" subtitle={`${photoSets.length} סטים`} />
       <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap' }}>
         <Paper sx={{ p: 2, borderRadius: 2, flex: 1, minWidth: 140, border: '1px solid rgba(0,0,0,0.06)' }}>
-          <Typography variant="h4" fontWeight={900} sx={{ fontFamily: 'Syne', color: '#3B82F6' }}>{photoSets.length}</Typography>
+          <Typography variant="h4" fontWeight={900} sx={{ fontFamily: 'Rubik', color: '#3B82F6' }}>{photoSets.length}</Typography>
           <Typography variant="caption" color="text.secondary">סטים</Typography>
         </Paper>
         <Paper sx={{ p: 2, borderRadius: 2, flex: 1, minWidth: 140, border: '1px solid rgba(0,0,0,0.06)' }}>
-          <Typography variant="h4" fontWeight={900} sx={{ fontFamily: 'Syne', color: '#10B981' }}>{photoSets.reduce((s, p) => s + p.before.length + p.after.length, 0)}</Typography>
+          <Typography variant="h4" fontWeight={900} sx={{ fontFamily: 'Rubik', color: '#10B981' }}>{photoSets.reduce((s, p) => s + p.before.length + p.after.length, 0)}</Typography>
           <Typography variant="caption" color="text.secondary">תמונות</Typography>
         </Paper>
         <Paper sx={{ p: 2, borderRadius: 2, flex: 1, minWidth: 140, border: '1px solid rgba(0,0,0,0.06)' }}>
-          <Typography variant="h4" fontWeight={900} sx={{ fontFamily: 'Syne', color: '#8B5CF6' }}>{photoSets.filter(p => p.aiReport).length}</Typography>
+          <Typography variant="h4" fontWeight={900} sx={{ fontFamily: 'Rubik', color: '#8B5CF6' }}>{photoSets.filter(p => p.aiReport).length}</Typography>
           <Typography variant="caption" color="text.secondary">דוחות AI</Typography>
         </Paper>
       </Box>

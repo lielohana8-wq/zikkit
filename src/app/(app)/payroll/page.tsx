@@ -31,7 +31,7 @@ interface TechPayroll {
 function CardHeader({ icon, title, action }: { icon: string; title: string; action?: React.ReactNode }) {
   return (
     <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-      <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
+      <Typography sx={{ fontFamily: "'Rubik', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
         {icon} {title}
       </Typography>
       {action}
@@ -254,8 +254,8 @@ export default function PayrollPage() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Header */}
             <Box sx={{ bgcolor: 'rgba(79,70,229,0.08)', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', p: '14px 16px' }}>
-              <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800, mb: '6px' }}>
-                {cfg.biz_name || 'Business'} — Payslip
+              <Typography sx={{ fontFamily: "'Rubik', sans-serif", fontSize: 14, fontWeight: 800, mb: '6px' }}>
+                {cfg.biz_name || 'העסק'} — תלוש שכר
               </Typography>
               <Typography sx={{ fontSize: 11, color: '#A8A29E', lineHeight: 1.8 }}>
                 👷 Technician: <strong>{selectedTech.tech.name}</strong><br />

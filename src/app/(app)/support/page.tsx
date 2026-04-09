@@ -36,7 +36,7 @@ export default function SupportPage() {
       createdAt: new Date().toISOString(),
     };
     await saveData({ ...db, tickets: [ticket, ...tickets] } as typeof db);
-    toast('Ticket submitted! We will respond within 24 hours.');
+    toast('פנייה נשלחה! נחזור אליך תוך 24 שעות.');
     setForm({ subject: '', category: 'general', message: '' });
     setShowNew(false);
   };

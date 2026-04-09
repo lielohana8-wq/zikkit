@@ -235,7 +235,7 @@ export default function SettingsPage() {
   const Section = ({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) => (
     <Card sx={{ mb: '16px' }}>
       <Box sx={{ p: '12px 16px', borderBottom: '1px solid ' + c.border }}>
-        <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700 }}>{icon} {title}</Typography>
+        <Typography sx={{ fontFamily: "'Rubik', sans-serif", fontSize: 12, fontWeight: 700 }}>{icon} {title}</Typography>
       </Box>
       <CardContent>{children}</CardContent>
     </Card>

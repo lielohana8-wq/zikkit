@@ -145,7 +145,7 @@ export default function QuotesPage() {
   const total = subtotal + tax;
 
   const handleSave = async () => {
-    if (!editQuote.client?.trim()) { toast('Enter client name', c.hot); return; }
+    if (!editQuote.client?.trim()) { toast('הכנס שם לקוח', c.hot); return; }
     if (items.every((i) => !i.name)) { toast('הוסף לפחות פריט אחד', c.hot); return; }
 
     const quotesList = [...(db.quotes || [])];
@@ -427,7 +427,7 @@ export default function QuotesPage() {
       <ModalBase open={showModal} onClose={() => setShowModal(false)} title={editQuote.id ? L('עריכת הצעת מחיר ','\u05E2\u05E8\u05D5\u05DA \u05D4\u05E6\u05E2\u05D4 ') + 'Q-' + editQuote.id : L('הצעת מחיר חדשה','\u05D4\u05E6\u05E2\u05D4 \u05D7\u05D3\u05E9\u05D4')} maxWidth={680}
         footer={<>
           <Button variant="outlined" size="small" onClick={() => setShowModal(false)}>{L('Cancel','ביטול')}</Button>
-          <Button variant="contained" size="small" onClick={handleSave}>{editQuote.id ? 'עדכן' : 'Create Quote'}</Button>
+          <Button variant="contained" size="small" onClick={handleSave}>{editQuote.id ? 'עדכן' : 'צור הצעה'}</Button>
         </>}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>

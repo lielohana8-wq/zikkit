@@ -96,7 +96,7 @@ export default function JobsPage() {
   };
 
   const handleSave = async () => {
-    if (!editJob.client?.trim()) { toast('Please enter a client name', '#ff4d6d'); return; }
+    if (!editJob.client?.trim()) { toast('הכנס שם לקוח', '#ff4d6d'); return; }
     const jobsList = [...(db.jobs || [])];
     if (editJob.id) {
       const idx = jobsList.findIndex((j) => j.id === editJob.id);
@@ -202,7 +202,7 @@ export default function JobsPage() {
           const firestore = getFirestoreDb();
           await fbSet(fbDoc(firestore, 'public_portals', updatedJob.portalToken), {
             type: 'job',
-            bizName: cfg.biz_name || 'Business',
+            bizName: cfg.biz_name || 'העסק',
             bizPhone: cfg.biz_phone || '',
             bizEmail: cfg.biz_email || '',
             bizAddress: cfg.biz_address || '',
@@ -308,7 +308,7 @@ export default function JobsPage() {
 
   const handleInvoice = (job: Job) => {
     const html = generateInvoiceHTML({
-      bizName: cfg.biz_name || 'Business',
+      bizName: cfg.biz_name || 'העסק',
       bizPhone: cfg.biz_phone || '',
       bizAddress: cfg.biz_address || '',
       client: job.client || '',

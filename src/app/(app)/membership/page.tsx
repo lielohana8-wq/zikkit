@@ -63,7 +63,7 @@ export default function MembershipPage() {
   const Stat = ({ label, value, color, icon }: any) => (
     <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', flex: 1, minWidth: 140 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>{icon}<Typography variant="caption" color="text.secondary">{label}</Typography></Box>
-      <Typography variant="h4" fontWeight={900} sx={{ color, fontFamily: 'Syne' }}>{value}</Typography>
+      <Typography variant="h4" fontWeight={900} sx={{ color, fontFamily: 'Rubik' }}>{value}</Typography>
     </Box>
   );
 
@@ -85,7 +85,7 @@ export default function MembershipPage() {
             <Box sx={{ position: 'absolute', top: 8, left: 8 }}><IconButton size="small" onClick={() => { setEditPlan(p); setShowPlanModal(true); }}><Edit sx={{ fontSize: 14 }} /></IconButton></Box>
             <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: `${p.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}><Star sx={{ color: p.color }} /></Box>
             <Typography fontWeight={800} fontSize={16}>{p.name}</Typography>
-            <Typography fontWeight={900} fontSize={28} sx={{ fontFamily: 'Syne', color: p.color }}>{formatCurrency(p.price, currency)}<Typography component="span" variant="caption" color="text.secondary">/{p.period === 'monthly' ? 'חודש' : 'שנה'}</Typography></Typography>
+            <Typography fontWeight={900} fontSize={28} sx={{ fontFamily: 'Rubik', color: p.color }}>{formatCurrency(p.price, currency)}<Typography component="span" variant="caption" color="text.secondary">/{p.period === 'monthly' ? 'חודש' : 'שנה'}</Typography></Typography>
             {p.features.map((f, i) => <Typography key={i} variant="body2" sx={{ fontSize: 12, py: 0.3, color: 'text.secondary' }}>✓ {f}</Typography>)}
           </Paper>
         ))}

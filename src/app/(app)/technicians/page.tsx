@@ -68,8 +68,8 @@ export default function TechniciansPage() {
   };
 
   const handleSave = async () => {
-    if (!editTech.name?.trim()) { toast('Enter technician name', c.hot); return; }
-    if (!editTech.email?.trim()) { toast('Enter email address', c.hot); return; }
+    if (!editTech.name?.trim()) { toast('הכנס שם טכנאי', c.hot); return; }
+    if (!editTech.email?.trim()) { toast('הכנס כתובת אימייל', c.hot); return; }
 
     const users = [...(db.users || [])];
     if (editTech.id) {
@@ -129,10 +129,10 @@ export default function TechniciansPage() {
   };
 
   const handleDelete = async (tech: User) => {
-    if (!confirm('Remove ' + tech.name + '?')) return;
+    if (!confirm('להסיר את ' + tech.name + '?')) return;
     const users = (db.users || []).filter((u) => u.id !== tech.id);
     await saveData({ ...db, users });
-    toast('Technician removed');
+    toast('טכנאי הוסר');
   };
 
   const Label = ({ text }: { text: string }) => (
@@ -163,7 +163,7 @@ export default function TechniciansPage() {
               { key: 'name', label: L('Name','שם'), render: (t) => (
                 <Box>
                   <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{t.name}</Typography>
-                  <Badge label={t.isActive ? 'Active' : 'Inactive'} variant={t.isActive ? 'green' : 'grey'} sx={{ mt: '2px' }} />
+                  <Badge label={t.isActive ? 'פעיל' : 'לא פעיל'} variant={t.isActive ? 'green' : 'grey'} sx={{ mt: '2px' }} />
                 </Box>
               )},
               { key: 'email', label: L('Email','מייל') },
