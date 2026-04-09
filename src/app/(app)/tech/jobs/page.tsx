@@ -5,6 +5,7 @@ import { Close, Phone, Navigation, Chat, AccessTime, LocationOn, Person, Descrip
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useData } from '@/hooks/useFirestore';
+import { getFirestoreDb, doc as fbDoc, setDoc as fbSetDoc } from '@/lib/firebase';
 import { useToast } from '@/hooks/useToast';
 import { formatDate, formatJobNumber, formatCurrency } from '@/lib/formatters';
 import { JOB_STATUS_CONFIG } from '@/lib/constants';
