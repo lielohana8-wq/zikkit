@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
     'zikkit-5e554.firebaseapp.com',
     'zikkit.netlify.app',
     'zikkitai.netlify.app',
-    'localhost',
+    'localhost', 'zikkit-jvc7.vercel.app', 'aizikkit-git-main-lielohana8-wqs-projects.vercel.app', 'aizikkit-mjpt4mohx-lielohana8-wqs-projects.vercel.app',
     '127.0.0.1',
   ];
 
