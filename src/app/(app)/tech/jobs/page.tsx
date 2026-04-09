@@ -1,16 +1,11 @@
 'use client';
-
-import { useL } from '@/hooks/useL';
-import { useLanguage } from '@/hooks/useLanguage';
-
 import { useState, useMemo } from 'react';
-import { Box, Button, TextField, Typography, InputAdornment, Menu, MenuItem } from '@mui/material';
+import { Box, Button, TextField, Typography, InputAdornment, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { DataTable } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ModalBase } from '@/components/modals/ModalBase';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useData } from '@/hooks/useFirestore';
 import { useToast } from '@/hooks/useToast';
@@ -18,215 +13,174 @@ import { formatDate, formatJobNumber, formatCurrency } from '@/lib/formatters';
 import { JOB_STATUS_CONFIG } from '@/lib/constants';
 import type { Job, JobStatus } from '@/types';
 
+const STATUS_ACTIONS: { status: JobStatus; label: string; icon: string; color: string; from: string[] }[] = [
+  { status: 'in_progress', label: 'התחל עבודה', icon: '▶️', color: '#D97706', from: ['assigned','scheduled','callback','no_answer','parts_arrived'] },
+  { status: 'waiting_parts', label: 'ממתין לחלקים', icon: '📦', color: '#7C3AED', from: ['in_progress'] },
+  { status: 'parts_arrived', label: 'חלקים הגיעו', icon: '✅', color: '#059669', from: ['waiting_parts'] },
+  { status: 'no_answer', label: 'לקוח לא עונה', icon: '📵', color: '#E11D48', from: ['assigned','scheduled','callback'] },
+  { status: 'callback', label: 'חזרה ללקוח', icon: '📞', color: '#D97706', from: ['assigned','scheduled','no_answer','in_progress'] },
+];
+
 export default function TechJobsPage() {
   const { user } = useAuth();
-  const L = useL();
-  const { lang } = useLanguage();
   const { db, saveData, cfg } = useData();
   const { toast } = useToast();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [showCloseModal, setShowCloseModal] = useState(false);
-  const [closeJob, setCloseJob] = useState<Job | null>(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [showClose, setShowClose] = useState(false);
   const [closeRevenue, setCloseRevenue] = useState(0);
   const [closeMaterials, setCloseMaterials] = useState(0);
   const [closeNotes, setCloseNotes] = useState('');
-  const currency = cfg.currency || 'USD';
-
-  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [menuJob, setMenuJob] = useState<Job | null>(null);
-
+  const currency = cfg.currency || (cfg.region === 'IL' ? 'ILS' : 'USD');
   const techName = user?.name || '';
 
   const myJobs = useMemo(() => {
-    let filtered = (db.jobs || []).filter((j) => j.tech === techName);
-    if (statusFilter !== 'all') filtered = filtered.filter((j) => j.status === statusFilter);
-    if (search) {
-      const q = search.toLowerCase();
-      filtered = filtered.filter((j) =>
-        j.client?.toLowerCase().includes(q) || j.desc?.toLowerCase().includes(q) || j.address?.toLowerCase().includes(q) || j.num?.includes(q)
-      );
-    }
-    return filtered.sort((a, b) => new Date(b.created || 0).getTime() - new Date(a.created || 0).getTime());
+    let list = (db.jobs || []).filter((j: Job) => j.tech === techName);
+    if (statusFilter !== 'all') list = list.filter((j: Job) => j.status === statusFilter);
+    if (search) { const q = search.toLowerCase(); list = list.filter((j: Job) => j.client?.toLowerCase().includes(q) || j.desc?.toLowerCase().includes(q) || j.address?.toLowerCase().includes(q) || j.num?.includes(q)); }
+    return list.sort((a: Job, b: Job) => new Date(b.created || 0).getTime() - new Date(a.created || 0).getTime());
   }, [db.jobs, techName, search, statusFilter]);
 
-  const handleStatusChange = async (job: Job, newStatus: JobStatus) => {
-    const jobsList = [...(db.jobs || [])];
-    const idx = jobsList.findIndex((j) => j.id === job.id);
+  const changeStatus = async (job: Job, status: JobStatus) => {
+    const jobs = [...(db.jobs || [])];
+    const idx = jobs.findIndex((j: Job) => j.id === job.id);
+    if (idx >= 0) { jobs[idx] = { ...jobs[idx], status }; await saveData({ ...db, jobs }); toast('סטטוס עודכן ✓'); }
+    setSelectedJob(null);
+  };
+
+  const closeJob = async () => {
+    if (!selectedJob) return;
+    const jobs = [...(db.jobs || [])];
+    const idx = jobs.findIndex((j: Job) => j.id === selectedJob.id);
     if (idx >= 0) {
-      jobsList[idx] = { ...jobsList[idx], status: newStatus };
-      await saveData({ ...db, jobs: jobsList });
-      toast(L('סטטוס עודכן','סטטוס עודכן'));
+      jobs[idx] = { ...jobs[idx], status: 'completed' as JobStatus, revenue: closeRevenue, materials: closeMaterials, notes: (jobs[idx].notes || '') + (closeNotes ? '\n--- סגירת טכנאי ---\n' + closeNotes : '') };
+      await saveData({ ...db, jobs });
+      toast('✅ עבודה נסגרה');
     }
-    handleCloseMenu();
+    setShowClose(false); setSelectedJob(null);
   };
 
-  const openCloseJob = (job: Job) => {
-    setCloseJob(job);
-    setCloseRevenue(job.revenue || 0);
-    setCloseMaterials(job.materials || 0);
-    setCloseNotes('');
-    setShowCloseModal(true);
-    handleCloseMenu();
-  };
-
-  const handleCloseJobSubmit = async () => {
-    if (!closeJob) return;
-    const jobsList = [...(db.jobs || [])];
-    const idx = jobsList.findIndex((j) => j.id === closeJob.id);
-    if (idx >= 0) {
-      jobsList[idx] = {
-        ...jobsList[idx], status: 'completed', revenue: closeRevenue, materials: closeMaterials,
-        notes: (jobsList[idx].notes || '') + (closeNotes ? '\n--- Closed by Tech ---\n' + closeNotes : ''),
-      };
-      await saveData({ ...db, jobs: jobsList });
-      toast('✅ Job closed!');
-    }
-    setShowCloseModal(false);
-    setCloseJob(null);
-  };
-
-  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>, job: Job) => {
-    event.stopPropagation();
-    setMenuAnchor(event.currentTarget);
-    setMenuJob(job);
-  };
-
-  const handleCloseMenu = () => {
-    setMenuAnchor(null);
-    setMenuJob(null);
-  };
-
-  const Label = ({ text }: { text: string }) => (
-    <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>
-  );
+  const statuses = ['all','assigned','in_progress','scheduled','waiting_parts','parts_arrived','no_answer','callback','completed'];
 
   return (
-    <Box className="zk-fade-up" sx={{ animation: 'fadeIn 0.2s ease' }}>
-      <SectionHeader title={L("My Jobs","העבודות שלי")} subtitle={myJobs.length + L(" assigned to you"," משויכות אליך")} />
+    <Box className="zk-fade-up">
+      <SectionHeader title="העבודות שלי" subtitle={myJobs.length + ' עבודות משויכות'} />
 
       {/* Filters */}
-      <Box sx={{ display: 'flex', gap: '10px', mb: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <TextField placeholder="חיפוש עבודות..." value={search} onChange={(e) => setSearch(e.target.value)} size="small" sx={{ minWidth: 220 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#78716C' }} /></InputAdornment> }} />
-        {['all', 'assigned', 'in_progress', 'scheduled', 'waiting_parts', 'parts_arrived', 'no_answer', 'callback', 'completed'].map((s) => {
-          const cfg = JOB_STATUS_CONFIG[s as keyof typeof JOB_STATUS_CONFIG];
+      <Box sx={{ display: 'flex', gap: '8px', mb: 2, flexWrap: 'wrap', alignItems: 'center', px: '20px' }}>
+        <TextField placeholder="חיפוש..." value={search} onChange={(e) => setSearch(e.target.value)} size="small" sx={{ minWidth: 180 }}
+          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#A8A29E' }} /></InputAdornment> }} />
+        {statuses.map(s => {
+          const c = JOB_STATUS_CONFIG[s as keyof typeof JOB_STATUS_CONFIG];
+          const count = s === 'all' ? myJobs.length : (db.jobs || []).filter((j: Job) => j.tech === techName && j.status === s).length;
           return (
-            <Button key={s} size="small" onClick={() => setStatusFilter(s)} sx={{
-              px: '10px', py: '4px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto', textTransform: 'capitalize',
-              bgcolor: statusFilter === s ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.03)',
-              color: statusFilter === s ? '#4F46E5' : '#78716C',
-              border: '1px solid ' + (statusFilter === s ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.08)'),
-            }}>
-              {s === 'all' ? 'הכל' : cfg?.label || s}
-            </Button>
+            <Chip key={s} label={(c?.he || 'הכל') + ' (' + count + ')'} size="small" onClick={() => setStatusFilter(s)}
+              sx={{ fontWeight: statusFilter === s ? 700 : 400, bgcolor: statusFilter === s ? 'rgba(79,70,229,0.08)' : 'transparent', color: statusFilter === s ? '#4F46E5' : '#A8A29E', border: '1px solid ' + (statusFilter === s ? 'rgba(79,70,229,0.2)' : 'rgba(0,0,0,0.06)') }} />
           );
         })}
       </Box>
 
       {myJobs.length === 0 ? (
-        <EmptyState icon="🔧" title={L("No Jobs Assigned","אין עבודות משויכות")} subtitle={L("Jobs will appear here.","עבודות שישויכו אליך יופיעו כאן.")} />
+        <EmptyState icon="🔧" title="אין עבודות משויכות" subtitle="עבודות שישויכו אליך יופיעו כאן." />
       ) : (
-        <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
-          <DataTable<Job>
-            keyExtractor={(j) => j.id}
-            columns={[
-              { key: 'num', label: '#', render: (j) => <Typography sx={{ fontWeight: 700, fontSize: 11 }}>{j.num || formatJobNumber(j.id)}</Typography>, width: 70 },
-              { key: 'client', label: 'לקוח' },
-              { key: 'phone', label: 'טלפון', render: (j) => j.phone || '—' },
-              { key: 'address', label: 'כתובת', render: (j) => j.address || '—' },
-              { key: 'status', label: 'סטטוס', render: (j) => {
-                const cfg = JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG];
-                return <Badge label={cfg?.label || j.status} variant={cfg?.color || 'grey'} />;
-              }},
-              { key: 'revenue', label: L('Revenue','הכנסה'), render: (j) => j.revenue ? formatCurrency(j.revenue, currency) : '—' },
-              { key: 'created', label: 'תאריך', render: (j) => formatDate(j.created) },
-              { key: 'actions', label: '', width: 80, render: (j) => (
-                <Button size="small" onClick={(e) => handleOpenMenu(e, j)}
-                  sx={{ fontSize: 11, minWidth: 'auto', p: '3px 10px', bgcolor: 'rgba(0,0,0,0.03)', color: '#A8A29E', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px' }}>
-                  ⋮ פעולות
-                </Button>
-              )},
-            ]}
-            data={myJobs}
-          />
+        <Box sx={{ px: '20px' }}>
+          {myJobs.map((j: Job) => {
+            const sc = JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG];
+            const actions = STATUS_ACTIONS.filter(a => a.from.includes(j.status));
+            return (
+              <Box key={j.id} sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', p: '14px 16px', mb: '10px', borderRight: '3px solid ' + (sc?.hex || '#A8A29E') }}>
+                {/* Header */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', mb: '8px' }}>
+                  <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#A8A29E', fontFamily: 'monospace' }}>{j.num || formatJobNumber(j.id)}</Typography>
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, flex: 1 }}>{j.client}</Typography>
+                  <Badge label={sc?.he || j.status} variant={sc?.color || 'grey'} />
+                </Box>
+
+                {/* Details */}
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '12px', mb: '10px', fontSize: 12, color: '#78716C' }}>
+                  {j.phone && <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>📞 {j.phone}</Box>}
+                  {j.address && <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>📍 {j.address}</Box>}
+                  {(j.scheduledDate || j.date) && <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>📅 {j.scheduledDate || j.date} {j.scheduledTime || j.time || ''}</Box>}
+                  {j.desc && <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>📝 {j.desc}</Box>}
+                </Box>
+
+                {/* Quick actions */}
+                <Box sx={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {j.phone && <Button size="small" href={'tel:' + j.phone} sx={{ borderRadius: '20px', fontSize: 11, bgcolor: 'rgba(5,150,105,0.08)', color: '#059669', fontWeight: 600 }}>📞 התקשר</Button>}
+                  {j.address && <Button size="small" href={'https://waze.com/ul?q=' + encodeURIComponent(j.address)} target="_blank" sx={{ borderRadius: '20px', fontSize: 11, bgcolor: 'rgba(37,99,235,0.08)', color: '#2563EB', fontWeight: 600 }}>🗺️ נווט</Button>}
+                  {j.phone && <Button size="small" href={'https://wa.me/' + (j.phone.startsWith('0') ? '972' + j.phone.slice(1) : j.phone).replace(/[^0-9]/g,'')} target="_blank" sx={{ borderRadius: '20px', fontSize: 11, bgcolor: 'rgba(37,211,102,0.08)', color: '#25D366', fontWeight: 600 }}>💬 וואטסאפ</Button>}
+
+                  {/* Status actions */}
+                  {actions.map(a => (
+                    <Button key={a.status} size="small" onClick={() => changeStatus(j, a.status)}
+                      sx={{ borderRadius: '20px', fontSize: 11, bgcolor: a.color + '12', color: a.color, fontWeight: 600, border: '1px solid ' + a.color + '25' }}>
+                      {a.icon} {a.label}
+                    </Button>
+                  ))}
+                  {j.status !== 'completed' && j.status !== 'cancelled' && (
+                    <Button size="small" onClick={() => { setSelectedJob(j); setCloseRevenue(j.revenue || 0); setCloseMaterials(j.materials || 0); setCloseNotes(''); setShowClose(true); }}
+                      sx={{ borderRadius: '20px', fontSize: 11, bgcolor: 'rgba(5,150,105,0.1)', color: '#059669', fontWeight: 700, border: '1px solid rgba(5,150,105,0.2)' }}>
+                      ✅ סגור עבודה
+                    </Button>
+                  )}
+                </Box>
+
+                {/* Revenue if completed */}
+                {j.status === 'completed' && j.revenue ? (
+                  <Box sx={{ mt: '8px', p: '8px 12px', bgcolor: 'rgba(5,150,105,0.06)', borderRadius: '8px', display: 'flex', gap: '16px', fontSize: 12 }}>
+                    <span>💰 הכנסה: <strong>{formatCurrency(j.revenue, currency)}</strong></span>
+                    {j.materials ? <span>🔧 חומרים: <strong>{formatCurrency(j.materials, currency)}</strong></span> : null}
+                    <span>📊 רווח: <strong style={{color:'#059669'}}>{formatCurrency((j.revenue || 0) - (j.materials || 0), currency)}</strong></span>
+                  </Box>
+                ) : null}
+              </Box>
+            );
+          })}
         </Box>
       )}
 
-      {/* Actions Menu */}
-      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleCloseMenu}
-        PaperProps={{ sx: { bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', minWidth: 200 } }}>
-        {menuJob && menuJob.status !== 'in_progress' && menuJob.status !== 'completed' && (
-          <MenuItem onClick={() => { if (menuJob) handleStatusChange(menuJob, 'in_progress'); }}
-            sx={{ fontSize: 12, gap: '8px', color: '#f59e0b', '&:hover': { bgcolor: 'rgba(245,158,11,0.08)' } }}>
-            ▶️ התחל עבודה
-          </MenuItem>
-        )}
-        {menuJob && menuJob.status !== 'completed' && (
-          <MenuItem onClick={() => { if (menuJob) openCloseJob(menuJob); }}
-            sx={{ fontSize: 12, gap: '8px', color: '#22c55e', fontWeight: 700, '&:hover': { bgcolor: 'rgba(34,197,94,0.08)' } }}>
-            ✅ סגור עבודה
-          </MenuItem>
-        )}
-        {menuJob && menuJob.status === 'in_progress' && (
-          <MenuItem onClick={() => { if (menuJob) handleStatusChange(menuJob, 'waiting_parts'); }}
-            sx={{ fontSize: 12, gap: '8px', color: '#a78bfa', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' } }}>
-            📦 ממתין לחלקים
-          </MenuItem>
-        )}
-        {menuJob && menuJob.status === 'waiting_parts' && (
-          <MenuItem onClick={() => { if (menuJob) handleStatusChange(menuJob, 'parts_arrived'); }}
-            sx={{ fontSize: 12, gap: '8px', color: '#22c55e', '&:hover': { bgcolor: 'rgba(34,197,94,0.08)' } }}>
-            📦 חלקים הגיעו
-          </MenuItem>
-        )}
-        <MenuItem onClick={() => { if (menuJob) handleStatusChange(menuJob, 'callback'); }}
-          sx={{ fontSize: 12, gap: '8px', color: '#A8A29E', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
-          📞 חזרה ללקוח
-        </MenuItem>
-        <MenuItem onClick={() => { if (menuJob) handleStatusChange(menuJob, 'no_answer'); }}
-          sx={{ fontSize: 12, gap: '8px', color: '#ef4444', '&:hover': { bgcolor: 'rgba(239,68,68,0.08)' } }}>
-          📵 לקוח לא עונה
-        </MenuItem>
-      </Menu>
-
-      {/* סגור עבודה Modal */}
-      <ModalBase open={showCloseModal} onClose={() => setShowCloseModal(false)} title={'סגור עבודה ' + (closeJob?.num || '')}
-        footer={<>
-          <Button variant="outlined" size="small" onClick={() => setShowCloseModal(false)}>{L('Cancel','ביטול')}</Button>
-          <Button size="small" onClick={handleCloseJobSubmit}
-            sx={{ bgcolor: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '10px', fontWeight: 700, '&:hover': { bgcolor: '#22c55e', color: '#000' } }}>
-            ✅ סגור והשלם
-          </Button>
-        </>}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <Box sx={{ bgcolor: 'rgba(79,70,229,0.08)', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', p: '12px 16px', fontSize: 12, color: '#A8A29E', lineHeight: 1.7 }}>
-            📋 Client: <strong>{closeJob?.client}</strong><br />
-            📍 Address: {closeJob?.address || '—'}
+      {/* Close Job Dialog */}
+      <Dialog open={showClose} onClose={() => setShowClose(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '14px', direction: 'rtl' } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>סגור עבודה — {selectedJob?.num}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ bgcolor: 'rgba(79,70,229,0.06)', borderRadius: '10px', p: '12px', mb: 2, fontSize: 13, color: '#78716C' }}>
+            📋 לקוח: <strong style={{color:'#1C1917'}}>{selectedJob?.client}</strong><br/>
+            📍 כתובת: {selectedJob?.address || '—'}
           </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-            <Box><Label text={L("Total Revenue ($)","סכום הכנסה")} /><TextField fullWidth size="small" type="number" value={closeRevenue} onChange={(e) => setCloseRevenue(parseFloat(e.target.value) || 0)} /></Box>
-            <Box><Label text={L("Materials Cost ($)","עלות חומרים")} /><TextField fullWidth size="small" type="number" value={closeMaterials} onChange={(e) => setCloseMaterials(parseFloat(e.target.value) || 0)} /></Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', mb: 2 }}>
+            <Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>סכום הכנסה</Typography>
+              <TextField fullWidth size="small" type="number" value={closeRevenue} onChange={e => setCloseRevenue(parseFloat(e.target.value) || 0)} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>עלות חומרים</Typography>
+              <TextField fullWidth size="small" type="number" value={closeMaterials} onChange={e => setCloseMaterials(parseFloat(e.target.value) || 0)} />
+            </Box>
           </Box>
           {closeRevenue > 0 && (
-            <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '10px', p: '12px 16px' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px' }}>
-                <Typography sx={{ fontSize: 12, color: '#78716C' }}>{L('Revenue','הכנסה')}</Typography>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#22c55e' }}>{formatCurrency(closeRevenue, currency)}</Typography>
+            <Box sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', p: '12px', mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px', fontSize: 12 }}>
+                <span style={{color:'#78716C'}}>הכנסה</span><strong style={{color:'#059669'}}>{formatCurrency(closeRevenue, currency)}</strong>
               </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px' }}>
-                <Typography sx={{ fontSize: 12, color: '#78716C' }}>{L('Materials','חומרים')}</Typography>
-                <Typography sx={{ fontSize: 12, color: '#ff4d6d' }}>-{formatCurrency(closeMaterials, currency)}</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px', fontSize: 12 }}>
+                <span style={{color:'#78716C'}}>חומרים</span><span style={{color:'#E11D48'}}>-{formatCurrency(closeMaterials, currency)}</span>
               </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '8px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                <Typography sx={{ fontSize: 14, fontWeight: 800 }}>{L('Profit','רווח')}</Typography>
-                <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#4F46E5' }}>{formatCurrency(closeRevenue - closeMaterials, currency)}</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '8px', borderTop: '1px solid rgba(0,0,0,0.06)', fontSize: 14, fontWeight: 700 }}>
+                <span>רווח</span><span style={{color:'#4F46E5'}}>{formatCurrency(closeRevenue - closeMaterials, currency)}</span>
               </Box>
             </Box>
           )}
-          <Box><Label text={L("Closing Notes","הערות סגירה")} /><TextField fullWidth size="small" multiline rows={2} value={closeNotes} onChange={(e) => setCloseNotes(e.target.value)} placeholder="עבודה הושלמה..." /></Box>
-        </Box>
-      </ModalBase>
+          <Box>
+            <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>הערות סגירה</Typography>
+            <TextField fullWidth size="small" multiline rows={2} value={closeNotes} onChange={e => setCloseNotes(e.target.value)} placeholder="עבודה הושלמה..." />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setShowClose(false)}>ביטול</Button>
+          <Button variant="contained" onClick={closeJob} sx={{ bgcolor: '#059669', '&:hover': { bgcolor: '#047857' } }}>✅ סגור והשלם</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

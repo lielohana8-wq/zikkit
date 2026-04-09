@@ -1,10 +1,6 @@
 'use client';
-
-import { useL } from '@/hooks/useL';
-import { useLanguage } from '@/hooks/useLanguage';
-
 import { useMemo } from 'react';
-import { Box, Typography, Card, CardContent } from '@mui/material';
+import { Box, Typography, Card, CardContent, Button } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { KpiCard } from '@/components/ui/KpiCard';
@@ -15,143 +11,84 @@ import { formatCurrency, formatDate, formatJobNumber, formatPercent } from '@/li
 import { JOB_STATUS_CONFIG } from '@/lib/constants';
 import type { Job } from '@/types';
 
-function CardHeader({ icon, title, action }: { icon: string; title: string; action?: React.ReactNode }) {
-  return (
-    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-      <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
-        {icon} {title}
-      </Typography>
-      {action}
-    </Box>
-  );
-}
-
 export default function TechDashboardPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const L = useL();
-  const { lang } = useLanguage();
   const { db, cfg } = useData();
-  const currency = cfg.currency || 'USD';
+  const currency = cfg.currency || (cfg.region === 'IL' ? 'ILS' : 'USD');
   const techName = user?.name || '';
-
-  const myJobs = useMemo(() =>
-    (db.jobs || []).filter((j) => j.tech === techName),
-  [db.jobs, techName]);
+  const myJobs = useMemo(() => (db.jobs || []).filter((j: Job) => j.tech === techName), [db.jobs, techName]);
 
   const today = new Date().toISOString().slice(0, 10);
-  const now = Date.now();
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
 
-  const todayJobs = useMemo(() =>
-    myJobs.filter((j) => {
-      const d = j.scheduledDate || j.date || j.created || '';
-      return d.startsWith(today) && !['completed', 'cancelled'].includes(j.status);
-    }),
-  [myJobs, today]);
+  const todayJobs = useMemo(() => myJobs.filter((j: Job) => {
+    const d = j.scheduledDate || j.date || j.created || '';
+    return d.startsWith(today) && !['completed','cancelled'].includes(j.status);
+  }).sort((a: Job, b: Job) => (a.scheduledTime || a.time || '').localeCompare(b.scheduledTime || b.time || '')), [myJobs, today]);
 
-  const activeJobs = myJobs.filter((j) => !['completed', 'cancelled'].includes(j.status));
-  const completedThisMonth = myJobs.filter((j) => j.status === 'completed' && new Date(j.created || 0) >= monthStart);
-  const monthRevenue = completedThisMonth.reduce((s, j) => s + (j.revenue || 0), 0);
-  const myCommission = (user as { commission?: number })?.commission || 0;
-  const monthCommission = (monthRevenue * myCommission) / 100;
-  const completionRate = myJobs.length > 0 ? (myJobs.filter((j) => j.status === 'completed').length / myJobs.length) * 100 : 0;
-
-  const recentJobs = useMemo(() =>
-    [...myJobs].sort((a, b) => new Date(b.created || 0).getTime() - new Date(a.created || 0).getTime()).slice(0, 6),
-  [myJobs]);
+  const activeJobs = myJobs.filter((j: Job) => !['completed','cancelled'].includes(j.status));
+  const completedMonth = myJobs.filter((j: Job) => j.status === 'completed' && new Date(j.created || 0) >= monthStart);
+  const monthRevenue = completedMonth.reduce((s: number, j: Job) => s + (j.revenue || 0), 0);
+  const commission = (user as any)?.commission || 0;
+  const monthCommission = (monthRevenue * commission) / 100;
+  const completionRate = myJobs.length > 0 ? (myJobs.filter((j: Job) => j.status === 'completed').length / myJobs.length) * 100 : 0;
 
   return (
-    <Box sx={{ animation: 'fadeIn 0.2s ease' }}>
+    <Box className="zk-fade-up">
       {/* Welcome */}
-      <Box sx={{
-        background: 'linear-gradient(135deg, rgba(79,70,229,0.08), rgba(79,143,255,0.08))',
-        border: '1px solid rgba(0,0,0,0.08)', borderRadius: '14px',
-        p: '16px 20px', mb: '16px', display: 'flex', alignItems: 'center', gap: '16px',
-      }}>
+      <Box sx={{ background: 'linear-gradient(135deg, rgba(79,70,229,0.06), rgba(5,150,105,0.06))', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', p: '18px 20px', mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box sx={{ fontSize: 36 }}>👷</Box>
-        <Box>
-          <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, mb: '4px' }}>
-            Hey, {techName || 'Technician'}!
-          </Typography>
-          <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>
-            {todayJobs.length > 0
-              ? `You have ${todayJobs.length} job${todayJobs.length > 1 ? 's' : ''} scheduled today.`
-              : 'אין עבודות מתוכננות להיום. בדוק את השיבוצים שלך.'}
+        <Box sx={{ flex: 1 }}>
+          <Typography sx={{ fontSize: 18, fontWeight: 700, mb: '2px' }}>היי, {techName}!</Typography>
+          <Typography sx={{ fontSize: 13, color: '#78716C' }}>
+            {todayJobs.length > 0 ? `יש לך ${todayJobs.length} עבודות היום` : 'אין עבודות מתוכננות להיום'}
           </Typography>
         </Box>
+        <Button variant="contained" size="small" onClick={() => router.push('/tech/jobs')} sx={{ borderRadius: '20px', fontSize: 12 }}>
+          לעבודות שלי
+        </Button>
       </Box>
 
       {/* KPIs */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: '10px', mb: '16px' }}>
-        <KpiCard label={L("Today's Jobs","עבודות היום")} value={String(todayJobs.length)} variant="accent" />
-        <KpiCard label={L("Active Jobs","עבודות פעילות")} value={String(activeJobs.length)} variant="blue" />
-        <KpiCard label={L("This Month","החודש")} value={String(completedThisMonth.length) + ' done'} variant="green" />
-        <KpiCard label={L("Month Revenue","הכנסות החודש")} value={formatCurrency(monthRevenue, currency)} variant="teal" />
-        <KpiCard label={L("My Commission","העמלה שלי")} value={formatCurrency(monthCommission, currency)} subtitle={myCommission + '%'} variant="purple" />
-        <KpiCard label={L("Completion Rate","אחוז השלמה")} value={formatPercent(completionRate)} variant="warm" />
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: '10px', mb: 2 }}>
+        <KpiCard label="עבודות היום" value={String(todayJobs.length)} variant="accent" />
+        <KpiCard label="עבודות פעילות" value={String(activeJobs.length)} variant="blue" />
+        <KpiCard label="הושלמו החודש" value={String(completedMonth.length)} variant="green" />
+        <KpiCard label="הכנסות החודש" value={formatCurrency(monthRevenue, currency)} variant="teal" />
+        <KpiCard label="העמלה שלי" value={formatCurrency(monthCommission, currency)} subtitle={commission + '%'} variant="purple" />
+        <KpiCard label="אחוז השלמה" value={formatPercent(completionRate)} variant="warm" />
       </Box>
 
-      {/* Today + Recent */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', '@media(max-width:768px)': { gridTemplateColumns: '1fr !important' } }}>
-        {/* Today's Schedule */}
-        <Card>
-          <CardHeader icon="📅" title={L("Today's Schedule","לוח זמנים היום")} action={<Badge label={todayJobs.length + ' jobs'} variant="accent" />} />
-          <CardContent sx={{ p: '0 !important' }}>
-            {todayJobs.length === 0 ? (
-              <Typography sx={{ p: 3, textAlign: 'center', fontSize: 12, color: '#78716C' }}>{L("No jobs for today","אין עבודות להיום")}</Typography>
-            ) : (
-              todayJobs.map((j, i) => (
-                <Box key={j.id} onClick={() => router.push('/tech/jobs')} sx={{
-                  display: 'flex', alignItems: 'center', gap: '10px', p: '10px 16px', cursor: 'pointer',
-                  borderBottom: i < todayJobs.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.025)' },
-                }}>
-                  <Box sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', fontFamily: 'monospace', minWidth: 45 }}>
-                    {j.time || '—'}
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{j.client}</Typography>
-                    <Typography sx={{ fontSize: 10, color: '#78716C' }}>{j.address || j.desc || ''}</Typography>
-                  </Box>
-                  <Badge label={(lang==='he'?JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.he:JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.label) || j.status}
-                    variant={JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.color || 'grey'} />
-                </Box>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent Jobs */}
-        <Card>
-          <CardHeader icon="🔧" title={L("עבודות אחרונות","עבודות אחרונות")} />
-          <CardContent sx={{ p: '0 !important' }}>
-            {recentJobs.length === 0 ? (
-              <Typography sx={{ p: 3, textAlign: 'center', fontSize: 12, color: '#78716C' }}>{L("No jobs assigned yet","עדיין לא שויכו עבודות")}</Typography>
-            ) : (
-              recentJobs.map((j, i) => (
-                <Box key={j.id} sx={{
-                  display: 'flex', alignItems: 'center', gap: '10px', p: '10px 16px',
-                  borderBottom: i < recentJobs.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
-                }}>
-                  <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', fontFamily: 'monospace', minWidth: 50 }}>
-                    {j.num || formatJobNumber(j.id)}
-                  </Typography>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{j.client}</Typography>
-                    <Typography sx={{ fontSize: 10, color: '#78716C' }}>{formatDate(j.created)}</Typography>
-                  </Box>
-                  <Badge label={(lang==='he'?JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.he:JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.label) || j.status}
-                    variant={JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.color || 'grey'} />
-                  {j.revenue ? <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#22c55e' }}>{formatCurrency(j.revenue, currency)}</Typography> : null}
-                </Box>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </Box>
+      {/* Today's Jobs */}
+      <Card sx={{ mb: 2 }}>
+        <Box sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography sx={{ fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>📅 העבודות של היום</Typography>
+          <Badge label={todayJobs.length + ' עבודות'} variant="accent" />
+        </Box>
+        <CardContent sx={{ p: '0 !important' }}>
+          {todayJobs.length === 0 ? (
+            <Typography sx={{ p: 3, textAlign: 'center', fontSize: 13, color: '#78716C' }}>אין עבודות להיום 🎉</Typography>
+          ) : todayJobs.map((j: Job, i: number) => (
+            <Box key={j.id} onClick={() => router.push('/tech/jobs')} sx={{
+              display: 'flex', alignItems: 'center', gap: '12px', p: '12px 16px', cursor: 'pointer',
+              borderBottom: i < todayJobs.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.015)' },
+            }}>
+              <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#4F46E5', fontFamily: 'monospace', minWidth: 48 }}>
+                {j.scheduledTime || j.time || '—'}
+              </Typography>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography noWrap sx={{ fontSize: 13, fontWeight: 600 }}>{j.client}</Typography>
+                <Typography noWrap sx={{ fontSize: 11, color: '#78716C' }}>{j.address || j.desc || ''}</Typography>
+              </Box>
+              {j.phone && <Button size="small" href={'tel:' + j.phone} onClick={(e: any) => e.stopPropagation()} sx={{ minWidth: 'auto', p: '4px 8px', fontSize: 14 }}>📞</Button>}
+              {j.address && <Button size="small" href={'https://waze.com/ul?q=' + encodeURIComponent(j.address)} target="_blank" onClick={(e: any) => e.stopPropagation()} sx={{ minWidth: 'auto', p: '4px 8px', fontSize: 14 }}>🗺️</Button>}
+              <Badge label={JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.he || j.status} variant={JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.color || 'grey'} />
+            </Box>
+          ))}
+        </CardContent>
+      </Card>
     </Box>
   );
 }
