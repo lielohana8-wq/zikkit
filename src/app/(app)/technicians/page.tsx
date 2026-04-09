@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ModalBase } from '@/components/modals/ModalBase';
 import { useData } from '@/hooks/useFirestore';
+import { getFirestoreDb, doc as fbDoc, setDoc as fbSetDoc } from '@/lib/firebase';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { formatCurrency } from '@/lib/formatters';
@@ -25,7 +26,7 @@ interface TechWithStats extends User {
 }
 
 export default function TechniciansPage() {
-  const { db, saveData, cfg } = useData();
+  const { db, saveData, cfg, bizId } = useData();
   const L = useL();
   const { toast } = useToast();
   const { sendPasswordReset } = useAuth();
@@ -87,6 +88,23 @@ export default function TechniciansPage() {
         mustChangePassword: true,
       };
       users.push(newTech);
+
+      // Create Firebase Auth + tech_lookup for new tech
+      if (editTech.email && bizId) {
+        try {
+          await fetch('/api/users/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: editTech.email, password: 'Tech1234!', bizId, userName: editTech.name, role: 'technician' }),
+          });
+          const firestore = getFirestoreDb();
+          const lookupKey = editTech.email.toLowerCase().replace(/[@.]/g, '_');
+          await fbSetDoc(fbDoc(firestore, 'tech_lookup', lookupKey), {
+            bizId, email: editTech.email.toLowerCase(), name: editTech.name || '', role: 'technician', created: new Date().toISOString(),
+          });
+          console.log('[Tech] Created auth + tech_lookup for:', editTech.email);
+        } catch (e) { console.warn('[Tech] Auth setup error:', e); }
+      }
     }
     await saveData({ ...db, users });
     setShowModal(false);

@@ -31,10 +31,16 @@ function loadLocal<T>(key: string, fallback: T): T {
   catch { return fallback; }
 }
 
+function getBizId(ref: React.MutableRefObject<string | null>): string | null {
+  if (ref.current) return ref.current;
+  if (typeof window === 'undefined') return null;
+  return sessionStorage.getItem('zk_bizId') || localStorage.getItem('zk_bizId') || null;
+}
+
 export function DataProvider({ children }: { children: ReactNode }) {
   const [db, setDb] = useState<BusinessDatabase>(() => loadLocal(STORAGE_KEYS.DATA, defaultDb));
   const [cfg, setCfg] = useState<BusinessConfig>(() => loadLocal(STORAGE_KEYS.CONFIG, defaultCfg));
-  const [bizId, setBizId] = useState<string | null>(null);
+  const [bizId, setBizIdState] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const bizIdRef = useRef<string | null>(null);
   const cfgRef = useRef<BusinessConfig>(cfg);
@@ -42,22 +48,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const hasSynced = useRef(false);
   const isSyncing = useRef(false);
 
-  useEffect(() => { bizIdRef.current = bizId; if(bizId) { sessionStorage.setItem('zk_bizId', bizId); localStorage.setItem('zk_bizId', bizId); } }, [bizId]);
+  const setBizId = useCallback((id: string | null) => {
+    setBizIdState(id);
+    bizIdRef.current = id;
+    if (id && typeof window !== 'undefined') {
+      sessionStorage.setItem('zk_bizId', id);
+      localStorage.setItem('zk_bizId', id);
+    }
+  }, []);
+
   useEffect(() => { cfgRef.current = cfg; }, [cfg]);
 
   const saveData = useCallback(async (data: BusinessDatabase) => {
     setDb(data);
     localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(data));
     lastSaveTime.current = Date.now();
-    const id = bizIdRef.current || sessionStorage.getItem('zk_bizId') || localStorage.getItem('zk_bizId');
+    const id = getBizId(bizIdRef);
+    console.log('[Zikkit] saveData called, bizId=' + (id ? id.slice(0, 8) + '...' : 'NULL'));
     if (id) {
       try {
         const firestore = getFirestoreDb();
         await setDoc(doc(firestore, 'businesses', id), { db: JSON.parse(JSON.stringify(data)) }, { merge: true });
-        console.log('[Zikkit] Data saved to cloud');
-      } catch (e) {
-        console.error('[Zikkit] Cloud save FAILED:', e);
+        console.log('[Zikkit] ✅ Saved to Firestore');
+      } catch (e: any) {
+        console.error('[Zikkit] ❌ Save FAILED:', e?.message || e);
       }
+    } else {
+      console.warn('[Zikkit] ⚠️ No bizId — only saved locally!');
     }
   }, []);
 
@@ -71,20 +88,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
     cfgRef.current = merged;
     localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(merged));
     lastSaveTime.current = Date.now();
-    const id = bizIdRef.current || sessionStorage.getItem('zk_bizId') || localStorage.getItem('zk_bizId');
+    const id = getBizId(bizIdRef);
     if (id) {
       try {
         const firestore = getFirestoreDb();
-        await setDoc(doc(firestore, 'businesses', id), { cfg: merged }, { merge: true });
+        await setDoc(doc(firestore, 'businesses', id), { cfg: JSON.parse(JSON.stringify(merged)) }, { merge: true });
       } catch (e) { console.warn('[Zikkit] Config save failed:', e); }
     }
     return merged;
   }, []);
 
   const syncFromCloud = useCallback(async () => {
-    const id = bizIdRef.current || sessionStorage.getItem('zk_bizId') || localStorage.getItem('zk_bizId');
+    const id = getBizId(bizIdRef);
     if (!id || isSyncing.current) return;
-    // Don't sync if data was saved in the last 15 seconds — prevents overwriting local changes
     if (Date.now() - lastSaveTime.current < 15000) return;
     isSyncing.current = true;
     setLoading(true);
@@ -93,7 +109,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const snap = await getDoc(doc(firestore, 'businesses', id));
       if (snap.exists()) {
         const data = snap.data();
-        // Only update if we haven't saved recently
         if (Date.now() - lastSaveTime.current >= 15000) {
           if (data.db) { localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(data.db)); setDb(data.db as BusinessDatabase); }
           if (data.cfg) { localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(data.cfg)); setCfg(data.cfg as BusinessConfig); }
@@ -103,7 +118,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     finally { setLoading(false); isSyncing.current = false; }
   }, []);
 
-  // Initial sync when bizId is set
   useEffect(() => {
     if (bizId && !hasSynced.current) {
       hasSynced.current = true;
@@ -111,7 +125,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [bizId, syncFromCloud]);
 
-  // Periodic sync every 5 minutes
   useEffect(() => {
     if (!bizId) return;
     const timer = setInterval(syncFromCloud, SYNC_INTERVAL_MS);
