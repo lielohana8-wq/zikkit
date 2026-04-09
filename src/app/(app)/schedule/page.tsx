@@ -112,7 +112,7 @@ function JobCard({ job, color, compact, onClick, onDragStart }: {
         position: 'relative',
         bgcolor: color + '12',
         borderRight: '3px solid ' + color,
-        borderRadius: '8px', height: '100%',
+        borderRadius: '8px',
         px: compact ? '8px' : '10px',
         py: compact ? '4px' : '7px',
         cursor: 'grab',
@@ -641,7 +641,7 @@ export default function SchedulePage() {
   const [editOpen, setEditOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createSlot, setCreateSlot] = useState<{ date: string; time: string; tech?: string } | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [filterAnchor, setFilterAnchor] = useState<null | HTMLElement>(null);
   const [dragJob, setDragJob] = useState<Job | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -744,7 +744,7 @@ export default function SchedulePage() {
         <Chip label={String(unassigned.length)} size="small" sx={{ bgcolor: 'rgba(255,176,32,0.15)', color: '#FFB020', fontWeight: 700 }} />
         {isMobile && <IconButton size="small" onClick={() => setSidebarOpen(false)} sx={{ ml: 0.5 }}><Close sx={{ fontSize: 16 }} /></IconButton>}
       </Box>
-      <Button fullWidth variant="contained" size="small" startIcon={<AutoFixHigh />} onClick={handleAutoAssign} sx={{ mb: 2, bgcolor: c.violet || '#8B5CF6', fontWeight: 700, borderRadius: '8px', height: '100%', '&:hover': { bgcolor: '#7C3AED' } }}>
+      <Button fullWidth variant="contained" size="small" startIcon={<AutoFixHigh />} onClick={handleAutoAssign} sx={{ mb: 2, bgcolor: c.violet || '#8B5CF6', fontWeight: 700, borderRadius: '8px', '&:hover': { bgcolor: '#7C3AED' } }}>
         שיבוץ אוטומטי (AI)
       </Button>
       <Divider sx={{ mb: 1.5 }} />
@@ -755,7 +755,7 @@ export default function SchedulePage() {
             <Paper key={job.id} draggable onDragStart={() => setDragJob(job)} elevation={0} sx={{
               p: '10px', cursor: 'grab', bgcolor: c.glass, border: '1px solid ' + c.border,
               borderRight: '3px solid ' + (PRIORITY[job.priority || 'normal']?.color),
-              borderRadius: '8px', height: '100%', transition: 'all 0.15s',
+              borderRadius: '8px', transition: 'all 0.15s',
               '&:hover': { bgcolor: c.glass2, borderColor: c.border2 }, '&:active': { cursor: 'grabbing' },
             }}>
               <Typography noWrap sx={{ fontSize: 12, fontWeight: 700, color: c.text }}>{job.num} — {job.client}</Typography>
@@ -792,7 +792,7 @@ export default function SchedulePage() {
 
       {/* Desktop: persistent sidebar */}
       {!isMobile && sidebarOpen && (
-        <Box sx={{ width: 280, flexShrink: 0, bgcolor: c.surface1, borderLeft: '1px solid ' + c.border, overflow: 'hidden' }}>
+        <Box sx={{ width: 240, flexShrink: 0, bgcolor: c.surface1, borderLeft: '1px solid ' + c.border, overflow: 'hidden' }}>
           {sidebarContent}
         </Box>
       )}
@@ -850,7 +850,7 @@ export default function SchedulePage() {
             ))}
           </Menu>
           <Button variant="contained" size="small" startIcon={!isMobile ? <Add /> : undefined} onClick={() => { setCreateSlot({ date: fmtD(currentDate), time: '09:00' }); setCreateOpen(true); }} sx={{
-            bgcolor: '#00E676', color: '#000', fontWeight: 700, borderRadius: '8px', height: '100%', fontSize: 11,
+            bgcolor: '#00E676', color: '#000', fontWeight: 700, borderRadius: '8px', fontSize: 11,
             minWidth: isMobile ? 36 : 'auto', px: isMobile ? 0 : 1.5,
             '&:hover': { bgcolor: '#00C853' },
           }}>
@@ -860,7 +860,7 @@ export default function SchedulePage() {
 
         {/* Conflicts */}
         {conflicts.length > 0 && (
-          <Box sx={{ mx: isMobile ? 1 : 2, mt: 1, px: '12px', py: '8px', bgcolor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', height: '100%', display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <Box sx={{ mx: isMobile ? 1 : 2, mt: 1, px: '12px', py: '8px', bgcolor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#EF4444' }}>{'⚠ ' + conflicts.length + ' התנגשויות'}</Typography>
             {conflicts.slice(0, 2).map((cc: any, i: number) => <Typography key={i} sx={{ fontSize: 10, color: c.text3 }}>{cc.a.client} ↔ {cc.b.client}</Typography>)}
           </Box>

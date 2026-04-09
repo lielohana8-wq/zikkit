@@ -681,9 +681,12 @@ export default function JobsPage() {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
             <Box><Label text={L("Scheduled Date","תאריך מתוכנן")} /><TextField fullWidth size="small" type="date" value={editJob.scheduledDate || ''} onChange={(e) => setEditJob({ ...editJob, scheduledDate: e.target.value })} /></Box>
             <Box><Label text={L("Scheduled Time","שעה מתוכננת")} /><TextField fullWidth size="small" type="time" value={editJob.scheduledTime || editJob.time || ''} onChange={(e) => setEditJob({ ...editJob, scheduledTime: e.target.value, time: e.target.value })} /></Box>
+            <Box><Label text={L("Duration","משך זמן")} /><Select fullWidth size="small" value={(editJob as any).duration || 60} onChange={(e: any) => setEditJob({ ...editJob, duration: Number(e.target.value) } as any)} sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 }}>
+              <MenuItem value={30}>30 {L("min","דק׳")}</MenuItem><MenuItem value={60}>1 {L("hr","שעה")}</MenuItem><MenuItem value={90}>1.5 {L("hrs","שעות")}</MenuItem><MenuItem value={120}>2 {L("hrs","שעות")}</MenuItem><MenuItem value={180}>3 {L("hrs","שעות")}</MenuItem><MenuItem value={240}>4 {L("hrs","שעות")}</MenuItem><MenuItem value={360}>6 {L("hrs","שעות")}</MenuItem><MenuItem value={480}>8 {L("hrs","שעות")}</MenuItem>
+            </Select></Box>
           </Box>
 
           {editJob.id && (

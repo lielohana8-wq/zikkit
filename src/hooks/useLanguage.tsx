@@ -50,6 +50,19 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // One-time migration: force Hebrew for existing users
+  useEffect(() => {
+    try {
+      const cfg = JSON.parse(localStorage.getItem('fp_config') || '{}');
+      if (!cfg._langMigrated) {
+        cfg.lang = 'he';
+        cfg._langMigrated = true;
+        localStorage.setItem('fp_config', JSON.stringify(cfg));
+        setLangState('he');
+      }
+    } catch {}
+  }, []);
+
   // Sync language from business config when it changes
   useEffect(() => {
     const check = () => {

@@ -7,13 +7,13 @@ import { LanguageProvider } from '@/hooks/useLanguage';
 import { ToastProvider } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { DataBridge } from '@/features/auth/DataBridge';
-import { PWAInstall } from '@/components/ui/PWAInstall';
 import './globals.css';
+import { PWAInstall } from '@/components/ui/PWAInstall';
 
 export const metadata: Metadata = {
-  title: 'Zikkit — ניהול עסק',
+  title: 'Zikkit',
   description: 'AI-Powered Field Service Management — Replaces your receptionist and software.',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Zikkit' },
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Zikkit' },
   icons: {
     icon: [{ url: '/icon-192.svg', type: 'image/svg+xml' }],
     apple: [{ url: '/icon-192.svg' }],
@@ -22,8 +22,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#4F46E5', width: 'device-width', initialScale: 1,
-  maximumScale: 1, viewportFit: 'cover',
+  themeColor: '#00E5FF', width: 'device-width', initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -33,9 +33,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="apple-touch-icon" href="/icon-192.svg" />
       </head>
       <body suppressHydrationWarning>
         <ThemeProvider theme={theme}>
