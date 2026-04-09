@@ -1,14 +1,14 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { Box, Button, Typography, Chip, Dialog, DialogContent, DialogActions, TextField, Select, MenuItem, IconButton, SwipeableDrawer } from '@mui/material';
-import { Close, Phone, Navigation, Chat, AccessTime, LocationOn, Person, Description, CalendarMonth, AttachMoney } from '@mui/icons-material';
+import { Box, Button, Typography, Chip, Dialog, DialogContent, DialogActions, TextField, Select, MenuItem, IconButton, SwipeableDrawer, Divider } from '@mui/material';
+import { Close, Phone, Navigation, Chat, AccessTime, LocationOn, Person, Description, CalendarMonth, Add, Delete } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useData } from '@/hooks/useFirestore';
-import { getFirestoreDb, doc as fbDoc, setDoc as fbSetDoc } from '@/lib/firebase';
 import { useToast } from '@/hooks/useToast';
 import { formatDate, formatJobNumber, formatCurrency } from '@/lib/formatters';
 import { JOB_STATUS_CONFIG } from '@/lib/constants';
+import { getFirestoreDb, doc as fbDoc, setDoc as fbSetDoc } from '@/lib/firebase';
 import type { Job, JobStatus } from '@/types';
 
 const STATUS_FLOW: { status: JobStatus; label: string; icon: string; color: string; from: string[] }[] = [
@@ -19,29 +19,27 @@ const STATUS_FLOW: { status: JobStatus; label: string; icon: string; color: stri
   { status: 'callback', label: 'חזרה ללקוח', icon: '📞', color: '#D97706', from: ['assigned','scheduled','no_answer','in_progress'] },
 ];
 
-const PAYMENT_METHODS = [
-  { value: 'cash', label: '💵 מזומן' },
-  { value: 'credit_card', label: '💳 אשראי' },
-  { value: 'check', label: '📝 צ׳ק' },
-  { value: 'bank_transfer', label: '🏦 העברה בנקאית' },
-  { value: 'bit', label: '📱 ביט' },
-  { value: 'invoice', label: '📄 חשבונית' },
-  { value: 'other', label: 'אחר' },
+const PAYMENTS = [
+  { value: 'cash', label: '💵 מזומן' }, { value: 'credit_card', label: '💳 אשראי' },
+  { value: 'check', label: '📝 צ׳ק' }, { value: 'bank_transfer', label: '🏦 העברה' },
+  { value: 'bit', label: '📱 ביט' }, { value: 'invoice', label: '📄 חשבונית' },
 ];
 
-const AUTO_MSGS: Record<string, (j: Job, biz: string) => string> = {
-  in_progress: (j, b) => `היי ${j.client || ''}, הטכנאי שלנו יצא אליך! צפי הגעה בקרוב. ${b}`,
-  waiting_parts: (j, b) => `היי ${j.client || ''}, לעבודה שלך נדרשים חלקים. נעדכן ברגע שיגיעו. ${b}`,
-  parts_arrived: (j, b) => `היי ${j.client || ''}, החלקים הגיעו! נתאם מועד להמשך. ${b}`,
-  no_answer: (j, b) => `היי ${j.client || ''}, ניסינו ליצור קשר ולא הצלחנו. אנא חזרו אלינו. ${b}`,
-  callback: (j, b) => `היי ${j.client || ''}, אנחנו חוזרים אליך בקשר לעבודה. ${b}`,
+const AUTO_MSGS: Record<string, (j: Job, b: string) => string> = {
+  in_progress: (j, b) => `היי ${j.client}, הטכנאי יצא אליך! ${b}`,
+  waiting_parts: (j, b) => `היי ${j.client}, נדרשים חלקים. נעדכן כשיגיעו. ${b}`,
+  parts_arrived: (j, b) => `היי ${j.client}, החלקים הגיעו! נתאם מועד. ${b}`,
+  no_answer: (j, b) => `היי ${j.client}, ניסינו להתקשר. אנא חזרו אלינו. ${b}`,
+  callback: (j, b) => `היי ${j.client}, חוזרים אליך בקשר לעבודה. ${b}`,
 };
 
 function waLink(phone: string, msg?: string) {
-  const clean = phone.replace(/[^0-9]/g, '');
-  const wa = clean.startsWith('0') ? '972' + clean.slice(1) : clean;
-  return 'https://wa.me/' + wa + (msg ? '?text=' + encodeURIComponent(msg) : '');
+  const c = phone.replace(/[^0-9]/g, '');
+  const w = c.startsWith('0') ? '972' + c.slice(1) : c;
+  return 'https://wa.me/' + w + (msg ? '?text=' + encodeURIComponent(msg) : '');
 }
+
+interface LineItem { id: number; name: string; qty: number; price: number; }
 
 export default function TechJobsPage() {
   const { user } = useAuth();
@@ -50,169 +48,109 @@ export default function TechJobsPage() {
   const [filter, setFilter] = useState('active');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Job | null>(null);
+  const [tab, setTab] = useState<'details' | 'items' | 'actions'>('details');
   const [showClose, setShowClose] = useState(false);
-  const [closeRevenue, setCloseRevenue] = useState(0);
-  const [closeMaterials, setCloseMaterials] = useState(0);
   const [closeNotes, setCloseNotes] = useState('');
   const [closePayment, setClosePayment] = useState('cash');
+  const [waPrompt, setWaPrompt] = useState<{ url: string } | null>(null);
+  // Line items for current job
+  const [items, setItems] = useState<LineItem[]>([]);
+  const [newItem, setNewItem] = useState({ name: '', qty: 1, price: 0 });
   const currency = cfg.currency || (cfg.region === 'IL' ? 'ILS' : 'USD');
   const bizName = cfg.biz_name || '';
   const techName = user?.name || '';
+  const products = db.products || [];
 
   const allJobs = useMemo(() => (db.jobs || []).filter((j: Job) => j.tech === techName), [db.jobs, techName]);
-  
+
   const filtered = useMemo(() => {
     let list = allJobs;
     if (filter === 'active') list = list.filter((j: Job) => !['completed','cancelled'].includes(j.status));
     else if (filter === 'today') { const t = new Date().toISOString().slice(0,10); list = list.filter((j: Job) => (j.scheduledDate || j.date || '').startsWith(t)); }
     else if (filter === 'completed') list = list.filter((j: Job) => j.status === 'completed');
-    if (search) { const q = search.toLowerCase(); list = list.filter((j: Job) => j.client?.toLowerCase().includes(q) || j.address?.toLowerCase().includes(q) || j.desc?.toLowerCase().includes(q)); }
+    if (search) { const q = search.toLowerCase(); list = list.filter((j: Job) => j.client?.toLowerCase().includes(q) || j.address?.toLowerCase().includes(q)); }
     return list.sort((a: Job, b: Job) => new Date(b.created || 0).getTime() - new Date(a.created || 0).getTime());
   }, [allJobs, filter, search]);
 
-  const [waPrompt, setWaPrompt] = useState<{ phone: string; msg: string } | null>(null);
+  const itemsTotal = items.reduce((s, i) => s + i.price * i.qty, 0);
 
-  const changeStatus = async (job: Job, status: JobStatus) => {
-    // Open WhatsApp FIRST (before async) to avoid popup blocker
-    let waUrl = '';
-    if (job.phone && AUTO_MSGS[status]) {
-      const msg = AUTO_MSGS[status](job, bizName);
-      waUrl = waLink(job.phone, msg);
-    }
-    const jobs = [...(db.jobs || [])];
-    const idx = jobs.findIndex((j: Job) => j.id === job.id);
-    if (idx >= 0) { jobs[idx] = { ...jobs[idx], status }; await saveData({ ...db, jobs }); toast('סטטוס עודכן ✓'); setSelected({ ...jobs[idx] }); }
-    if (waUrl) setWaPrompt({ phone: waUrl, msg: '' });
+  const openJob = (job: Job) => {
+    setSelected(job);
+    setItems((job as any).lineItems || []);
+    setTab('details');
   };
 
-  const openCloseDialog = (job: Job) => {
-    setCloseRevenue(job.revenue || 0); setCloseMaterials(job.materials || 0); setCloseNotes(''); setClosePayment('cash'); setShowClose(true);
-  };
-
-  const closeJob = async () => {
+  const saveItems = async (newItems: LineItem[]) => {
+    setItems(newItems);
     if (!selected) return;
     const jobs = [...(db.jobs || [])];
     const idx = jobs.findIndex((j: Job) => j.id === selected.id);
     if (idx >= 0) {
-      jobs[idx] = { ...jobs[idx], status: 'completed' as JobStatus, revenue: closeRevenue, materials: closeMaterials, paymentMethod: closePayment, notes: (jobs[idx].notes || '') + (closeNotes ? '\n--- סגירת טכנאי ---\n' + closeNotes : '') };
+      (jobs[idx] as any).lineItems = newItems;
+      jobs[idx].revenue = newItems.reduce((s, i) => s + i.price * i.qty, 0);
+      await saveData({ ...db, jobs });
+      setSelected({ ...jobs[idx] });
+    }
+  };
+
+  const addProduct = (p: any) => {
+    const ni = [...items, { id: Date.now(), name: p.name, qty: 1, price: p.price || 0 }];
+    saveItems(ni);
+  };
+
+  const addCustomItem = () => {
+    if (!newItem.name.trim()) return;
+    const ni = [...items, { id: Date.now(), ...newItem }];
+    saveItems(ni);
+    setNewItem({ name: '', qty: 1, price: 0 });
+  };
+
+  const removeItem = (id: number) => saveItems(items.filter(i => i.id !== id));
+
+  const updateItem = (id: number, field: string, value: any) => {
+    saveItems(items.map(i => i.id === id ? { ...i, [field]: value } : i));
+  };
+
+  const changeStatus = async (job: Job, status: JobStatus) => {
+    let waUrl = '';
+    if (job.phone && AUTO_MSGS[status]) waUrl = waLink(job.phone, AUTO_MSGS[status](job, bizName));
+    const jobs = [...(db.jobs || [])];
+    const idx = jobs.findIndex((j: Job) => j.id === job.id);
+    if (idx >= 0) { jobs[idx] = { ...jobs[idx], status }; await saveData({ ...db, jobs }); toast('סטטוס עודכן ✓'); setSelected({ ...jobs[idx] }); }
+    if (waUrl) setWaPrompt({ url: waUrl });
+  };
+
+  const closeJob = async () => {
+    if (!selected) return;
+    const revenue = itemsTotal || 0;
+    const jobs = [...(db.jobs || [])];
+    const idx = jobs.findIndex((j: Job) => j.id === selected.id);
+    if (idx >= 0) {
+      jobs[idx] = { ...jobs[idx], status: 'completed' as JobStatus, revenue, paymentMethod: closePayment, notes: (jobs[idx].notes || '') + (closeNotes ? '\n--- סגירת טכנאי ---\n' + closeNotes : ''), lineItems: items } as any;
       await saveData({ ...db, jobs }); toast('✅ עבודה נסגרה');
+      // Create receipt
+      const token = 'rcpt_' + Date.now();
+      try {
+        const firestore = getFirestoreDb();
+        await fbSetDoc(fbDoc(firestore, 'public_portals', token), {
+          type: 'receipt', bizName, bizPhone: cfg.biz_phone || '', bizLogo: cfg.biz_logo || '',
+          client: selected.client, phone: selected.phone || '', address: selected.address || '',
+          desc: selected.desc || '', scheduledDate: selected.scheduledDate || '', scheduledTime: selected.scheduledTime || '',
+          techName, num: selected.num || formatJobNumber(selected.id), jobId: selected.id,
+          revenue, materials: 0, paymentMethod: closePayment, items,
+          currency: cfg.currency || (cfg.region === 'IL' ? 'ILS' : 'USD'), created: new Date().toISOString(),
+        });
+        if (selected.phone) {
+          const url = window.location.origin + '/receipt/' + token;
+          setWaPrompt({ url: waLink(selected.phone, 'היי ' + selected.client + ', תודה! הנה הקבלה: ' + url + ' — ' + bizName) });
+        }
+      } catch (e) { console.warn('[Receipt]', e); }
     }
     setShowClose(false); setSelected(null);
   };
 
-  // Detail drawer content
-  const DetailDrawer = ({ job }: { job: Job }) => {
-    const sc = JOB_STATUS_CONFIG[job.status as keyof typeof JOB_STATUS_CONFIG];
-    const actions = STATUS_FLOW.filter(a => a.from.includes(job.status));
-    return (
-      <Box sx={{ direction: 'rtl' }}>
-        {/* Header */}
-        <Box sx={{ background: `linear-gradient(135deg, ${sc?.hex || '#4F46E5'}15, ${sc?.hex || '#4F46E5'}08)`, p: '20px 20px 16px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', mb: '4px' }}>
-              <Typography sx={{ fontSize: 11, color: '#A8A29E', fontFamily: 'monospace' }}>{job.num || formatJobNumber(job.id)}</Typography>
-              <Chip label={sc?.he || job.status} size="small" sx={{ height: 22, fontSize: 10, fontWeight: 700, bgcolor: (sc?.hex || '#A8A29E') + '18', color: sc?.hex || '#A8A29E' }} />
-            </Box>
-            <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#1C1917', mb: '2px' }}>{job.client}</Typography>
-            {job.desc && <Typography sx={{ fontSize: 13, color: '#78716C' }}>{job.desc}</Typography>}
-          </Box>
-          <IconButton onClick={() => setSelected(null)} size="small"><Close /></IconButton>
-        </Box>
-
-        {/* Quick actions bar */}
-        <Box sx={{ display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-          {job.phone && (
-            <Button href={'tel:' + job.phone} sx={{ flex: 1, py: 1.5, borderRadius: 0, flexDirection: 'column', gap: '2px', fontSize: 10, color: '#059669', fontWeight: 600 }}>
-              <Phone sx={{ fontSize: 20 }} />חייג
-            </Button>
-          )}
-          {job.address && (
-            <Button href={'https://waze.com/ul?q=' + encodeURIComponent(job.address)} target="_blank" sx={{ flex: 1, py: 1.5, borderRadius: 0, flexDirection: 'column', gap: '2px', fontSize: 10, color: '#2563EB', fontWeight: 600, borderRight: '1px solid rgba(0,0,0,0.06)', borderLeft: '1px solid rgba(0,0,0,0.06)' }}>
-              <Navigation sx={{ fontSize: 20 }} />נווט
-            </Button>
-          )}
-          {job.phone && (
-            <Button href={waLink(job.phone)} target="_blank" sx={{ flex: 1, py: 1.5, borderRadius: 0, flexDirection: 'column', gap: '2px', fontSize: 10, color: '#25D366', fontWeight: 600 }}>
-              <Chat sx={{ fontSize: 20 }} />וואטסאפ
-            </Button>
-          )}
-        </Box>
-
-        {/* Details */}
-        <Box sx={{ p: '16px 20px' }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#A8A29E', mb: '10px', letterSpacing: '0.5px' }}>פרטים</Typography>
-          
-          {[
-            job.phone && { icon: <Phone sx={{ fontSize: 16 }} />, label: 'טלפון', value: job.phone },
-            job.email && { icon: <Person sx={{ fontSize: 16 }} />, label: 'מייל', value: job.email },
-            job.address && { icon: <LocationOn sx={{ fontSize: 16 }} />, label: 'כתובת', value: job.address },
-            (job.scheduledDate || job.date) && { icon: <CalendarMonth sx={{ fontSize: 16 }} />, label: 'תאריך', value: (job.scheduledDate || job.date) + (job.scheduledTime || job.time ? ' · ' + (job.scheduledTime || job.time) : '') },
-            job.duration && { icon: <AccessTime sx={{ fontSize: 16 }} />, label: 'משך', value: job.duration >= 60 ? (job.duration / 60) + ' שעות' : job.duration + ' דק׳' },
-            job.desc && { icon: <Description sx={{ fontSize: 16 }} />, label: 'תיאור', value: job.desc },
-            job.revenue && { icon: <AttachMoney sx={{ fontSize: 16 }} />, label: 'הכנסה', value: formatCurrency(job.revenue, currency) },
-            job.notes && { icon: <Description sx={{ fontSize: 16 }} />, label: 'הערות', value: job.notes },
-          ].filter(Boolean).map((item: any, i) => (
-            <Box key={i} sx={{ display: 'flex', gap: '10px', py: '8px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-              <Box sx={{ color: '#A8A29E', mt: '2px' }}>{item.icon}</Box>
-              <Box>
-                <Typography sx={{ fontSize: 10, color: '#A8A29E', fontWeight: 600 }}>{item.label}</Typography>
-                <Typography sx={{ fontSize: 13, color: '#1C1917', lineHeight: 1.5 }}>{item.value}</Typography>
-              </Box>
-            </Box>
-          ))}
-        </Box>
-
-        {/* Status actions */}
-        {job.status !== 'completed' && job.status !== 'cancelled' && (
-          <Box sx={{ p: '0 20px 16px' }}>
-            <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#A8A29E', mb: '10px', letterSpacing: '0.5px' }}>עדכון סטטוס</Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {actions.map(a => (
-                <Button key={a.status} fullWidth onClick={() => changeStatus(job, a.status)}
-                  sx={{ justifyContent: 'flex-start', py: '10px', px: '14px', borderRadius: '10px', fontSize: 13, fontWeight: 600, bgcolor: a.color + '0A', color: a.color, border: '1px solid ' + a.color + '20', gap: '8px' }}>
-                  {a.icon} {a.label}
-                </Button>
-              ))}
-              <Button fullWidth onClick={() => openCloseDialog(job)}
-                sx={{ justifyContent: 'flex-start', py: '10px', px: '14px', borderRadius: '10px', fontSize: 13, fontWeight: 700, bgcolor: 'rgba(5,150,105,0.08)', color: '#059669', border: '1px solid rgba(5,150,105,0.2)', gap: '8px' }}>
-                ✅ סגור עבודה
-              </Button>
-            </Box>
-          </Box>
-        )}
-
-        {/* Completed summary */}
-        {job.status === 'completed' && job.revenue ? (
-          <Box sx={{ p: '0 20px 20px' }}>
-            <Box sx={{ bgcolor: 'rgba(5,150,105,0.06)', borderRadius: '12px', p: '14px' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '6px', fontSize: 13 }}>
-                <span style={{color:'#78716C'}}>הכנסה</span><strong style={{color:'#059669'}}>{formatCurrency(job.revenue, currency)}</strong>
-              </Box>
-              {job.materials ? <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '6px', fontSize: 13 }}>
-                <span style={{color:'#78716C'}}>חומרים</span><span style={{color:'#E11D48'}}>-{formatCurrency(job.materials, currency)}</span>
-              </Box> : null}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '8px', borderTop: '1px solid rgba(0,0,0,0.06)', fontSize: 15, fontWeight: 700 }}>
-                <span>רווח</span><span style={{color:'#4F46E5'}}>{formatCurrency((job.revenue || 0) - (job.materials || 0), currency)}</span>
-              </Box>
-              {(job as any).paymentMethod && <Typography sx={{ fontSize: 11, color: '#A8A29E', mt: '6px' }}>💳 {PAYMENT_METHODS.find(p => p.value === (job as any).paymentMethod)?.label || (job as any).paymentMethod}</Typography>}
-            </Box>
-            {job.phone && (
-              <Box sx={{ display: 'flex', gap: '8px', mt: '10px' }}>
-                <Button size="small" fullWidth href={waLink(job.phone, `היי ${job.client}, תודה על העבודה! סכום: ${formatCurrency(job.revenue, currency)}. ${bizName}`)} target="_blank"
-                  sx={{ borderRadius: '10px', fontSize: 11, bgcolor: 'rgba(37,211,102,0.08)', color: '#25D366', fontWeight: 600 }}>📄 קבלה בוואטסאפ</Button>
-                <Button size="small" fullWidth href={'sms:' + job.phone + '?body=' + encodeURIComponent(`היי ${job.client}, תודה! סכום: ${formatCurrency(job.revenue, currency)}. ${bizName}`)}
-                  sx={{ borderRadius: '10px', fontSize: 11, bgcolor: 'rgba(79,70,229,0.08)', color: '#4F46E5', fontWeight: 600 }}>💬 קבלה ב-SMS</Button>
-              </Box>
-            )}
-          </Box>
-        ) : null}
-      </Box>
-    );
-  };
-
   return (
     <Box className="zk-fade-up">
-      {/* Header */}
       <Box sx={{ px: '20px', pt: '8px', pb: '12px' }}>
         <Typography sx={{ fontSize: 20, fontWeight: 800 }}>העבודות שלי</Typography>
         <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>{allJobs.length} עבודות</Typography>
@@ -220,14 +158,9 @@ export default function TechJobsPage() {
 
       {/* Filters */}
       <Box sx={{ display: 'flex', gap: '6px', px: '20px', mb: '12px', overflowX: 'auto', pb: '4px' }}>
-        {[
-          { key: 'active', label: 'פעילות', count: allJobs.filter((j: Job) => !['completed','cancelled'].includes(j.status)).length },
-          { key: 'today', label: 'היום', count: allJobs.filter((j: Job) => (j.scheduledDate || j.date || '').startsWith(new Date().toISOString().slice(0,10))).length },
-          { key: 'completed', label: 'הושלמו', count: allJobs.filter((j: Job) => j.status === 'completed').length },
-          { key: 'all', label: 'הכל', count: allJobs.length },
-        ].map(f => (
-          <Chip key={f.key} label={`${f.label} (${f.count})`} size="small" onClick={() => setFilter(f.key)}
-            sx={{ fontWeight: filter === f.key ? 700 : 400, bgcolor: filter === f.key ? 'rgba(79,70,229,0.08)' : 'transparent', color: filter === f.key ? '#4F46E5' : '#A8A29E', border: '1px solid ' + (filter === f.key ? 'rgba(79,70,229,0.2)' : 'rgba(0,0,0,0.06)'), flexShrink: 0 }} />
+        {[{ key: 'active', label: 'פעילות' }, { key: 'today', label: 'היום' }, { key: 'completed', label: 'הושלמו' }, { key: 'all', label: 'הכל' }].map(f => (
+          <Chip key={f.key} label={f.label} size="small" onClick={() => setFilter(f.key)}
+            sx={{ fontWeight: filter === f.key ? 700 : 400, bgcolor: filter === f.key ? '#4F46E515' : 'transparent', color: filter === f.key ? '#4F46E5' : '#A8A29E', border: '1px solid ' + (filter === f.key ? '#4F46E530' : 'rgba(0,0,0,0.06)'), flexShrink: 0 }} />
         ))}
       </Box>
 
@@ -235,96 +168,229 @@ export default function TechJobsPage() {
       <Box sx={{ px: '20px', mb: '12px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: '#FAF7F4', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.06)', px: '12px', gap: '8px' }}>
           <SearchIcon sx={{ fontSize: 18, color: '#A8A29E' }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="חיפוש לקוח, כתובת..." style={{ border: 'none', background: 'transparent', outline: 'none', flex: 1, padding: '10px 0', fontSize: 13, fontFamily: 'inherit', direction: 'rtl' }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="חיפוש..." style={{ border: 'none', background: 'transparent', outline: 'none', flex: 1, padding: '10px 0', fontSize: 13, fontFamily: 'inherit', direction: 'rtl' }} />
         </Box>
       </Box>
 
-      {/* Job cards */}
+      {/* Cards */}
       <Box sx={{ px: '20px', pb: '80px' }}>
         {filtered.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <Typography sx={{ fontSize: 32, mb: 1 }}>🔧</Typography>
-            <Typography sx={{ fontSize: 14, color: '#78716C' }}>אין עבודות</Typography>
-          </Box>
+          <Box sx={{ textAlign: 'center', py: 6 }}><Typography sx={{ fontSize: 32, mb: 1 }}>🔧</Typography><Typography sx={{ fontSize: 14, color: '#78716C' }}>אין עבודות</Typography></Box>
         ) : filtered.map((j: Job) => {
           const sc = JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG];
           return (
-            <Box key={j.id} onClick={() => setSelected(j)} sx={{
+            <Box key={j.id} onClick={() => openJob(j)} sx={{
               bgcolor: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', p: '14px 16px', mb: '8px',
-              borderRight: '4px solid ' + (sc?.hex || '#A8A29E'), cursor: 'pointer', transition: 'all 0.15s',
-              '&:active': { transform: 'scale(0.98)' },
+              borderRight: '4px solid ' + (sc?.hex || '#A8A29E'), cursor: 'pointer', '&:active': { transform: 'scale(0.98)' },
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', mb: '6px' }}>
                 <Typography sx={{ fontSize: 15, fontWeight: 700, flex: 1 }}>{j.client}</Typography>
-                <Chip label={sc?.he || j.status} size="small" sx={{ height: 22, fontSize: 10, fontWeight: 700, bgcolor: (sc?.hex || '#A8A29E') + '15', color: sc?.hex || '#A8A29E' }} />
+                <Chip label={sc?.he || j.status} size="small" sx={{ height: 22, fontSize: 10, fontWeight: 700, bgcolor: (sc?.hex || '#A8A29E') + '15', color: sc?.hex }} />
               </Box>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: 12, color: '#78716C' }}>
                 {j.address && <Box sx={{ display: 'flex', alignItems: 'center', gap: '3px' }}><LocationOn sx={{ fontSize: 14 }} />{j.address}</Box>}
                 {(j.scheduledTime || j.time) && <Box sx={{ display: 'flex', alignItems: 'center', gap: '3px' }}><AccessTime sx={{ fontSize: 14 }} />{j.scheduledTime || j.time}</Box>}
-                {j.phone && <Box sx={{ display: 'flex', alignItems: 'center', gap: '3px' }}><Phone sx={{ fontSize: 14 }} />{j.phone}</Box>}
               </Box>
+              {(j as any).lineItems?.length > 0 && (
+                <Typography sx={{ fontSize: 11, color: '#4F46E5', mt: '4px', fontWeight: 600 }}>
+                  💰 {formatCurrency((j as any).lineItems.reduce((s: number, i: any) => s + i.price * i.qty, 0), currency)} · {(j as any).lineItems.length} פריטים
+                </Typography>
+              )}
             </Box>
           );
         })}
       </Box>
 
-      {/* Detail drawer */}
+      {/* Detail Drawer */}
       <SwipeableDrawer anchor="bottom" open={!!selected} onClose={() => setSelected(null)} onOpen={() => {}}
-        PaperProps={{ sx: { borderRadius: '20px 20px 0 0', maxHeight: '90vh' } }}>
+        PaperProps={{ sx: { borderRadius: '20px 20px 0 0', maxHeight: '92vh', direction: 'rtl' } }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', pt: '8px', pb: '4px' }}>
           <Box sx={{ width: 36, height: 4, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.12)' }} />
         </Box>
-        {selected && <DetailDrawer job={selected} />}
+        {selected && (() => {
+          const sc = JOB_STATUS_CONFIG[selected.status as keyof typeof JOB_STATUS_CONFIG];
+          const actions = STATUS_FLOW.filter(a => a.from.includes(selected.status));
+          return (<>
+            {/* Header */}
+            <Box sx={{ p: '16px 20px 12px', display: 'flex', alignItems: 'flex-start' }}>
+              <Box sx={{ flex: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', mb: '4px' }}>
+                  <Typography sx={{ fontSize: 11, color: '#A8A29E', fontFamily: 'monospace' }}>{selected.num || formatJobNumber(selected.id)}</Typography>
+                  <Chip label={sc?.he || selected.status} size="small" sx={{ height: 20, fontSize: 9, fontWeight: 700, bgcolor: (sc?.hex || '#A8A29E') + '18', color: sc?.hex }} />
+                </Box>
+                <Typography sx={{ fontSize: 20, fontWeight: 800 }}>{selected.client}</Typography>
+              </Box>
+              <IconButton onClick={() => setSelected(null)} size="small"><Close /></IconButton>
+            </Box>
+
+            {/* Quick actions */}
+            <Box sx={{ display: 'flex', borderTop: '1px solid rgba(0,0,0,0.06)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+              {selected.phone && <Button href={'tel:' + selected.phone} sx={{ flex: 1, py: 1.2, borderRadius: 0, flexDirection: 'column', gap: '2px', fontSize: 10, color: '#059669', fontWeight: 600 }}><Phone sx={{ fontSize: 18 }} />חייג</Button>}
+              {selected.address && <Button href={'https://waze.com/ul?q=' + encodeURIComponent(selected.address)} target="_blank" sx={{ flex: 1, py: 1.2, borderRadius: 0, flexDirection: 'column', gap: '2px', fontSize: 10, color: '#2563EB', fontWeight: 600, borderRight: '1px solid rgba(0,0,0,0.06)', borderLeft: '1px solid rgba(0,0,0,0.06)' }}><Navigation sx={{ fontSize: 18 }} />נווט</Button>}
+              {selected.phone && <Button href={waLink(selected.phone)} target="_blank" sx={{ flex: 1, py: 1.2, borderRadius: 0, flexDirection: 'column', gap: '2px', fontSize: 10, color: '#25D366', fontWeight: 600 }}><Chat sx={{ fontSize: 18 }} />וואטסאפ</Button>}
+            </Box>
+
+            {/* Tabs */}
+            <Box sx={{ display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+              {[{ key: 'details', label: '📋 פרטים' }, { key: 'items', label: '💰 פריטים (' + items.length + ')' }, { key: 'actions', label: '⚡ פעולות' }].map(t => (
+                <Button key={t.key} onClick={() => setTab(t.key as any)} sx={{ flex: 1, py: 1, borderRadius: 0, fontSize: 12, fontWeight: tab === t.key ? 700 : 400, color: tab === t.key ? '#4F46E5' : '#A8A29E', borderBottom: tab === t.key ? '2px solid #4F46E5' : '2px solid transparent' }}>{t.label}</Button>
+              ))}
+            </Box>
+
+            <Box sx={{ maxHeight: '50vh', overflow: 'auto', p: '16px 20px' }}>
+              {/* TAB: Details */}
+              {tab === 'details' && (
+                <Box>
+                  {[
+                    selected.phone && { icon: '📞', label: 'טלפון', value: selected.phone },
+                    selected.email && { icon: '📧', label: 'מייל', value: selected.email },
+                    selected.address && { icon: '📍', label: 'כתובת', value: selected.address },
+                    (selected.scheduledDate || selected.date) && { icon: '📅', label: 'תאריך', value: (selected.scheduledDate || selected.date) + ' ' + (selected.scheduledTime || selected.time || '') },
+                    selected.duration && { icon: '⏱️', label: 'משך', value: selected.duration >= 60 ? (selected.duration / 60) + ' שעות' : selected.duration + ' דק׳' },
+                    selected.desc && { icon: '📝', label: 'תיאור', value: selected.desc },
+                    selected.notes && { icon: '💬', label: 'הערות', value: selected.notes },
+                  ].filter(Boolean).map((item: any, i) => (
+                    <Box key={i} sx={{ display: 'flex', gap: '10px', py: '10px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                      <Typography sx={{ fontSize: 16, mt: '1px' }}>{item.icon}</Typography>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography sx={{ fontSize: 10, color: '#A8A29E', fontWeight: 600 }}>{item.label}</Typography>
+                        <Typography sx={{ fontSize: 13, color: '#1C1917', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{item.value}</Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+
+              {/* TAB: Items / Quote */}
+              {tab === 'items' && (
+                <Box>
+                  {/* Existing items */}
+                  {items.map((item) => (
+                    <Box key={item.id} sx={{ display: 'flex', alignItems: 'center', gap: '8px', py: '8px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{item.name}</Typography>
+                      </Box>
+                      <TextField size="small" type="number" value={item.qty} onChange={e => updateItem(item.id, 'qty', parseInt(e.target.value) || 1)}
+                        sx={{ width: 50, '& input': { textAlign: 'center', fontSize: 12, p: '6px' } }} />
+                      <Typography sx={{ fontSize: 10, color: '#A8A29E' }}>×</Typography>
+                      <TextField size="small" type="number" value={item.price} onChange={e => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
+                        sx={{ width: 70, '& input': { textAlign: 'center', fontSize: 12, p: '6px' } }} />
+                      <Typography sx={{ fontSize: 12, fontWeight: 700, minWidth: 60, textAlign: 'left' }}>{formatCurrency(item.price * item.qty, currency)}</Typography>
+                      <IconButton size="small" onClick={() => removeItem(item.id)}><Delete sx={{ fontSize: 16, color: '#E11D48' }} /></IconButton>
+                    </Box>
+                  ))}
+
+                  {/* Total */}
+                  {items.length > 0 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: '12px', borderBottom: '2px solid rgba(0,0,0,0.08)', mb: '16px' }}>
+                      <Typography sx={{ fontSize: 15, fontWeight: 800 }}>סה״כ</Typography>
+                      <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#4F46E5' }}>{formatCurrency(itemsTotal, currency)}</Typography>
+                    </Box>
+                  )}
+
+                  {/* Add from catalog */}
+                  {products.length > 0 && (
+                    <Box sx={{ mb: '12px' }}>
+                      <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#A8A29E', mb: '6px' }}>הוסף מהקטלוג</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {products.slice(0, 12).map((p: any) => (
+                          <Chip key={p.id} label={`${p.name} — ${formatCurrency(p.price, currency)}`} size="small" onClick={() => addProduct(p)}
+                            sx={{ fontSize: 11, cursor: 'pointer', '&:hover': { bgcolor: '#4F46E510' } }} icon={<Add sx={{ fontSize: 14 }} />} />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Add custom item */}
+                  <Box sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', p: '12px', mt: '8px' }}>
+                    <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '8px' }}>➕ פריט מותאם אישית</Typography>
+                    <Box sx={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <TextField size="small" placeholder="שם פריט" value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                        sx={{ flex: 1, '& input': { fontSize: 12, p: '8px' } }} />
+                      <TextField size="small" type="number" placeholder="כמות" value={newItem.qty} onChange={e => setNewItem({ ...newItem, qty: parseInt(e.target.value) || 1 })}
+                        sx={{ width: 55, '& input': { fontSize: 12, p: '8px', textAlign: 'center' } }} />
+                      <TextField size="small" type="number" placeholder="מחיר" value={newItem.price || ''} onChange={e => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
+                        sx={{ width: 70, '& input': { fontSize: 12, p: '8px', textAlign: 'center' } }} />
+                      <Button size="small" variant="contained" onClick={addCustomItem} disabled={!newItem.name.trim()}
+                        sx={{ minWidth: 'auto', px: 1.5, fontSize: 16, borderRadius: '8px' }}>+</Button>
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+
+              {/* TAB: Actions */}
+              {tab === 'actions' && selected.status !== 'completed' && selected.status !== 'cancelled' && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {actions.map(a => (
+                    <Button key={a.status} fullWidth onClick={() => changeStatus(selected, a.status)}
+                      sx={{ justifyContent: 'flex-start', py: '12px', px: '14px', borderRadius: '10px', fontSize: 14, fontWeight: 600, bgcolor: a.color + '0A', color: a.color, border: '1px solid ' + a.color + '20', gap: '10px' }}>
+                      {a.icon} {a.label}
+                    </Button>
+                  ))}
+                  <Divider sx={{ my: 1 }} />
+                  <Button fullWidth onClick={() => { setClosePayment('cash'); setCloseNotes(''); setShowClose(true); }}
+                    sx={{ justifyContent: 'flex-start', py: '12px', px: '14px', borderRadius: '10px', fontSize: 14, fontWeight: 700, bgcolor: '#05966910', color: '#059669', border: '1px solid #05966925', gap: '10px' }}>
+                    ✅ סגור עבודה {itemsTotal > 0 ? '(' + formatCurrency(itemsTotal, currency) + ')' : ''}
+                  </Button>
+                </Box>
+              )}
+
+              {/* Completed summary */}
+              {tab === 'actions' && selected.status === 'completed' && (
+                <Box>
+                  <Box sx={{ bgcolor: '#05966908', borderRadius: '12px', p: '14px', mb: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, mb: '4px' }}>
+                      <span style={{color:'#78716C'}}>סה״כ</span>
+                      <strong style={{color:'#059669'}}>{formatCurrency(selected.revenue || 0, currency)}</strong>
+                    </Box>
+                    {(selected as any).paymentMethod && <Typography sx={{ fontSize: 12, color: '#A8A29E', mt: '4px' }}>💳 {PAYMENTS.find(p => p.value === (selected as any).paymentMethod)?.label}</Typography>}
+                  </Box>
+                  {selected.phone && (
+                    <Button fullWidth variant="contained" href={waLink(selected.phone, 'היי ' + selected.client + ', תודה! הנה הקבלה: ' + window.location.origin + '/receipt/rcpt_' + selected.id)} target="_blank"
+                      sx={{ bgcolor: '#25D366', borderRadius: '10px', py: 1.2, fontSize: 13, fontWeight: 700, '&:hover': { bgcolor: '#1da851' } }}>
+                      📄 שלח קבלה בוואטסאפ
+                    </Button>
+                  )}
+                </Box>
+              )}
+            </Box>
+          </>);
+        })()}
       </SwipeableDrawer>
 
       {/* WhatsApp prompt */}
       {waPrompt && (
         <Box sx={{ position: 'fixed', bottom: 70, left: '50%', transform: 'translateX(-50%)', zIndex: 300, bgcolor: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.15)', p: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', maxWidth: '92vw', width: 340, direction: 'rtl' }}>
           <Box sx={{ fontSize: 20 }}>💬</Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontSize: 13, fontWeight: 600 }}>שלח הודעה ללקוח?</Typography>
-          </Box>
-          <Button size="small" variant="contained" href={waPrompt.phone} target="_blank" onClick={() => setWaPrompt(null)}
-            sx={{ bgcolor: '#25D366', fontSize: 12, fontWeight: 700, borderRadius: '20px', minWidth: 'auto', px: 2, '&:hover': { bgcolor: '#1da851' } }}>שלח</Button>
+          <Typography sx={{ flex: 1, fontSize: 13, fontWeight: 600 }}>שלח הודעה ללקוח?</Typography>
+          <Button size="small" variant="contained" href={waPrompt.url} target="_blank" onClick={() => setWaPrompt(null)}
+            sx={{ bgcolor: '#25D366', fontSize: 12, fontWeight: 700, borderRadius: '20px', px: 2, '&:hover': { bgcolor: '#1da851' } }}>שלח</Button>
           <Button size="small" onClick={() => setWaPrompt(null)} sx={{ fontSize: 11, minWidth: 'auto', color: '#A8A29E' }}>✕</Button>
         </Box>
       )}
 
-      {/* Close job dialog */}
+      {/* Close dialog */}
       <Dialog open={showClose} onClose={() => setShowClose(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '14px', direction: 'rtl' } }}>
         <Box sx={{ p: '20px 20px 0' }}>
           <Typography sx={{ fontSize: 16, fontWeight: 700 }}>סגור עבודה — {selected?.num}</Typography>
+          {itemsTotal > 0 && <Typography sx={{ fontSize: 22, fontWeight: 800, color: '#4F46E5', mt: '4px' }}>{formatCurrency(itemsTotal, currency)}</Typography>}
         </Box>
         <DialogContent>
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', mb: 2 }}>
-            <Box>
-              <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>סכום הכנסה</Typography>
-              <TextField fullWidth size="small" type="number" value={closeRevenue} onChange={e => setCloseRevenue(parseFloat(e.target.value) || 0)} />
+          {items.length > 0 && (
+            <Box sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', p: '12px', mb: 2, fontSize: 12 }}>
+              {items.map(i => (
+                <Box key={i.id} sx={{ display: 'flex', justifyContent: 'space-between', py: '3px' }}>
+                  <span>{i.name} ×{i.qty}</span><strong>{formatCurrency(i.price * i.qty, currency)}</strong>
+                </Box>
+              ))}
             </Box>
-            <Box>
-              <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>עלות חומרים</Typography>
-              <TextField fullWidth size="small" type="number" value={closeMaterials} onChange={e => setCloseMaterials(parseFloat(e.target.value) || 0)} />
-            </Box>
-          </Box>
+          )}
           <Box sx={{ mb: 2 }}>
             <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>אמצעי תשלום</Typography>
             <Select fullWidth size="small" value={closePayment} onChange={(e: any) => setClosePayment(e.target.value)}>
-              {PAYMENT_METHODS.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
+              {PAYMENTS.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
             </Select>
           </Box>
-          {closeRevenue > 0 && (
-            <Box sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', p: '12px', mb: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px', fontSize: 13 }}>
-                <span style={{color:'#78716C'}}>הכנסה</span><strong style={{color:'#059669'}}>{formatCurrency(closeRevenue, currency)}</strong>
-              </Box>
-              {closeMaterials > 0 && <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px', fontSize: 13 }}>
-                <span style={{color:'#78716C'}}>חומרים</span><span style={{color:'#E11D48'}}>-{formatCurrency(closeMaterials, currency)}</span>
-              </Box>}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '8px', borderTop: '1px solid rgba(0,0,0,0.06)', fontSize: 15, fontWeight: 700 }}>
-                <span>רווח</span><span style={{color:'#4F46E5'}}>{formatCurrency(closeRevenue - closeMaterials, currency)}</span>
-              </Box>
-            </Box>
-          )}
           <Box>
             <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>הערות</Typography>
             <TextField fullWidth size="small" multiline rows={2} value={closeNotes} onChange={e => setCloseNotes(e.target.value)} placeholder="הערות סגירה..." />
