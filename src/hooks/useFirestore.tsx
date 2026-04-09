@@ -38,28 +38,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const bizIdRef = useRef<string | null>(null);
   const cfgRef = useRef<BusinessConfig>(cfg);
-  const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSaveTime = useRef<number>(0);
   const hasSynced = useRef(false);
   const isSyncing = useRef(false);
 
-  // Keep refs in sync
   useEffect(() => { bizIdRef.current = bizId; }, [bizId]);
   useEffect(() => { cfgRef.current = cfg; }, [cfg]);
 
   const saveData = useCallback(async (data: BusinessDatabase) => {
     setDb(data);
     localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(data));
+    lastSaveTime.current = Date.now();
     const id = bizIdRef.current;
     if (id) {
       try {
         const firestore = getFirestoreDb();
         await setDoc(doc(firestore, 'businesses', id), { db: data }, { merge: true });
-      } catch (e) { console.warn('[Zikkit Data] Cloud save failed:', e); }
+        console.log('[Zikkit] Data saved to cloud');
+      } catch (e) {
+        console.error('[Zikkit] Cloud save FAILED:', e);
+      }
     }
   }, []);
 
   const saveCfg = useCallback(async (patch: Partial<BusinessConfig>): Promise<BusinessConfig> => {
-    // Use React state first, then localStorage as fallback — never start from empty
     const stateValue = cfgRef.current || {};
     let lsValue = {};
     try { lsValue = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || '{}'); } catch {}
@@ -68,42 +70,52 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setCfg(merged);
     cfgRef.current = merged;
     localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(merged));
+    lastSaveTime.current = Date.now();
     const id = bizIdRef.current;
     if (id) {
       try {
         const firestore = getFirestoreDb();
         await setDoc(doc(firestore, 'businesses', id), { cfg: merged }, { merge: true });
-      } catch (e) { console.warn('[Zikkit Data] Config save failed:', e); }
+      } catch (e) { console.warn('[Zikkit] Config save failed:', e); }
     }
     return merged;
   }, []);
 
   const syncFromCloud = useCallback(async () => {
     const id = bizIdRef.current;
-    if (!id || hasSynced.current || isSyncing.current) return;
+    if (!id || isSyncing.current) return;
+    // Don't sync if data was saved in the last 15 seconds — prevents overwriting local changes
+    if (Date.now() - lastSaveTime.current < 15000) return;
     isSyncing.current = true;
-    hasSynced.current = true;
     setLoading(true);
     try {
       const firestore = getFirestoreDb();
       const snap = await getDoc(doc(firestore, 'businesses', id));
       if (snap.exists()) {
         const data = snap.data();
-        if (data.db) { localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(data.db)); setDb(data.db as BusinessDatabase); }
-        if (data.cfg) { localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(data.cfg)); setCfg(data.cfg as BusinessConfig); }
+        // Only update if we haven't saved recently
+        if (Date.now() - lastSaveTime.current >= 15000) {
+          if (data.db) { localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(data.db)); setDb(data.db as BusinessDatabase); }
+          if (data.cfg) { localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(data.cfg)); setCfg(data.cfg as BusinessConfig); }
+        }
       }
-    } catch (e) { console.warn('[Zikkit Data] Sync failed:', e); }
+    } catch (e) { console.warn('[Zikkit] Sync failed:', e); }
     finally { setLoading(false); isSyncing.current = false; }
   }, []);
 
-  // Auto-sync timer
+  // Initial sync when bizId is set
+  useEffect(() => {
+    if (bizId && !hasSynced.current) {
+      hasSynced.current = true;
+      syncFromCloud();
+    }
+  }, [bizId, syncFromCloud]);
+
+  // Periodic sync every 5 minutes
   useEffect(() => {
     if (!bizId) return;
-    syncTimerRef.current = setInterval(() => {
-      hasSynced.current = false;
-      syncFromCloud();
-    }, SYNC_INTERVAL_MS);
-    return () => { if (syncTimerRef.current) clearInterval(syncTimerRef.current); };
+    const timer = setInterval(syncFromCloud, SYNC_INTERVAL_MS);
+    return () => clearInterval(timer);
   }, [bizId, syncFromCloud]);
 
   return (
