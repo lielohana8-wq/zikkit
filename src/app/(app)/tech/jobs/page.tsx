@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/useToast';
 import { formatDate, formatJobNumber, formatCurrency } from '@/lib/formatters';
 import { JOB_STATUS_CONFIG } from '@/lib/constants';
 import { getFirestoreDb, doc as fbDoc, setDoc as fbSetDoc } from '@/lib/firebase';
+import { SignatureCanvas } from '@/components/ui/SignatureCanvas';
 import type { Job, JobStatus } from '@/types';
 
 const STATUS_FLOW: { status: JobStatus; label: string; icon: string; color: string; from: string[] }[] = [
@@ -55,6 +56,11 @@ export default function TechJobsPage() {
   const [closeManualRevenue, setCloseManualRevenue] = useState(0);
   const [closePayment, setClosePayment] = useState('cash');
   const [waPrompt, setWaPrompt] = useState<{ url: string } | null>(null);
+  const [jobPhotos, setJobPhotos] = useState<string[]>([]);
+  const [showSignature, setShowSignature] = useState(false);
+  const [jobNote, setJobNote] = useState('');
+  const [timerStart, setTimerStart] = useState<number | null>(null);
+  const [timerElapsed, setTimerElapsed] = useState(0);
   // Line items for current job
   const [items, setItems] = useState<LineItem[]>([]);
   const [newItem, setNewItem] = useState({ name: '', qty: 1, price: 0 });
@@ -62,6 +68,13 @@ export default function TechJobsPage() {
   const bizName = cfg.biz_name || '';
   const techName = user?.name || '';
   const products = db.products || [];
+  const officePhone = cfg.biz_phone || '';
+
+  // Timer
+  const timerRef = { current: null as any };
+  const startTimer = () => { setTimerStart(Date.now()); setTimerElapsed(0); };
+  const stopTimer = () => { if (timerStart) setTimerElapsed(Date.now() - timerStart); setTimerStart(null); };
+  const formatTimer = (ms: number) => { const s = Math.floor(ms / 1000); const m = Math.floor(s / 60); const h = Math.floor(m / 60); return (h > 0 ? h + ':' : '') + String(m % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
 
   const allJobs = useMemo(() => (db.jobs || []).filter((j: Job) => j.tech === techName), [db.jobs, techName]);
 
@@ -79,6 +92,10 @@ export default function TechJobsPage() {
   const openJob = (job: Job) => {
     setSelected(job);
     setItems((job as any).lineItems || []);
+    setJobPhotos((job as any).photos || []);
+    setJobNote('');
+    setShowSignature(false);
+    if ((job as any).timerStart) { setTimerStart((job as any).timerStart); } else { setTimerStart(null); setTimerElapsed(0); }
     setTab('details');
   };
 
@@ -234,7 +251,7 @@ export default function TechJobsPage() {
 
             {/* Tabs */}
             <Box sx={{ display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-              {[{ key: 'details', label: '📋 פרטים' }, { key: 'items', label: '💰 פריטים (' + items.length + ')' }, { key: 'actions', label: '⚡ פעולות' }].map(t => (
+              {[{ key: 'details', label: '📋 פרטים' }, { key: 'items', label: '💰 פריטים (' + items.length + ')' }, { key: 'media', label: '📷 מדיה' }, { key: 'actions', label: '⚡ פעולות' }].map(t => (
                 <Button key={t.key} onClick={() => setTab(t.key as any)} sx={{ flex: 1, py: 1, borderRadius: 0, fontSize: 12, fontWeight: tab === t.key ? 700 : 400, color: tab === t.key ? '#4F46E5' : '#A8A29E', borderBottom: tab === t.key ? '2px solid #4F46E5' : '2px solid transparent' }}>{t.label}</Button>
               ))}
             </Box>
@@ -371,6 +388,79 @@ export default function TechJobsPage() {
                         sx={{ minWidth: 'auto', px: 1.5, fontSize: 16, borderRadius: '8px' }}>+</Button>
                     </Box>
                   </Box>
+                </Box>
+              )}
+
+              {/* TAB: Media - Photos + Signature + Timer + Notes */}
+              {tab === 'media' && (
+                <Box>
+                  {/* Timer */}
+                  <Box sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', p: '12px', mb: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Typography sx={{ fontSize: 24 }}>{timerStart ? '⏱️' : '⏱️'}</Typography>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography sx={{ fontSize: 12, fontWeight: 600, color: timerStart ? '#D97706' : '#78716C' }}>
+                        {timerStart ? 'טיימר פעיל' : 'טיימר עבודה'}
+                      </Typography>
+                      <Typography sx={{ fontSize: 20, fontWeight: 800, fontFamily: 'monospace', color: timerStart ? '#D97706' : '#A8A29E' }}>
+                        {formatTimer(timerStart ? (Date.now() - timerStart) : timerElapsed)}
+                      </Typography>
+                    </Box>
+                    {!timerStart ? (
+                      <Button size="small" onClick={startTimer} sx={{ borderRadius: '20px', bgcolor: '#D9770610', color: '#D97706', fontWeight: 600, fontSize: 12 }}>▶️ התחל</Button>
+                    ) : (
+                      <Button size="small" onClick={stopTimer} sx={{ borderRadius: '20px', bgcolor: '#E11D4810', color: '#E11D48', fontWeight: 600, fontSize: 12 }}>⏹️ עצור</Button>
+                    )}
+                  </Box>
+
+                  {/* Photos */}
+                  <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#78716C', mb: '8px' }}>📷 תמונות עבודה</Typography>
+                  <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap', mb: '14px' }}>
+                    {jobPhotos.map((p, i) => (
+                      <Box key={i} sx={{ position: 'relative', width: 72, height: 72, borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
+                        <img src={p} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <IconButton size="small" onClick={() => { const np = jobPhotos.filter((_, idx) => idx !== i); setJobPhotos(np); if (selected) { const jobs = [...(db.jobs || [])]; const idx2 = jobs.findIndex((j: Job) => j.id === selected.id); if (idx2 >= 0) { (jobs[idx2] as any).photos = np; saveData({ ...db, jobs }); } } }}
+                          sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'rgba(0,0,0,0.5)', width: 20, height: 20, p: 0 }}>
+                          <Close sx={{ fontSize: 12, color: '#fff' }} />
+                        </IconButton>
+                      </Box>
+                    ))}
+                    <Box onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment'; inp.multiple = true; inp.onchange = (e: any) => { Array.from(e.target.files || []).forEach((file: any) => { const reader = new FileReader(); reader.onload = (ev) => { const img2 = new Image(); img2.onload = () => { const canvas = document.createElement('canvas'); const scale = Math.min(1, 800 / Math.max(img2.width, img2.height)); canvas.width = img2.width * scale; canvas.height = img2.height * scale; canvas.getContext('2d')?.drawImage(img2, 0, 0, canvas.width, canvas.height); const url = canvas.toDataURL('image/jpeg', 0.7); setJobPhotos(prev => { const np = [...prev, url]; if (selected) { const jobs2 = [...(db.jobs || [])]; const idx3 = jobs2.findIndex((j: Job) => j.id === selected.id); if (idx3 >= 0) { (jobs2[idx3] as any).photos = np; saveData({ ...db, jobs: jobs2 }); } } return np; }); }; img2.src = ev.target?.result as string; }; reader.readAsDataURL(file); }); }; inp.click(); }}
+                      sx={{ width: 72, height: 72, borderRadius: '10px', border: '2px dashed rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { borderColor: '#4F46E5', bgcolor: '#4F46E505' } }}>
+                      <Typography sx={{ fontSize: 20 }}>📷</Typography>
+                      <Typography sx={{ fontSize: 9, color: '#A8A29E' }}>צלם</Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Quick note */}
+                  <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#78716C', mb: '6px' }}>📝 הוסף הערה</Typography>
+                  <Box sx={{ display: 'flex', gap: '6px', mb: '14px' }}>
+                    <TextField size="small" fullWidth value={jobNote} onChange={e => setJobNote(e.target.value)} placeholder="כתוב הערה..."
+                      sx={{ '& input': { fontSize: 13, p: '8px 12px' } }} />
+                    <Button size="small" variant="contained" disabled={!jobNote.trim()} onClick={() => { if (!selected || !jobNote.trim()) return; const jobs = [...(db.jobs || [])]; const idx = jobs.findIndex((j: Job) => j.id === selected.id); if (idx >= 0) { jobs[idx] = { ...jobs[idx], notes: (jobs[idx].notes || '') + '\n' + new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) + ' — ' + jobNote }; saveData({ ...db, jobs }); setSelected({ ...jobs[idx] }); toast('הערה נוספה'); } setJobNote(''); }}
+                      sx={{ minWidth: 'auto', px: 2, fontSize: 12 }}>שמור</Button>
+                  </Box>
+
+                  {/* Signature */}
+                  <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#78716C', mb: '6px' }}>✍️ חתימת לקוח</Typography>
+                  {(selected as any)?.signature ? (
+                    <Box sx={{ bgcolor: '#05966908', borderRadius: '10px', p: '12px', textAlign: 'center' }}>
+                      <img src={(selected as any).signature} alt="" style={{ maxWidth: 200, maxHeight: 80 }} />
+                      <Typography sx={{ fontSize: 11, color: '#059669', mt: '4px' }}>✅ נחתם</Typography>
+                    </Box>
+                  ) : showSignature ? (
+                    <SignatureCanvas onSave={(sig) => { if (!selected) return; const jobs = [...(db.jobs || [])]; const idx = jobs.findIndex((j: Job) => j.id === selected.id); if (idx >= 0) { (jobs[idx] as any).signature = sig; saveData({ ...db, jobs }); setSelected({ ...jobs[idx] } as any); } setShowSignature(false); toast('חתימה נשמרה'); }} onCancel={() => setShowSignature(false)} />
+                  ) : (
+                    <Button fullWidth onClick={() => setShowSignature(true)} sx={{ borderRadius: '10px', border: '2px dashed rgba(0,0,0,0.1)', py: 2, color: '#78716C', fontSize: 13 }}>
+                      ✍️ לחץ לחתימת לקוח
+                    </Button>
+                  )}
+
+                  {/* Call office */}
+                  {officePhone && (
+                    <Button fullWidth href={'tel:' + officePhone} sx={{ mt: 2, borderRadius: '10px', bgcolor: '#4F46E508', color: '#4F46E5', fontSize: 13, fontWeight: 600, py: 1.2, border: '1px solid #4F46E520' }}>
+                      📞 התקשר למשרד
+                    </Button>
+                  )}
                 </Box>
               )}
 
