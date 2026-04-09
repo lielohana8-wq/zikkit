@@ -58,7 +58,7 @@ export interface BusinessDatabase {
   quotes: import('./quote').Quote[];
   products: import('./product').Product[];
   botLog: BotLogEntry[];
-  expenses: Expense[];`n  [key: string]: any;
+  expenses: Expense[];
   payments: any[];
   reviews: any[];
   inventory: any[];
@@ -87,4 +87,3 @@ export interface Expense {
   desc?: string;
   vendor?: string;
 }
-[key: string]: any; 
