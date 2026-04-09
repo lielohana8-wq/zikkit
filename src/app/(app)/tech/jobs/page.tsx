@@ -51,6 +51,8 @@ export default function TechJobsPage() {
   const [tab, setTab] = useState<'details' | 'items' | 'actions'>('details');
   const [showClose, setShowClose] = useState(false);
   const [closeNotes, setCloseNotes] = useState('');
+  const [closeMaterials, setCloseMaterials] = useState(0);
+  const [closeManualRevenue, setCloseManualRevenue] = useState(0);
   const [closePayment, setClosePayment] = useState('cash');
   const [waPrompt, setWaPrompt] = useState<{ url: string } | null>(null);
   // Line items for current job
@@ -122,11 +124,11 @@ export default function TechJobsPage() {
 
   const closeJob = async () => {
     if (!selected) return;
-    const revenue = itemsTotal || 0;
+    const revenue = closeManualRevenue || itemsTotal || 0;
     const jobs = [...(db.jobs || [])];
     const idx = jobs.findIndex((j: Job) => j.id === selected.id);
     if (idx >= 0) {
-      jobs[idx] = { ...jobs[idx], status: 'completed' as JobStatus, revenue, paymentMethod: closePayment, notes: (jobs[idx].notes || '') + (closeNotes ? '\n--- סגירת טכנאי ---\n' + closeNotes : ''), lineItems: items } as any;
+      jobs[idx] = { ...jobs[idx], status: 'completed' as JobStatus, revenue, materials: closeMaterials, paymentMethod: closePayment, notes: (jobs[idx].notes || '') + (closeNotes ? '\n--- סגירת טכנאי ---\n' + closeNotes : ''), lineItems: items } as any;
       await saveData({ ...db, jobs }); toast('✅ עבודה נסגרה');
       // Create receipt
       const token = 'rcpt_' + Date.now();
@@ -137,7 +139,7 @@ export default function TechJobsPage() {
           client: selected.client, phone: selected.phone || '', address: selected.address || '',
           desc: selected.desc || '', scheduledDate: selected.scheduledDate || '', scheduledTime: selected.scheduledTime || '',
           techName, num: selected.num || formatJobNumber(selected.id), jobId: selected.id,
-          revenue, materials: 0, paymentMethod: closePayment, items,
+          revenue, materials: closeMaterials, paymentMethod: closePayment, items,
           currency: cfg.currency || (cfg.region === 'IL' ? 'ILS' : 'USD'), created: new Date().toISOString(),
         });
         if (selected.phone) {
@@ -382,7 +384,7 @@ export default function TechJobsPage() {
                     </Button>
                   ))}
                   <Divider sx={{ my: 1 }} />
-                  <Button fullWidth onClick={() => { setClosePayment('cash'); setCloseNotes(''); setShowClose(true); }}
+                  <Button fullWidth onClick={() => { setClosePayment('cash'); setCloseNotes(''); setCloseMaterials(0); setCloseManualRevenue(itemsTotal || 0); setShowClose(true); }}
                     sx={{ justifyContent: 'flex-start', py: '12px', px: '14px', borderRadius: '10px', fontSize: 14, fontWeight: 700, bgcolor: '#05966910', color: '#059669', border: '1px solid #05966925', gap: '10px' }}>
                     ✅ סגור עבודה {itemsTotal > 0 ? '(' + formatCurrency(itemsTotal, currency) + ')' : ''}
                   </Button>
@@ -437,6 +439,29 @@ export default function TechJobsPage() {
                   <span>{i.name} ×{i.qty}</span><strong>{formatCurrency(i.price * i.qty, currency)}</strong>
                 </Box>
               ))}
+            </Box>
+          )}
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', mb: 2 }}>
+            <Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>סכום הכנסה</Typography>
+              <TextField fullWidth size="small" type="number" value={closeManualRevenue} onChange={e => setCloseManualRevenue(parseFloat(e.target.value) || 0)} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>עלות חומרים</Typography>
+              <TextField fullWidth size="small" type="number" value={closeMaterials} onChange={e => setCloseMaterials(parseFloat(e.target.value) || 0)} />
+            </Box>
+          </Box>
+          {closeManualRevenue > 0 && (
+            <Box sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', p: '12px', mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px', fontSize: 13 }}>
+                <span style={{color:'#78716C'}}>הכנסה</span><strong style={{color:'#059669'}}>{formatCurrency(closeManualRevenue, currency)}</strong>
+              </Box>
+              {closeMaterials > 0 && <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px', fontSize: 13 }}>
+                <span style={{color:'#78716C'}}>חומרים</span><span style={{color:'#E11D48'}}>-{formatCurrency(closeMaterials, currency)}</span>
+              </Box>}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '8px', borderTop: '1px solid rgba(0,0,0,0.06)', fontSize: 15, fontWeight: 700 }}>
+                <span>רווח</span><span style={{color:'#4F46E5'}}>{formatCurrency(closeManualRevenue - closeMaterials, currency)}</span>
+              </Box>
             </Box>
           )}
           <Box sx={{ mb: 2 }}>
