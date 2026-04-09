@@ -1,250 +1,156 @@
 'use client';
-
-import { useL } from '@/hooks/useL';
-import { useState, useMemo } from 'react';
-import { Box, Button, Typography, Card, CardContent } from '@mui/material';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Box, Typography, Chip, Avatar, Button } from '@mui/material';
+import { PageTabs } from '@/components/ui/PageTabs';
 import { SectionHeader } from '@/components/layout/SectionHeader';
-import { Badge } from '@/components/ui/Badge';
-import { KpiCard } from '@/components/ui/KpiCard';
-import { DataTable } from '@/components/ui/DataTable';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { useData } from '@/hooks/useFirestore';
-import { formatDate, formatTime, timeAgo } from '@/lib/formatters';
-import type { GPSCheckin, Job } from '@/types';
+import { useL } from '@/hooks/useL';
+import { zikkitColors as c } from '@/styles/theme';
+import type { User } from '@/types/user';
+import type { Job } from '@/types/job';
 
-interface TechLocation {
-  name: string;
-  lastCheckin: GPSCheckin | null;
-  currentJob: Job | null;
-  totalCheckins: number;
-  status: 'on_job' | 'available' | 'offline';
-}
-
-function CardHeader({ icon, title, action }: { icon: string; title: string; action?: React.ReactNode }) {
-  return (
-    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-      <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
-        {icon} {title}
-      </Typography>
-      {action}
-    </Box>
-  );
-}
+const TECH_COLORS = ['#4F46E5','#059669','#D97706','#7C3AED','#E11D48','#0D9488','#EC4899','#84CC16'];
+function tColor(i: number) { return TECH_COLORS[i % TECH_COLORS.length]; }
 
 export default function GPSTrackingPage() {
   const { db } = useData();
   const L = useL();
+  const mapRef = useRef<HTMLDivElement>(null);
+  const leafletMap = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
   const [selectedTech, setSelectedTech] = useState<string | null>(null);
 
-  const techs = useMemo(() => (db.users || []).filter((u) => u.role === 'tech' || u.role === 'technician'), [db.users]);
-  const allJobs = db.jobs || [];
+  const techs = useMemo(() => (db.users || []).filter((u: User) => u.role === 'tech' || u.role === 'technician'), [db.users]);
+  const jobs = useMemo(() => db.jobs || [], [db.jobs]);
 
-  // Gather all GPS checkins from all jobs
-  const allCheckins = useMemo(() => {
-    const checkins: (GPSCheckin & { tech: string; jobClient: string; jobId: number })[] = [];
-    allJobs.forEach((j) => {
-      if (j.gpsCheckins && j.tech) {
-        j.gpsCheckins.forEach((c) => {
-          checkins.push({ ...c, tech: j.tech!, jobClient: j.client, jobId: j.id });
-        });
-      }
+  // Build tech locations from GPS checkins or job addresses
+  const techLocations = useMemo(() => {
+    return techs.map((tech, i) => {
+      const techJobs = jobs.filter((j: Job) => j.tech === tech.name);
+      const lastCheckin = (tech as any).lastGps || (techJobs[0]?.gpsCheckins?.slice(-1)[0]);
+      // Default: Jerusalem area with slight offset per tech
+      const lat = lastCheckin?.lat || 31.77 + (i * 0.008);
+      const lng = lastCheckin?.lng || 35.21 + (i * 0.005);
+      const activeJob = techJobs.find((j: Job) => j.status === 'in_progress');
+      return { name: tech.name, lat, lng, color: tColor(i), activeJob, jobCount: techJobs.filter((j: Job) => j.status !== 'completed' && j.status !== 'cancelled').length };
     });
-    return checkins.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-  }, [allJobs]);
+  }, [techs, jobs]);
 
-  // Tech locations
-  const techLocations = useMemo((): TechLocation[] => {
-    return techs.map((tech) => {
-      const techCheckins = allCheckins.filter((c) => c.tech === tech.name);
-      const lastCheckin = techCheckins[0] || null;
-      const activeJob = allJobs.find((j) => j.tech === tech.name && j.status === 'in_progress');
-      const hoursAgo = lastCheckin ? (Date.now() - new Date(lastCheckin.time).getTime()) / 3600000 : 999;
+  // Load Leaflet from CDN and init map
+  useEffect(() => {
+    if (!mapRef.current || leafletMap.current) return;
+    // Add CSS
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+      document.head.appendChild(link);
+    }
+    // Add JS
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    script.onload = () => {
+      if (!mapRef.current || leafletMap.current) return;
+      const L2 = (window as any).L;
+      const map = L2.map(mapRef.current).setView([31.77, 35.21], 12);
+      L2.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+      }).addTo(map);
+      leafletMap.current = map;
+      // Force resize after render
+      setTimeout(() => map.invalidateSize(), 200);
+    };
+    document.head.appendChild(script);
+    return () => { if (leafletMap.current) { leafletMap.current.remove(); leafletMap.current = null; } };
+  }, []);
 
-      let status: 'on_job' | 'available' | 'offline' = 'offline';
-      if (activeJob) status = 'on_job';
-      else if (hoursAgo < 2) status = 'available';
-
-      return {
-        name: tech.name,
-        lastCheckin,
-        currentJob: activeJob || null,
-        totalCheckins: techCheckins.length,
-        status,
-      };
+  // Update markers when tech locations change
+  useEffect(() => {
+    if (!leafletMap.current) return;
+    const L2 = (window as any).L;
+    if (!L2) return;
+    // Clear old markers
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+    // Add new markers
+    techLocations.forEach((t) => {
+      if (selectedTech && t.name !== selectedTech) return;
+      const icon = L2.divIcon({
+        className: '',
+        html: '<div style="width:32px;height:32px;border-radius:50%;background:' + t.color + ';border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">' + t.name.slice(0, 2) + '</div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+      const marker = L2.marker([t.lat, t.lng], { icon }).addTo(leafletMap.current);
+      marker.bindPopup('<div dir="rtl" style="font-family:Rubik,sans-serif;min-width:140px;"><strong>' + t.name + '</strong><br/>' + (t.activeJob ? '🔧 ' + t.activeJob.client : '📍 זמין') + '<br/>' + t.jobCount + ' עבודות פתוחות</div>');
+      markersRef.current.push(marker);
     });
-  }, [techs, allCheckins, allJobs]);
-
-  const onJobCount = techLocations.filter((t) => t.status === 'on_job').length;
-  const availableCount = techLocations.filter((t) => t.status === 'available').length;
-  const offlineCount = techLocations.filter((t) => t.status === 'offline').length;
-
-  const selectedTechCheckins = useMemo(() =>
-    selectedTech ? allCheckins.filter((c) => c.tech === selectedTech).slice(0, 20) : allCheckins.slice(0, 20),
-  [allCheckins, selectedTech]);
+    // Fit bounds
+    if (markersRef.current.length > 0) {
+      const group = L2.featureGroup(markersRef.current);
+      leafletMap.current.fitBounds(group.getBounds().pad(0.2));
+    }
+  }, [techLocations, selectedTech]);
 
   return (
-    <Box sx={{ animation: 'fadeIn 0.2s ease' }}>
-      <SectionHeader title={L("GPS Tracking","מעקב GPS")} subtitle={L("Live technician locations","מיקומי טכנאים בזמן אמת")} />
+    <Box className="zk-fade-up">
+      <PageTabs tabs={[{ label: L('GPS Tracking', 'מעקב GPS'), href: '/gps-tracking', icon: '🗺️' }]} />
+      <SectionHeader title={L('GPS Tracking', 'מעקב GPS')} subtitle={L('Real-time technician locations', 'מיקום טכנאים בזמן אמת')} />
 
-      {techs.length === 0 ? (
-        <EmptyState icon="🗺️" title="אין טכנאים" subtitle="הוסף טכנאים למעקב GPS." />
-      ) : (
-        <>
-          {/* KPI Grid */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '10px', mb: '16px' }}>
-            <KpiCard label={L("On Job","בעבודה")} value={String(onJobCount)} subtitle={onJobCount + ' בעבודה כרגע'} variant="green" />
-            <KpiCard label={L("Available","זמין")} value={String(availableCount)} variant="blue" />
-            <KpiCard label={L("Offline","לא מחובר")} value={String(offlineCount)} variant="warm" />
-            <KpiCard label={"סה״כ צ׳ק-אינים"} value={String(allCheckins.length)} subtitle={'כל הזמן'} variant="teal" />
+      <Box sx={{ px: '20px', pb: '20px' }}>
+        {/* Tech filter chips */}
+        <Box sx={{ display: 'flex', gap: '6px', mb: 2, flexWrap: 'wrap' }}>
+          <Chip
+            label={L('All', 'הכל') + ' ' + techs.length}
+            onClick={() => setSelectedTech(null)}
+            size="small"
+            sx={{ fontWeight: !selectedTech ? 700 : 400, bgcolor: !selectedTech ? c.accentDim : 'transparent', color: !selectedTech ? c.accent : c.text3, border: '1px solid ' + (!selectedTech ? c.accent + '40' : c.border) }}
+          />
+          {techs.map((tech, i) => (
+            <Chip
+              key={String(tech.id)}
+              label={tech.name}
+              onClick={() => setSelectedTech(selectedTech === tech.name ? null : tech.name)}
+              size="small"
+              avatar={<Avatar sx={{ width: 20, height: 20, bgcolor: tColor(i), fontSize: 9, fontWeight: 700 }}>{tech.name.slice(0, 2)}</Avatar>}
+              sx={{ fontWeight: selectedTech === tech.name ? 700 : 400, bgcolor: selectedTech === tech.name ? tColor(i) + '15' : 'transparent', border: '1px solid ' + (selectedTech === tech.name ? tColor(i) + '40' : c.border) }}
+            />
+          ))}
+        </Box>
+
+        {/* Map */}
+        <Box sx={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid ' + c.border, bgcolor: c.surface1 }}>
+          <Box ref={mapRef} sx={{ width: '100%', height: { xs: 350, md: 500 } }} />
+        </Box>
+
+        {/* Tech list below map */}
+        <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: '10px' }}>
+          {techLocations.map((t, i) => (
+            <Box key={t.name} onClick={() => setSelectedTech(t.name)} sx={{
+              p: '12px 14px', borderRadius: '10px', bgcolor: c.surface1, border: '1px solid ' + c.border,
+              borderRight: '3px solid ' + t.color, cursor: 'pointer', transition: 'all 0.15s',
+              '&:hover': { boxShadow: '0 2px 8px rgba(0,0,0,0.05)' },
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', mb: '4px' }}>
+                <Avatar sx={{ width: 24, height: 24, bgcolor: t.color, fontSize: 9, fontWeight: 700 }}>{t.name.slice(0, 2)}</Avatar>
+                <Typography sx={{ fontSize: 13, fontWeight: 600, color: c.text }}>{t.name}</Typography>
+                <Box sx={{ flex: 1 }} />
+                <Chip label={t.activeJob ? 'בטיפול' : 'זמין'} size="small" sx={{ height: 18, fontSize: 9, fontWeight: 600, bgcolor: t.activeJob ? c.warmDim : c.greenDim, color: t.activeJob ? c.warm : c.green }} />
+              </Box>
+              {t.activeJob && <Typography sx={{ fontSize: 11, color: c.text3 }}>🔧 {t.activeJob.client} — {t.activeJob.address || ''}</Typography>}
+              <Typography sx={{ fontSize: 10, color: c.text3 }}>{t.jobCount} {L('open jobs', 'עבודות פתוחות')}</Typography>
+            </Box>
+          ))}
+        </Box>
+
+        {techs.length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 6 }}>
+            <Typography sx={{ fontSize: 32, mb: 1 }}>🗺️</Typography>
+            <Typography sx={{ fontSize: 14, color: c.text3 }}>{L('Add technicians to see their location', 'הוסף טכנאים כדי לראות את מיקומם')}</Typography>
           </Box>
-
-          {/* Map Placeholder + Tech List */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', mb: '12px', '@media(max-width:768px)': { gridTemplateColumns: '1fr !important' } }}>
-
-            {/* Map placeholder */}
-            <Card>
-              <CardHeader icon="🗺️" title={L("Map View","תצוגת מפה")} action={
-                <Badge label={techs.length + ' techs'} variant="accent" />
-              } />
-              <CardContent>
-                <Box sx={{
-                  height: 300, borderRadius: '10px', bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden',
-                }}>
-                  {/* Simulated map grid */}
-                  <Box sx={{ position: 'absolute', inset: 0, opacity: 0.05 }}>
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <Box key={'h' + i} sx={{ position: 'absolute', top: (i + 1) * 12.5 + '%', left: 0, right: 0, height: '1px', bgcolor: '#fff' }} />
-                    ))}
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <Box key={'v' + i} sx={{ position: 'absolute', left: (i + 1) * 12.5 + '%', top: 0, bottom: 0, width: '1px', bgcolor: '#fff' }} />
-                    ))}
-                  </Box>
-
-                  {/* Tech pins */}
-                  {techLocations.map((t, i) => {
-                    const hasPos = t.lastCheckin;
-                    // Spread pins around the map for visual representation
-                    const x = hasPos ? ((t.lastCheckin!.lng + 180) % 360) / 3.6 : 30 + i * 15;
-                    const y = hasPos ? ((90 - t.lastCheckin!.lat) % 180) / 1.8 : 40 + (i % 3) * 15;
-                    return (
-                      <Box key={t.name} onClick={() => setSelectedTech(selectedTech === t.name ? null : t.name)} sx={{
-                        position: 'absolute', left: `${Math.min(Math.max(x, 10), 85)}%`, top: `${Math.min(Math.max(y, 10), 85)}%`,
-                        transform: 'translate(-50%, -50%)', cursor: 'pointer', zIndex: 2,
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
-                        transition: 'transform 0.2s', '&:hover': { transform: 'translate(-50%, -50%) scale(1.15)' },
-                      }}>
-                        <Box sx={{
-                          width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          bgcolor: t.status === 'on_job' ? 'rgba(34,197,94,0.2)' : t.status === 'available' ? 'rgba(79,143,255,0.2)' : 'rgba(0,0,0,0.06)',
-                          border: '2px solid ' + (t.status === 'on_job' ? '#22c55e' : t.status === 'available' ? '#4f8fff' : '#78716C'),
-                          boxShadow: t.status !== 'offline' ? `0 0 12px ${t.status === 'on_job' ? 'rgba(34,197,94,0.4)' : 'rgba(79,143,255,0.3)'}` : 'none',
-                          fontSize: 12,
-                        }}>
-                          👷
-                        </Box>
-                        <Typography sx={{
-                          fontSize: 8, fontWeight: 700, px: '4px', py: '1px', borderRadius: '4px',
-                          bgcolor: selectedTech === t.name ? 'rgba(79,70,229,0.12)' : 'rgba(0,0,0,0.6)',
-                          color: selectedTech === t.name ? '#4F46E5' : '#A8A29E',
-                          whiteSpace: 'nowrap',
-                        }}>
-                          {t.name}
-                        </Typography>
-                      </Box>
-                    );
-                  })}
-
-                  {allCheckins.length === 0 && (
-                    <Typography sx={{ fontSize: 12, color: '#78716C', zIndex: 1 }}>
-                      GPS data will appear here when technicians check in
-                    </Typography>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-
-            {/* Tech Status List */}
-            <Card>
-              <CardHeader icon="👷" title={L("Technician Status","סטטוס טכנאים")} />
-              <CardContent sx={{ p: '0 !important' }}>
-                {techLocations.map((t, i) => (
-                  <Box key={t.name} onClick={() => setSelectedTech(selectedTech === t.name ? null : t.name)} sx={{
-                    display: 'flex', alignItems: 'center', gap: '12px', p: '12px 16px', cursor: 'pointer',
-                    borderBottom: i < techLocations.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
-                    bgcolor: selectedTech === t.name ? 'rgba(0,229,176,0.04)' : 'transparent',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.025)' },
-                  }}>
-                    <Box sx={{
-                      width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                      bgcolor: t.status === 'on_job' ? '#22c55e' : t.status === 'available' ? '#4f8fff' : '#78716C',
-                      boxShadow: '0 0 6px ' + (t.status === 'on_job' ? '#22c55e' : t.status === 'available' ? '#4f8fff' : '#78716C'),
-                    }} />
-                    <Box sx={{ flex: 1 }}>
-                      <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{t.name}</Typography>
-                      {t.currentJob ? (
-                        <Typography sx={{ fontSize: 10, color: '#22c55e' }}>Working on: {t.currentJob.client}</Typography>
-                      ) : t.lastCheckin ? (
-                        <Typography sx={{ fontSize: 10, color: '#78716C' }}>Last seen: {timeAgo(t.lastCheckin.time)}</Typography>
-                      ) : (
-                        <Typography sx={{ fontSize: 10, color: '#78716C' }}>{L("No GPS data","אין נתוני GPS")}</Typography>
-                      )}
-                    </Box>
-                    <Badge
-                      label={t.status === 'on_job' ? 'On Job' : t.status === 'available' ? 'Available' : 'Offline'}
-                      variant={t.status === 'on_job' ? 'green' : t.status === 'available' ? 'blue' : 'grey'}
-                    />
-                    {t.totalCheckins > 0 && (
-                      <Typography sx={{ fontSize: 10, color: '#78716C' }}>{t.totalCheckins} check-ins</Typography>
-                    )}
-                  </Box>
-                ))}
-              </CardContent>
-            </Card>
-          </Box>
-
-          {/* Recent Check-ins */}
-          <Card>
-            <CardHeader icon="📍" title={selectedTech ? `Check-ins — ${selectedTech}` : 'Recent Check-ins'} action={
-              selectedTech ? (
-                <Button size="small" onClick={() => setSelectedTech(null)} sx={{ fontSize: 10, color: '#78716C' }}>{L("Show All","הצג הכל")}</Button>
-              ) : (
-                <Badge label={allCheckins.length + ' total'} variant="accent" />
-              )
-            } />
-            <CardContent sx={{ p: '0 !important' }}>
-              {selectedTechCheckins.length === 0 ? (
-                <Box sx={{ p: 4, textAlign: 'center' }}>
-                  <Typography sx={{ fontSize: 12, color: '#78716C' }}>No GPS check-ins recorded yet</Typography>
-                </Box>
-              ) : (
-                <DataTable
-                  keyExtractor={(c: typeof selectedTechCheckins[0]) => c.time + c.tech + c.jobId}
-                  columns={[
-                    { key: 'tech', label: 'Technician', render: (c: typeof selectedTechCheckins[0]) => <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{c.tech}</Typography> },
-                    { key: 'type', label: 'סוג', render: (c: typeof selectedTechCheckins[0]) => (
-                      <Badge label={c.type} variant={c.type === 'checkin' ? 'green' : c.type === 'checkout' ? 'hot' : 'blue'} />
-                    )},
-                    { key: 'job', label: 'Job', render: (c: typeof selectedTechCheckins[0]) => c.jobClient || '—' },
-                    { key: 'coords', label: 'Coordinates', render: (c: typeof selectedTechCheckins[0]) => (
-                      <Typography sx={{ fontSize: 10, fontFamily: 'monospace', color: '#78716C' }}>
-                        {(c.lat || 0).toFixed(4)}, {(c.lng || 0).toFixed(4)}
-                      </Typography>
-                    )},
-                    { key: 'time', label: 'Time', render: (c: typeof selectedTechCheckins[0]) => (
-                      <Box>
-                        <Typography sx={{ fontSize: 11 }}>{formatDate(c.time)}</Typography>
-                        <Typography sx={{ fontSize: 10, color: '#78716C' }}>{formatTime(c.time)}</Typography>
-                      </Box>
-                    )},
-                  ]}
-                  data={selectedTechCheckins}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </>
-      )}
+        )}
+      </Box>
     </Box>
   );
 }
