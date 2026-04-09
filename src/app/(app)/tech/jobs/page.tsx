@@ -12,10 +12,10 @@ import { getFirestoreDb, doc as fbDoc, setDoc as fbSetDoc } from '@/lib/firebase
 import type { Job, JobStatus } from '@/types';
 
 const STATUS_FLOW: { status: JobStatus; label: string; icon: string; color: string; from: string[] }[] = [
-  { status: 'in_progress', label: 'התחל עבודה', icon: '▶️', color: '#D97706', from: ['assigned','scheduled','callback','no_answer','parts_arrived'] },
+  { status: 'in_progress', label: 'התחל עבודה', icon: '▶️', color: '#D97706', from: ['open','assigned','scheduled','callback','no_answer','parts_arrived'] },
   { status: 'waiting_parts', label: 'ממתין לחלקים', icon: '📦', color: '#7C3AED', from: ['in_progress'] },
   { status: 'parts_arrived', label: 'חלקים הגיעו', icon: '✅', color: '#059669', from: ['waiting_parts'] },
-  { status: 'no_answer', label: 'לקוח לא עונה', icon: '📵', color: '#E11D48', from: ['assigned','scheduled','callback'] },
+  { status: 'no_answer', label: 'לקוח לא עונה', icon: '📵', color: '#E11D48', from: ['open','assigned','scheduled','callback'] },
   { status: 'callback', label: 'חזרה ללקוח', icon: '📞', color: '#D97706', from: ['assigned','scheduled','no_answer','in_progress'] },
 ];
 
@@ -258,6 +258,20 @@ export default function TechJobsPage() {
                       </Box>
                     </Box>
                   ))}
+
+                  {/* Quick buttons */}
+                  <Box sx={{ display: 'flex', gap: '8px', mt: '16px', flexWrap: 'wrap' }}>
+                    <Button size="small" onClick={() => setTab('items')}
+                      sx={{ borderRadius: '20px', fontSize: 12, bgcolor: '#4F46E510', color: '#4F46E5', fontWeight: 600, border: '1px solid #4F46E520', flex: 1 }}>
+                      💰 צור הצעת מחיר
+                    </Button>
+                    {selected.phone && items.length > 0 && (
+                      <Button size="small" onClick={() => { const lines = items.map(i => i.name + ' x' + i.qty + ' - ' + formatCurrency(i.price * i.qty, currency)); const total = formatCurrency(itemsTotal, currency); const phone = selected.phone || ''; window.open(waLink(phone, ['היי ' + selected.client + ',', 'הצעת מחיר מ-' + bizName + ':', ...lines, '', 'סה״כ: ' + total].join(String.fromCharCode(10))), '_blank'); }}
+                        sx={{ borderRadius: '20px', fontSize: 12, bgcolor: '#25D36610', color: '#25D366', fontWeight: 600, border: '1px solid #25D36620', flex: 1 }}>
+                        📤 שלח הצעה בוואטסאפ
+                      </Button>
+                    )}
+                  </Box>
                 </Box>
               )}
 
