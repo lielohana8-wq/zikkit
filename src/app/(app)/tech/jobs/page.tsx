@@ -69,14 +69,19 @@ export default function TechJobsPage() {
     return list.sort((a: Job, b: Job) => new Date(b.created || 0).getTime() - new Date(a.created || 0).getTime());
   }, [allJobs, filter, search]);
 
+  const [waPrompt, setWaPrompt] = useState<{ phone: string; msg: string } | null>(null);
+
   const changeStatus = async (job: Job, status: JobStatus) => {
+    // Open WhatsApp FIRST (before async) to avoid popup blocker
+    let waUrl = '';
+    if (job.phone && AUTO_MSGS[status]) {
+      const msg = AUTO_MSGS[status](job, bizName);
+      waUrl = waLink(job.phone, msg);
+    }
     const jobs = [...(db.jobs || [])];
     const idx = jobs.findIndex((j: Job) => j.id === job.id);
     if (idx >= 0) { jobs[idx] = { ...jobs[idx], status }; await saveData({ ...db, jobs }); toast('סטטוס עודכן ✓'); setSelected({ ...jobs[idx] }); }
-    if (job.phone && AUTO_MSGS[status]) {
-      const msg = AUTO_MSGS[status](job, bizName);
-      if (confirm('שלח הודעת וואטסאפ ללקוח? ' + msg)) { window.open(waLink(job.phone, msg), '_blank'); }
-    }
+    if (waUrl) setWaPrompt({ phone: waUrl, msg: '' });
   };
 
   const openCloseDialog = (job: Job) => {
@@ -270,6 +275,19 @@ export default function TechJobsPage() {
         </Box>
         {selected && <DetailDrawer job={selected} />}
       </SwipeableDrawer>
+
+      {/* WhatsApp prompt */}
+      {waPrompt && (
+        <Box sx={{ position: 'fixed', bottom: 70, left: '50%', transform: 'translateX(-50%)', zIndex: 300, bgcolor: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.15)', p: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', maxWidth: '92vw', width: 340, direction: 'rtl' }}>
+          <Box sx={{ fontSize: 20 }}>💬</Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 600 }}>שלח הודעה ללקוח?</Typography>
+          </Box>
+          <Button size="small" variant="contained" href={waPrompt.phone} target="_blank" onClick={() => setWaPrompt(null)}
+            sx={{ bgcolor: '#25D366', fontSize: 12, fontWeight: 700, borderRadius: '20px', minWidth: 'auto', px: 2, '&:hover': { bgcolor: '#1da851' } }}>שלח</Button>
+          <Button size="small" onClick={() => setWaPrompt(null)} sx={{ fontSize: 11, minWidth: 'auto', color: '#A8A29E' }}>✕</Button>
+        </Box>
+      )}
 
       {/* Close job dialog */}
       <Dialog open={showClose} onClose={() => setShowClose(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '14px', direction: 'rtl' } }}>
