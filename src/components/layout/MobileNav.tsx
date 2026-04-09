@@ -30,7 +30,7 @@ const TECH_MAIN = [
   { icon: '🔧', he: 'עבודות', href: '/tech/jobs' },
   { icon: '📅', he: 'יומן', href: '/tech/schedule' },
   { icon: '📄', he: 'הצעות', href: '/tech/quotes' },
-  { icon: '📍', he: 'מיקום', href: '/tech/gps' },
+  
 ];
 
 export function MobileNav() {
