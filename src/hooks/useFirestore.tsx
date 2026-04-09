@@ -42,14 +42,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const hasSynced = useRef(false);
   const isSyncing = useRef(false);
 
-  useEffect(() => { bizIdRef.current = bizId; }, [bizId]);
+  useEffect(() => { bizIdRef.current = bizId; if(bizId) { sessionStorage.setItem('zk_bizId', bizId); localStorage.setItem('zk_bizId', bizId); } }, [bizId]);
   useEffect(() => { cfgRef.current = cfg; }, [cfg]);
 
   const saveData = useCallback(async (data: BusinessDatabase) => {
     setDb(data);
     localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(data));
     lastSaveTime.current = Date.now();
-    const id = bizIdRef.current;
+    const id = bizIdRef.current || sessionStorage.getItem('zk_bizId') || localStorage.getItem('zk_bizId');
     if (id) {
       try {
         const firestore = getFirestoreDb();
@@ -71,7 +71,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     cfgRef.current = merged;
     localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(merged));
     lastSaveTime.current = Date.now();
-    const id = bizIdRef.current;
+    const id = bizIdRef.current || sessionStorage.getItem('zk_bizId') || localStorage.getItem('zk_bizId');
     if (id) {
       try {
         const firestore = getFirestoreDb();
@@ -82,7 +82,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const syncFromCloud = useCallback(async () => {
-    const id = bizIdRef.current;
+    const id = bizIdRef.current || sessionStorage.getItem('zk_bizId') || localStorage.getItem('zk_bizId');
     if (!id || isSyncing.current) return;
     // Don't sync if data was saved in the last 15 seconds — prevents overwriting local changes
     if (Date.now() - lastSaveTime.current < 15000) return;
