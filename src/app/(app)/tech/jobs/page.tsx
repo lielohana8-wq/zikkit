@@ -43,11 +43,32 @@ export default function TechJobsPage() {
     return list.sort((a: Job, b: Job) => new Date(b.created || 0).getTime() - new Date(a.created || 0).getTime());
   }, [db.jobs, techName, search, statusFilter]);
 
+  const sendWhatsApp = (phone: string, msg: string) => {
+    const clean = phone.replace(/[^0-9]/g, '');
+    const waPhone = clean.startsWith('0') ? '972' + clean.slice(1) : clean;
+    window.open('https://wa.me/' + waPhone + '?text=' + encodeURIComponent(msg), '_blank');
+  };
+
+  const AUTO_MSGS: Record<string, (j: Job) => string> = {
+    in_progress: (j) => 'היי ' + (j.client || '') + ', הטכנאי שלנו יצא אליך! צפי הגעה בקרוב. ' + (cfg.biz_name || ''),
+    waiting_parts: (j) => 'היי ' + (j.client || '') + ', לעבודה שלך נדרשים חלקים נוספים. נעדכן אותך ברגע שהם יגיעו. ' + (cfg.biz_name || ''),
+    parts_arrived: (j) => 'היי ' + (j.client || '') + ', החלקים לעבודה שלך הגיעו! נתאם איתך מועד להמשך הטיפול. ' + (cfg.biz_name || ''),
+    no_answer: (j) => 'היי ' + (j.client || '') + ', ניסינו ליצור איתך קשר ולא הצלחנו. אנא חזור/חזרי אלינו בהקדם. ' + (cfg.biz_name || ''),
+    callback: (j) => 'היי ' + (j.client || '') + ', אנחנו חוזרים אליך בקשר לעבודה. אנא השב/י כשנוח. ' + (cfg.biz_name || ''),
+  };
+
   const changeStatus = async (job: Job, status: JobStatus) => {
     const jobs = [...(db.jobs || [])];
     const idx = jobs.findIndex((j: Job) => j.id === job.id);
     if (idx >= 0) { jobs[idx] = { ...jobs[idx], status }; await saveData({ ...db, jobs }); toast('סטטוס עודכן ✓'); }
     setSelectedJob(null);
+    // Auto-send WhatsApp notification
+    if (job.phone && AUTO_MSGS[status]) {
+      const msg = AUTO_MSGS[status](job);
+      if (confirm('שלח הודעת וואטסאפ ללקוח? ' + msg)) {
+        sendWhatsApp(job.phone, msg);
+      }
+    }
   };
 
   const closeJob = async () => {
