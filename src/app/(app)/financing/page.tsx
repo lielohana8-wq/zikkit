@@ -18,7 +18,7 @@ export default function FinancingPage() {
   const [installmentsEnabled, setInstallmentsEnabled] = useState(true);
   const [maxInstallments, setMaxInstallments] = useState(12);
 
-  const payments = useMemo(() => (db.payments || []).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()), [db.payments]);
+  const payments = useMemo(() => ((db as any).payments || []).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()), [(db as any).payments]);
   const totalCollected = payments.filter((p: any) => p.status === 'paid').reduce((s: number, p: any) => s + p.amount, 0);
   const pending = payments.filter((p: any) => p.status === 'pending');
 
