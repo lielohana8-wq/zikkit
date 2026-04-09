@@ -22,8 +22,10 @@ function AppContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (cfg?.lang && cfg.lang !== lang && ['en', 'es', 'he'].includes(cfg.lang)) {
       setLang(cfg.lang as 'en' | 'es' | 'he');
+    } else if (!cfg?.lang && (cfg?.region === 'IL' || lang === 'en') && lang !== 'he') {
+      setLang('he');
     }
-  }, [cfg?.lang]);
+  }, [cfg?.lang, cfg?.region]);
 
   // Setup wizard — show ONLY for brand new empty accounts
   useEffect(() => {

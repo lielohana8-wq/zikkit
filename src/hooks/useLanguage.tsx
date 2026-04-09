@@ -19,21 +19,24 @@ interface LanguageContextValue {
 }
 
 const LanguageContext = createContext<LanguageContextValue>({
-  lang: 'en', setLang: () => {}, t: (k) => k, dir: 'ltr', isRTL: false,
+  lang: 'he', setLang: () => {}, t: (k) => k, dir: 'rtl', isRTL: true,
 });
 
 function getInitialLang(): Lang {
-  if (typeof window === 'undefined') return 'en';
-  // 1. Check localStorage for saved cfg
+  if (typeof window === 'undefined') return 'he';
+  // 1. Check business config for explicit lang
   try {
     const cfg = JSON.parse(localStorage.getItem('fp_config') || '{}');
     if (cfg.lang && ['en', 'es', 'he'].includes(cfg.lang)) return cfg.lang;
+    // 2. Check region — Israel = Hebrew
+    if (cfg.region === 'IL') return 'he';
   } catch {}
-  // 2. Check browser language
+  // 3. Check browser language
   const nav = navigator.language || '';
   if (nav.includes('he') || nav.includes('iw')) return 'he';
   if (nav.includes('es')) return 'es';
-  return 'en';
+  // 4. Default to Hebrew (most users are Israeli for now)
+  return 'he';
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -46,6 +49,25 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       document.documentElement.dir = l === 'he' ? 'rtl' : 'ltr';
     }
   }, []);
+
+  // Sync language from business config when it changes
+  useEffect(() => {
+    const check = () => {
+      try {
+        const cfg = JSON.parse(localStorage.getItem('fp_config') || '{}');
+        if (cfg.lang && ['en', 'es', 'he'].includes(cfg.lang) && cfg.lang !== lang) {
+          setLangState(cfg.lang);
+        } else if (cfg.region === 'IL' && lang !== 'he') {
+          setLangState('he');
+        }
+      } catch {}
+    };
+    check();
+    // Re-check when storage changes (from DataProvider sync)
+    window.addEventListener('storage', check);
+    const timer = setInterval(check, 3000);
+    return () => { window.removeEventListener('storage', check); clearInterval(timer); };
+  }, [lang]);
 
   // Apply direction on mount
   useEffect(() => {
