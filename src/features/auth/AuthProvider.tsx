@@ -19,7 +19,7 @@ import {
   sendEmailVerification,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { getFirebaseAuth, getFirestoreDb, doc, getDoc, setDoc } from '@/lib/firebase';
+import { getFirebaseAuth, getFirestoreDb, doc, getDoc, setDoc, collection, getDocs } from '@/lib/firebase';
 import { STORAGE_KEYS, MAX_LOGIN_ATTEMPTS, LOCKOUT_DURATION_MS } from '@/lib/constants';
 import type { User } from '@/types';
 
@@ -168,6 +168,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           } else {
             console.warn('[Auth] No tech_lookup doc for:', lookupKey);
+            // Auto-heal: search all businesses for this email
+            try {
+              
+              const bizsSnap = await getDocs(collection(db, 'businesses'));
+              for (const bizDoc of bizsSnap.docs) {
+                const bizData = bizDoc.data();
+                const users = bizData?.db?.users || [];
+                const tech = users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase() && u.role !== 'owner');
+                if (tech) {
+                  console.log('[Auth] Auto-heal: found tech in business', bizDoc.id);
+                  // Create missing tech_lookup
+                  await setDoc(doc(db, 'tech_lookup', lookupKey), {
+                    bizId: bizDoc.id, email: email.toLowerCase(), name: tech.name || '', role: tech.role || 'technician', created: new Date().toISOString(),
+                  });
+                  // Store data locally
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(bizData.db || {}));
+                    localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(bizData.cfg || {}));
+                  }
+                  setState({
+                    firebaseUser: fbUser, user: tech, bizId: bizDoc.id, loading: false, error: null,
+                    mustChangePassword: !!tech.mustChangePassword,
+                  });
+                  return;
+                }
+              }
+            } catch (healErr) {
+              console.warn('[Auth] Auto-heal failed:', healErr);
+            }
           }
         } catch (e) {
           console.error('[Auth] tech_lookup check failed:', e);

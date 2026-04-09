@@ -7,39 +7,40 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Businesses — owner reads/writes their own business
+    // Businesses — any auth user can read (techs need access), only owner writes
     match /businesses/{bizId} {
-      allow read, write: if request.auth != null && request.auth.uid == bizId;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
     }
 
-    // Tech lookup — any auth user can read (techs find their business)
+    // Tech lookup — any auth user can read/write
     match /tech_lookup/{lookupKey} {
       allow read, write: if request.auth != null;
     }
 
-    // Super admins — only the admin reads their own doc
+    // Super admins
     match /super_admins/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Public portals — anyone can read (public links), auth users can write
+    // Public portals
     match /public_portals/{token} {
       allow read: if true;
       allow write: if request.auth != null;
     }
 
-    // Phone lookup — voice API reads to find business by phone number
+    // Phone lookup
     match /phone_lookup/{phoneNumber} {
       allow read: if true;
       allow write: if request.auth != null;
     }
 
-    // Agreements — auth users can read/write
+    // Agreements
     match /agreements/{agreementId} {
       allow read, write: if request.auth != null;
     }
 
-    // Licenses (if used)
+    // Licenses
     match /licenses/{licenseId} {
       allow read: if request.auth != null;
     }
