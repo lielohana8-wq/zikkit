@@ -39,7 +39,7 @@ function waLink(phone: string, msg?: string) {
   return 'https://wa.me/' + w + (msg ? '?text=' + encodeURIComponent(msg) : '');
 }
 
-interface LineItem { id: number; name: string; qty: number; price: number; }
+interface LineItem { id: number; name: string; qty: number; price: number; image?: string; }
 
 export default function TechJobsPage() {
   const { user } = useAuth();
@@ -280,17 +280,30 @@ export default function TechJobsPage() {
                 <Box>
                   {/* Existing items */}
                   {items.map((item) => (
-                    <Box key={item.id} sx={{ display: 'flex', alignItems: 'center', gap: '8px', py: '8px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{item.name}</Typography>
+                    <Box key={item.id} sx={{ py: '10px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {/* Photo */}
+                        <Box sx={{ position: 'relative', width: 44, height: 44, borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(0,0,0,0.06)', bgcolor: '#FAF7F4', cursor: 'pointer' }}
+                          onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment'; inp.onchange = (e: any) => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = (ev) => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); const scale = Math.min(1, 400 / Math.max(img.width, img.height)); canvas.width = img.width * scale; canvas.height = img.height * scale; canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height); updateItem(item.id, 'image', canvas.toDataURL('image/jpeg', 0.6)); }; img.src = ev.target?.result as string; }; reader.readAsDataURL(file); }; inp.click(); }}>
+                          {item.image ? (
+                            <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>📷</Box>
+                          )}
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{item.name}</Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', mt: '4px' }}>
+                            <TextField size="small" type="number" value={item.qty} onChange={e => updateItem(item.id, 'qty', parseInt(e.target.value) || 1)}
+                              sx={{ width: 44, '& input': { textAlign: 'center', fontSize: 11, p: '4px' } }} />
+                            <Typography sx={{ fontSize: 10, color: '#A8A29E' }}>×</Typography>
+                            <TextField size="small" type="number" value={item.price} onChange={e => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
+                              sx={{ width: 65, '& input': { textAlign: 'center', fontSize: 11, p: '4px' } }} />
+                            <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#4F46E5' }}>{formatCurrency(item.price * item.qty, currency)}</Typography>
+                          </Box>
+                        </Box>
+                        <IconButton size="small" onClick={() => removeItem(item.id)}><Delete sx={{ fontSize: 16, color: '#E11D48' }} /></IconButton>
                       </Box>
-                      <TextField size="small" type="number" value={item.qty} onChange={e => updateItem(item.id, 'qty', parseInt(e.target.value) || 1)}
-                        sx={{ width: 50, '& input': { textAlign: 'center', fontSize: 12, p: '6px' } }} />
-                      <Typography sx={{ fontSize: 10, color: '#A8A29E' }}>×</Typography>
-                      <TextField size="small" type="number" value={item.price} onChange={e => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
-                        sx={{ width: 70, '& input': { textAlign: 'center', fontSize: 12, p: '6px' } }} />
-                      <Typography sx={{ fontSize: 12, fontWeight: 700, minWidth: 60, textAlign: 'left' }}>{formatCurrency(item.price * item.qty, currency)}</Typography>
-                      <IconButton size="small" onClick={() => removeItem(item.id)}><Delete sx={{ fontSize: 16, color: '#E11D48' }} /></IconButton>
                     </Box>
                   ))}
 
