@@ -85,7 +85,7 @@ export default function JobsPage() {
     setEditJob({
       client: '', phone: '', address: '', zip: '', desc: '', status: 'open',
       priority: 'normal', date: new Date().toISOString().slice(0, 10),
-      scheduledDate: '', scheduledTime: '', time: '',
+      scheduledDate: '', scheduledTime: '', time: '', duration: 60,
     });
     setShowModal(true);
   };

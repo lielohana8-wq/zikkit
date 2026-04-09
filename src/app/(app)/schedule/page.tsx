@@ -113,6 +113,7 @@ function JobCard({ job, color, compact, onClick, onDragStart }: {
         bgcolor: color + '12',
         borderRight: '3px solid ' + color,
         borderRadius: '8px',
+        height: '100%',
         px: compact ? '8px' : '10px',
         py: compact ? '4px' : '7px',
         cursor: 'grab',
