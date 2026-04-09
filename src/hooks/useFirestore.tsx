@@ -53,7 +53,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (id) {
       try {
         const firestore = getFirestoreDb();
-        await setDoc(doc(firestore, 'businesses', id), { db: data }, { merge: true });
+        await setDoc(doc(firestore, 'businesses', id), { db: JSON.parse(JSON.stringify(data)) }, { merge: true });
         console.log('[Zikkit] Data saved to cloud');
       } catch (e) {
         console.error('[Zikkit] Cloud save FAILED:', e);
