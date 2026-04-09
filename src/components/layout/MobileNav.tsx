@@ -29,7 +29,6 @@ const TECH_MAIN = [
   { icon: '📊', he: 'ראשי', href: '/tech/dashboard' },
   { icon: '🔧', he: 'עבודות', href: '/tech/jobs' },
   { icon: '📅', he: 'יומן', href: '/tech/schedule' },
-  { icon: '📄', he: 'הצעות', href: '/tech/quotes' },
   
 ];
 
