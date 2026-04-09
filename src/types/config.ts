@@ -59,12 +59,20 @@ export interface BusinessDatabase {
   products: import('./product').Product[];
   botLog: BotLogEntry[];
   expenses: Expense[];
+  payments: any[];
+  reviews: any[];
+  inventory: any[];
+  photos: any[];
+  whatsapp: any[];
+  membership: any[];
+  support: any[];
+  [key: string]: any;
 }
 
 export interface BotLogEntry {
   time: string;
   msg: string;
-  type?: 'call_in' | 'call_out' | 'sms_in' | 'sms_out' | 'missed' | 'lead_created' | 'info';
+  type?: 'call_in' | 'call_out' | 'sms_in' | 'sms_out' | 'missed' | 'answered' | 'lead_created' | 'info';
   callerPhone?: string;
   duration?: number;       // seconds
   leadId?: number;         // auto-created lead
