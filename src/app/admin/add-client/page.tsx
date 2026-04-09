@@ -8,7 +8,7 @@ import { getAuth } from 'firebase/auth';
 type PlanType = 'trial' | 'monthly' | 'yearly';
 
 const PLAN_CONFIG: Record<PlanType, { label: string; color: string; duration: string; daysOrMonths: number }> = {
-  trial: { label: '🆓 ניסיון חינם — 14 יום', color: '#5a7080', duration: '14 ימים', daysOrMonths: 14 },
+  trial: { label: '🆓 ניסיון חינם — 14 יום', color: '#78716C', duration: '14 ימים', daysOrMonths: 14 },
   monthly: { label: '💳 חודשי — חודש אחד', color: '#4f8fff', duration: 'חודש', daysOrMonths: 30 },
   yearly: { label: '⭐ שנתי — שנה', color: '#4F46E5', duration: 'שנה', daysOrMonths: 365 },
 };
@@ -82,13 +82,7 @@ export default function AdminAddClientPage() {
     }
   };
 
-  const F = ({ label, k, type }: { label: string; k: string; type?: string }) => (
-    <Box sx={{ mb: 2 }}>
-      <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', mb: '4px' }}>{label}</Typography>
-      <TextField fullWidth size="small" type={type || 'text'} value={(form as Record<string, string>)[k]} onChange={(e) => set(k, e.target.value)}
-        sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} />
-    </Box>
-  );
+
 
   return (
     <Box dir="rtl">
@@ -104,14 +98,30 @@ export default function AdminAddClientPage() {
               <Typography sx={{ fontSize: 12, color: status === 'done' ? '#4F46E5' : '#ef4444' }}>{msg}</Typography>
             </Box>
           )}
-          <F label={"שם עסק"} k="biz_name" />
-          <F label={"אימייל"} k="email" />
-          <F label={"סיסמה ראשונית"} k="password" />
-          <F label={"טלפון"} k="biz_phone" />
+          <Box sx={{ mb: 2 }}>
+            <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', mb: '4px' }}>שם עסק</Typography>
+            <TextField fullWidth size="small" value={form.biz_name} onChange={(e) => set('biz_name', e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} />
+          </Box>
+          <Box sx={{ mb: 2 }}>
+            <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', mb: '4px' }}>אימייל</Typography>
+            <TextField fullWidth size="small" value={form.email} onChange={(e) => set('email', e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} />
+          </Box>
+          <Box sx={{ mb: 2 }}>
+            <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', mb: '4px' }}>סיסמה ראשונית</Typography>
+            <TextField fullWidth size="small" value={form.password} onChange={(e) => set('password', e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} />
+          </Box>
+          <Box sx={{ mb: 2 }}>
+            <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', mb: '4px' }}>טלפון</Typography>
+            <TextField fullWidth size="small" value={form.biz_phone} onChange={(e) => set('biz_phone', e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} />
+          </Box>
 
           {/* Plan Selection */}
           <Box sx={{ mb: 2 }}>
-            <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', mb: '4px' }}>תוכנית</Typography>
+            <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', mb: '4px' }}>תוכנית</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {(Object.entries(PLAN_CONFIG) as [PlanType, typeof PLAN_CONFIG.trial][]).map(([key, cfg]) => (
                 <Box key={key} onClick={() => set('plan', key)} sx={{
@@ -136,7 +146,7 @@ export default function AdminAddClientPage() {
           </Box>
 
           <Box sx={{ mb: 2 }}>
-            <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', mb: '4px' }}>סוג עסק</Typography>
+            <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', mb: '4px' }}>סוג עסק</Typography>
             <Select fullWidth size="small" value={form.biz_type} onChange={(e) => set('biz_type', e.target.value)}
               sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 }}>
               <MenuItem value="general">כללי</MenuItem>
@@ -151,7 +161,7 @@ export default function AdminAddClientPage() {
           </Box>
 
           <Box sx={{ mb: 2 }}>
-            <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', mb: '4px' }}>אזור</Typography>
+            <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', mb: '4px' }}>אזור</Typography>
             <Select fullWidth size="small" value={form.region} onChange={(e) => set('region', e.target.value)}
               sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 }}>
               <MenuItem value="IL">🇮🇱 ישראל</MenuItem>
