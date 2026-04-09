@@ -51,7 +51,7 @@ export interface BusinessConfig {
   botConfig?: import('./bot').BotConfig;
 }
 
-export interface BusinessDatabase {
+export interface BusinessDatabase { [key: string]: any;
   users: import('./user').User[];
   leads: import('./lead').Lead[];
   jobs: import('./job').Job[];
@@ -87,3 +87,4 @@ export interface Expense {
   desc?: string;
   vendor?: string;
 }
+
