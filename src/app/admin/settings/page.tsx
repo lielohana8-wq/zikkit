@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, TextField, Button, Alert } from '@mui/material';
 
-const C = { sf: '#0f1318', ac: '#00e5b0', bl: '#4f8fff', tx: '#e8f0f4', t2: '#a8bcc8', t3: '#5a7080', border: 'rgba(255,255,255,0.055)', ok: '#22c55e', rd: '#ef4444' };
+const C = { sf: '#FAF7F4', ac: '#4F46E5', bl: '#4f8fff', tx: '#e8f0f4', t2: '#a8bcc8', t3: '#5a7080', border: 'rgba(255,255,255,0.055)', ok: '#22c55e', rd: '#ef4444' };
 
 const KEY_CONFIG = [
   { key: 'ANTHROPIC_API_KEY', label: 'Anthropic API Key', desc: 'AI Voice Bot + Simulator. console.anthropic.com → API Keys', placeholder: 'sk-ant-...' },
@@ -206,7 +206,7 @@ export default function AdminSettingsPage() {
           disabled={calling || !testPhone.trim()}
           sx={{
             px: 4, py: 1.5, fontSize: 14, fontWeight: 800, borderRadius: '12px',
-            bgcolor: '#00e5b0', color: '#000',
+            bgcolor: '#4F46E5', color: '#000',
             '&:hover': { bgcolor: '#00d1a0' },
             '&:disabled': { bgcolor: 'rgba(0,229,176,0.2)', color: '#5a7080' },
           }}
@@ -217,7 +217,7 @@ export default function AdminSettingsPage() {
         <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.1)', borderRadius: '10px' }}>
           <Typography sx={{ fontSize: 11, color: '#f59e0b', lineHeight: 1.7 }}>
             ⚠️ <strong>דרישות:</strong> צריך להיות מוגדרים TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, ו-TWILIO_PHONE_NUMBER למעלה.<br />
-            ⚠️ <strong>ngrok:</strong> אם אתה על localhost, צריך להריץ <code style={{ background: 'rgba(255,255,255,0.1)', padding: '1px 4px', borderRadius: 3 }}>ngrok http 3000</code> בטרמינל נפרד כדי ש-Twilio יוכל לדבר עם השרת.<br />
+            ⚠️ <strong>ngrok:</strong> אם אתה על localhost, צריך להריץ <code style={{ background: 'rgba(0,0,0,0.08)', padding: '1px 4px', borderRadius: 3 }}>ngrok http 3000</code> בטרמינל נפרד כדי ש-Twilio יוכל לדבר עם השרת.<br />
             💡 <strong>עלות:</strong> ~$0.02 לשיחת טסט מהקרדיט של $15 שקיבלת ברישום.
           </Typography>
         </Box>

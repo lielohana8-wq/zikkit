@@ -10,7 +10,7 @@ type PlanType = 'trial' | 'monthly' | 'yearly';
 const PLAN_CONFIG: Record<PlanType, { label: string; color: string; duration: string; daysOrMonths: number }> = {
   trial: { label: '🆓 ניסיון חינם — 14 יום', color: '#5a7080', duration: '14 ימים', daysOrMonths: 14 },
   monthly: { label: '💳 חודשי — חודש אחד', color: '#4f8fff', duration: 'חודש', daysOrMonths: 30 },
-  yearly: { label: '⭐ שנתי — שנה', color: '#00e5b0', duration: 'שנה', daysOrMonths: 365 },
+  yearly: { label: '⭐ שנתי — שנה', color: '#4F46E5', duration: 'שנה', daysOrMonths: 365 },
 };
 
 function calcExpiry(plan: PlanType): string {
@@ -86,7 +86,7 @@ export default function AdminAddClientPage() {
     <Box sx={{ mb: 2 }}>
       <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', mb: '4px' }}>{label}</Typography>
       <TextField fullWidth size="small" type={type || 'text'} value={(form as Record<string, string>)[k]} onChange={(e) => set(k, e.target.value)}
-        sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#0d1117', borderRadius: '10px', fontSize: 13 } }} />
+        sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} />
     </Box>
   );
 
@@ -101,7 +101,7 @@ export default function AdminAddClientPage() {
               border: '1px solid ' + (status === 'done' ? 'rgba(0,229,176,0.2)' : 'rgba(239,68,68,0.2)'),
               borderRadius: '10px', p: '12px', mb: 2, whiteSpace: 'pre-line',
             }}>
-              <Typography sx={{ fontSize: 12, color: status === 'done' ? '#00e5b0' : '#ef4444' }}>{msg}</Typography>
+              <Typography sx={{ fontSize: 12, color: status === 'done' ? '#4F46E5' : '#ef4444' }}>{msg}</Typography>
             </Box>
           )}
           <F label={"שם עסק"} k="biz_name" />
@@ -116,7 +116,7 @@ export default function AdminAddClientPage() {
               {(Object.entries(PLAN_CONFIG) as [PlanType, typeof PLAN_CONFIG.trial][]).map(([key, cfg]) => (
                 <Box key={key} onClick={() => set('plan', key)} sx={{
                   p: '10px 14px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                  bgcolor: form.plan === key ? 'rgba(0,229,176,0.06)' : '#0d1117',
+                  bgcolor: form.plan === key ? 'rgba(0,229,176,0.06)' : '#FAF7F4',
                   border: '1px solid ' + (form.plan === key ? cfg.color + '55' : 'rgba(255,255,255,0.055)'),
                   '&:hover': { borderColor: cfg.color },
                 }}>
@@ -138,7 +138,7 @@ export default function AdminAddClientPage() {
           <Box sx={{ mb: 2 }}>
             <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', mb: '4px' }}>סוג עסק</Typography>
             <Select fullWidth size="small" value={form.biz_type} onChange={(e) => set('biz_type', e.target.value)}
-              sx={{ bgcolor: '#0d1117', borderRadius: '10px', fontSize: 13 }}>
+              sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 }}>
               <MenuItem value="general">כללי</MenuItem>
               <MenuItem value="hvac">❄️ מיזוג אוויר</MenuItem>
               <MenuItem value="plumbing">🔧 אינסטלציה</MenuItem>
@@ -153,7 +153,7 @@ export default function AdminAddClientPage() {
           <Box sx={{ mb: 2 }}>
             <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', mb: '4px' }}>אזור</Typography>
             <Select fullWidth size="small" value={form.region} onChange={(e) => set('region', e.target.value)}
-              sx={{ bgcolor: '#0d1117', borderRadius: '10px', fontSize: 13 }}>
+              sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 }}>
               <MenuItem value="IL">🇮🇱 ישראל</MenuItem>
               <MenuItem value="US">🇺🇸 ארה״ב</MenuItem>
             </Select>

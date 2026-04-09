@@ -1,6 +1,6 @@
 'use client';
 import { Box, Typography } from '@mui/material';
-const C = { sf: '#0f1318', ac: '#00e5b0', bl: '#4f8fff', tx: '#e8f0f4', t3: '#5a7080', border: 'rgba(255,255,255,0.055)' };
+const C = { sf: '#FAF7F4', ac: '#4F46E5', bl: '#4f8fff', tx: '#e8f0f4', t3: '#5a7080', border: 'rgba(255,255,255,0.055)' };
 const steps = [
   { n: '1', t: 'GitHub Private Repo', d: 'העלה קוד', c: C.bl },
   { n: '2', t: 'Vercel Deploy', d: 'חבר Repo + הגדר ENV', c: C.ac },

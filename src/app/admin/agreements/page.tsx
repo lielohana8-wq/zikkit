@@ -18,7 +18,7 @@ interface Agreement {
   notes?: string;
 }
 
-const C = { bg: '#07090b', surface: '#0f1318', surface2: '#141920', accent: '#00e5b0', blue: '#4f8fff', purple: '#a78bfa', hot: '#ff4d6d', green: '#22c55e', warm: '#f59e0b', text: '#e8f0f4', text2: '#a8bcc8', text3: '#5a7080', border: 'rgba(255,255,255,0.055)' };
+const C = { bg: '#07090b', surface: '#FAF7F4', surface2: '#FAF7F4', accent: '#4F46E5', blue: '#4f8fff', purple: '#a78bfa', hot: '#ff4d6d', green: '#22c55e', warm: '#f59e0b', text: '#e8f0f4', text2: '#a8bcc8', text3: '#5a7080', border: 'rgba(255,255,255,0.055)' };
 
 function SignaturePad({ onSave, onCancel }: { onSave: (data: string) => void; onCancel: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -31,7 +31,7 @@ function SignaturePad({ onSave, onCancel }: { onSave: (data: string) => void; on
     if (!ctx) return;
     ctx.fillStyle = '#0a0c10';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#00e5b0';
+    ctx.strokeStyle = '#4F46E5';
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
   }, []);
@@ -78,7 +78,7 @@ function SignaturePad({ onSave, onCancel }: { onSave: (data: string) => void; on
       <canvas ref={canvasRef} width={500} height={150}
         onMouseDown={start} onMouseMove={draw} onMouseUp={stop} onMouseLeave={stop}
         onTouchStart={start} onTouchMove={draw} onTouchEnd={stop}
-        style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, cursor: 'crosshair', display: 'block', width: '100%', height: 150, touchAction: 'none' }}
+        style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, cursor: 'crosshair', display: 'block', width: '100%', height: 150, touchAction: 'none' }}
       />
       <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
         <Button onClick={clear} size="small" sx={{ fontSize: 11, color: C.text3 }}>🗑️ נקה</Button>
@@ -156,7 +156,7 @@ export default function AdminAgreementsPage() {
           <Typography sx={{ fontSize: 22, fontWeight: 800, color: C.text }}>📝 הסכמים</Typography>
           <Typography sx={{ fontSize: 12, color: C.text3 }}>ניהול הסכמי פיילוט ו-NDA למשקיעים</Typography>
         </Box>
-        <Button onClick={() => setShowNew(!showNew)} variant="contained" sx={{ fontSize: 12, fontWeight: 700, borderRadius: '10px', px: 3, background: 'linear-gradient(135deg, #00e5b0, #00a882)', color: '#000' }}>
+        <Button onClick={() => setShowNew(!showNew)} variant="contained" sx={{ fontSize: 12, fontWeight: 700, borderRadius: '10px', px: 3, background: 'linear-gradient(135deg, #4F46E5, #00a882)', color: '#000' }}>
           + הסכם חדש
         </Button>
       </Box>

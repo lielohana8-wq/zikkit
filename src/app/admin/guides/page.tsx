@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Box, Typography, Button, Card, CardContent } from '@mui/material';
-const C = { sf: '#0f1318', ac: '#00e5b0', bl: '#4f8fff', tx: '#e8f0f4', t2: '#a8bcc8', t3: '#5a7080', border: 'rgba(255,255,255,0.055)' };
+const C = { sf: '#FAF7F4', ac: '#4F46E5', bl: '#4f8fff', tx: '#e8f0f4', t2: '#a8bcc8', t3: '#5a7080', border: 'rgba(255,255,255,0.055)' };
 
 interface Guide {
   title: string;

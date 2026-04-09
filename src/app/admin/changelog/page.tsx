@@ -1,10 +1,10 @@
 'use client';
 import { Box, Typography, Card, CardContent } from '@mui/material';
-const C = { sf: '#0f1318', ac: '#00e5b0', bl: '#4f8fff', tx: '#e8f0f4', t2: '#a8bcc8', t3: '#5a7080', border: 'rgba(255,255,255,0.055)' };
+const C = { sf: '#FAF7F4', ac: '#4F46E5', bl: '#4f8fff', tx: '#e8f0f4', t2: '#a8bcc8', t3: '#5a7080', border: 'rgba(255,255,255,0.055)' };
 
 const logs = [
   {
-    ver: 'v8.0', date: '10/03/2026', tag: 'CURRENT', tagColor: '#00e5b0',
+    ver: 'v8.0', date: '10/03/2026', tag: 'CURRENT', tagColor: '#4F46E5',
     items: [
       '🔐 מערכת הרשאות מלאה — 10 הרשאות, תפקיד Custom, שם תפקיד מותאם',
       '📧 חסימה עד אימות מייל — מסך ייעודי, בדיקה אוטומטית כל 5 שניות',

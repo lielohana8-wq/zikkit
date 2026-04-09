@@ -113,7 +113,7 @@ export default function AdminClientsPage() {
       <Box sx={{ display: 'flex', gap: '8px', mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField size="small" placeholder={"חיפוש..."} value={search} onChange={(e) => setSearch(e.target.value)}
           InputProps={{ startAdornment: <InputAdornment position="start">🔍</InputAdornment> }}
-          sx={{ width: 220, '& .MuiOutlinedInput-root': { bgcolor: '#0d1117', borderRadius: '10px', fontSize: 12 } }} />
+          sx={{ width: 220, '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 12 } }} />
         {[
           { key: 'all', label: `הכל (${counts.all})`, color: '#a8bcc8' },
           { key: 'trial', label: `Trial (${counts.trial || 0})`, color: '#f59e0b' },
@@ -123,9 +123,9 @@ export default function AdminClientsPage() {
         ].map((f) => (
           <Button key={f.key} size="small" onClick={() => setStatusFilter(f.key)} sx={{
             px: '10px', py: '4px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto',
-            bgcolor: statusFilter === f.key ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.05)',
+            bgcolor: statusFilter === f.key ? 'rgba(0,229,176,0.08)' : 'rgba(0,0,0,0.03)',
             color: statusFilter === f.key ? f.color : '#5a7080',
-            border: '1px solid ' + (statusFilter === f.key ? f.color + '55' : 'rgba(255,255,255,0.09)'),
+            border: '1px solid ' + (statusFilter === f.key ? f.color + '55' : 'rgba(0,0,0,0.08)'),
           }}>
             {f.label}
           </Button>
@@ -145,7 +145,7 @@ export default function AdminClientsPage() {
               <Box component="thead">
                 <Box component="tr">
                   {['עסק', 'מייל', 'סוג', 'תוכנית', 'תוקף', 'נשאר', 'עבודות', 'פעולות'].map((h) => (
-                    <Box key={h} component="th" sx={{ p: '10px 14px', textAlign: 'right', fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', borderBottom: '1px solid #21262d', bgcolor: '#0d1117' }}>{h}</Box>
+                    <Box key={h} component="th" sx={{ p: '10px 14px', textAlign: 'right', fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', borderBottom: '1px solid rgba(0,0,0,0.08)', bgcolor: '#FAF7F4' }}>{h}</Box>
                   ))}
                 </Box>
               </Box>
@@ -188,7 +188,7 @@ export default function AdminClientsPage() {
                       </Box>
                       <Box component="td" sx={{ p: '11px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                         <Button size="small" onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); setMenuClient(c); }}
-                          sx={{ fontSize: 10, minWidth: 'auto', p: '2px 8px', bgcolor: 'rgba(255,255,255,0.05)', color: '#a8bcc8', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '6px' }}>
+                          sx={{ fontSize: 10, minWidth: 'auto', p: '2px 8px', bgcolor: 'rgba(0,0,0,0.03)', color: '#a8bcc8', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px' }}>
                           ⋮
                         </Button>
                       </Box>
@@ -203,7 +203,7 @@ export default function AdminClientsPage() {
 
       {/* Actions Menu */}
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => { setMenuAnchor(null); setMenuClient(null); }}
-        PaperProps={{ sx: { bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', minWidth: 200 } }}>
+        PaperProps={{ sx: { bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', minWidth: 200 } }}>
         <Box sx={{ px: 2, py: 1, fontSize: 10, fontWeight: 700, color: '#5a7080' }}>הארך תוקף</Box>
         {[7, 14, 30, 90, 365].map((d) => (
           <MenuItem key={d} onClick={() => { if (menuClient) handleExtend(menuClient, d); }}
@@ -211,7 +211,7 @@ export default function AdminClientsPage() {
             +{d} ימים {d === 365 ? '(שנה)' : d === 30 ? '(חודש)' : ''}
           </MenuItem>
         ))}
-        <Box sx={{ height: 1, bgcolor: 'rgba(255,255,255,0.05)', my: '4px' }} />
+        <Box sx={{ height: 1, bgcolor: 'rgba(0,0,0,0.03)', my: '4px' }} />
         <MenuItem onClick={() => { if (menuClient) handleChangeStatus(menuClient, 'active'); }}
           sx={{ fontSize: 12, color: '#22c55e' }}>✅ סמן כפעיל</MenuItem>
         <MenuItem onClick={() => { if (menuClient) handleChangeStatus(menuClient, 'cancelled'); }}

@@ -94,7 +94,7 @@ export default function AdminDashboardPage() {
           {/* KPI Row 1 — Clients */}
           <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', letterSpacing: '1px', mb: 1 }}>לקוחות</Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px', mb: 3 }}>
-            <KPI label={"סה״כ לקוחות"} value={stats.total} color="#00e5b0" />
+            <KPI label={"סה״כ לקוחות"} value={stats.total} color="#4F46E5" />
             <KPI label={"Trial פעיל"} value={stats.trial.length} color="#f59e0b" sub={`${stats.trial.length > 0 ? stats.trial.length + ' בניסיון' : 'אין'}`} />
             <KPI label={"מנוי פעיל"} value={stats.active.length} color="#22c55e" />
             <KPI label={"פג תוקף"} value={stats.expired.length} color="#ef4444" />
@@ -104,7 +104,7 @@ export default function AdminDashboardPage() {
           {/* KPI Row 2 — Revenue */}
           <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', letterSpacing: '1px', mb: 1 }}>הכנסות</Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px', mb: 3 }}>
-            <KPI label={"MRR כולל"} value={'$' + (stats.mrrIL + stats.mrrUS).toLocaleString()} color="#00e5b0" sub={`₪${stats.mrrIL.toLocaleString()} + $${stats.mrrUS.toLocaleString()}`} />
+            <KPI label={"MRR כולל"} value={'$' + (stats.mrrIL + stats.mrrUS).toLocaleString()} color="#4F46E5" sub={`₪${stats.mrrIL.toLocaleString()} + $${stats.mrrUS.toLocaleString()}`} />
             <KPI label={"ARR משוער"} value={'$' + ((stats.mrrIL + stats.mrrUS) * 12).toLocaleString()} color="#4f8fff" />
             <KPI label={"🇮🇱 ישראל"} value={stats.ilClients.length} color="#4f8fff" sub={`₪${stats.mrrIL.toLocaleString()}/חודש`} />
             <KPI label={"🇺🇸 ארה״ב"} value={stats.usClients.length} color="#a78bfa" sub={`$${stats.mrrUS.toLocaleString()}/mo`} />
@@ -145,7 +145,7 @@ export default function AdminDashboardPage() {
           <Card>
             <Box sx={{ p: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.055)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography sx={{ fontSize: 13, fontWeight: 700 }}>🕐 לקוחות אחרונים</Typography>
-              <Typography onClick={() => router.push('/admin/clients')} sx={{ fontSize: 11, color: '#4f8fff', cursor: 'pointer', '&:hover': { color: '#00e5b0' } }}>הצג הכל →</Typography>
+              <Typography onClick={() => router.push('/admin/clients')} sx={{ fontSize: 11, color: '#4f8fff', cursor: 'pointer', '&:hover': { color: '#4F46E5' } }}>הצג הכל →</Typography>
             </Box>
             <CardContent sx={{ p: '0 !important' }}>
               {clients.slice(0, 5).map((c) => (

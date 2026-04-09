@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Box, Typography, Card, CardContent, Checkbox } from '@mui/material';
 
-const C = { sf: '#0f1318', ac: '#00e5b0', bl: '#4f8fff', tx: '#e8f0f4', t2: '#a8bcc8', t3: '#5a7080', border: 'rgba(255,255,255,0.055)', ok: '#22c55e', rd: '#ef4444' };
+const C = { sf: '#FAF7F4', ac: '#4F46E5', bl: '#4f8fff', tx: '#e8f0f4', t2: '#a8bcc8', t3: '#5a7080', border: 'rgba(255,255,255,0.055)', ok: '#22c55e', rd: '#ef4444' };
 
 interface CheckItem { id: string; label: string; }
 interface CheckGroup { title: string; icon: string; color: string; items: CheckItem[]; }
@@ -182,7 +182,7 @@ export default function ChecklistPage() {
           <Typography sx={{ fontSize: 36, fontWeight: 900, color: pct === 100 ? C.ok : pct > 70 ? '#f59e0b' : C.rd, fontFamily: "'Syne', sans-serif" }}>
             {pct}%
           </Typography>
-          <Box sx={{ width: 120, height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <Box sx={{ width: 120, height: 6, borderRadius: 3, bgcolor: 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
             <Box sx={{ width: pct + '%', height: '100%', borderRadius: 3, bgcolor: pct === 100 ? C.ok : pct > 70 ? '#f59e0b' : C.rd, transition: 'width 0.3s' }} />
           </Box>
         </Box>
