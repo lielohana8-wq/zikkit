@@ -16,7 +16,7 @@ import type { Job, GPSCheckin } from '@/types';
 
 function CardHeader({ icon, title, action }: { icon: string; title: string; action?: React.ReactNode }) {
   return (
-    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.055)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
       <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
         {icon} {title}
       </Typography>
@@ -128,12 +128,12 @@ export default function TechGPSPage() {
                   <Box key={j.id} sx={{
                     display: 'flex', alignItems: 'center', gap: '12px', p: '12px 16px', borderRadius: '12px',
                     bgcolor: isCheckedIn ? 'rgba(34,197,94,0.05)' : 'rgba(255,255,255,0.02)',
-                    border: '1px solid ' + (isCheckedIn ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.055)'),
+                    border: '1px solid ' + (isCheckedIn ? 'rgba(34,197,94,0.15)' : 'rgba(0,0,0,0.06)'),
                     flexWrap: 'wrap',
                   }}>
                     <Box sx={{ flex: 1, minWidth: 150 }}>
                       <Typography sx={{ fontSize: 13, fontWeight: 700, mb: '2px' }}>{j.client}</Typography>
-                      {j.address && <Typography sx={{ fontSize: 10, color: '#5a7080' }}>📍 {j.address}</Typography>}
+                      {j.address && <Typography sx={{ fontSize: 10, color: '#78716C' }}>📍 {j.address}</Typography>}
                       {j.scheduledTime && <Typography sx={{ fontSize: 10, color: '#4f8fff' }}>🕐 {j.scheduledTime}</Typography>}
                     </Box>
                     <Badge label={sc?.label || j.status} variant={sc?.color || 'grey'} />
@@ -182,7 +182,7 @@ export default function TechGPSPage() {
           <CardHeader icon="📌" title={L("Last Recorded Position","מיקום אחרון")} />
           <CardContent>
             <Box sx={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <Typography sx={{ fontSize: 12, fontFamily: 'monospace', color: '#00e5b0' }}>
+              <Typography sx={{ fontSize: 12, fontFamily: 'monospace', color: '#4F46E5' }}>
                 {lastPosition.lat.toFixed(6)}, {lastPosition.lng.toFixed(6)}
               </Typography>
               <Button size="small" onClick={() => window.open(`https://maps.google.com/?q=${lastPosition.lat},${lastPosition.lng}`, '_blank')}
@@ -202,13 +202,13 @@ export default function TechGPSPage() {
         <CardContent sx={{ p: '0 !important' }}>
           {allMyCheckins.length === 0 ? (
             <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography sx={{ fontSize: 12, color: '#5a7080' }}>No check-ins yet. Use the buttons above to check in to a job.</Typography>
+              <Typography sx={{ fontSize: 12, color: '#78716C' }}>No check-ins yet. Use the buttons above to check in to a job.</Typography>
             </Box>
           ) : (
             allMyCheckins.slice(0, 20).map((c, i) => (
               <Box key={c.time + c.jobId} sx={{
                 display: 'flex', alignItems: 'center', gap: '12px', p: '10px 16px',
-                borderBottom: i < Math.min(allMyCheckins.length, 20) - 1 ? '1px solid rgba(255,255,255,0.055)' : 'none',
+                borderBottom: i < Math.min(allMyCheckins.length, 20) - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
               }}>
                 <Box sx={{
                   width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
@@ -216,12 +216,12 @@ export default function TechGPSPage() {
                 }} />
                 <Box sx={{ flex: 1 }}>
                   <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{c.jobClient}</Typography>
-                  <Typography sx={{ fontSize: 10, color: '#5a7080' }}>
+                  <Typography sx={{ fontSize: 10, color: '#78716C' }}>
                     {formatDate(c.time)} · {formatTime(c.time)}
                   </Typography>
                 </Box>
                 <Badge label={c.type} variant={c.type === 'checkin' ? 'green' : c.type === 'checkout' ? 'hot' : 'blue'} />
-                <Typography sx={{ fontSize: 9, fontFamily: 'monospace', color: '#5a7080' }}>
+                <Typography sx={{ fontSize: 9, fontFamily: 'monospace', color: '#78716C' }}>
                   {c.lat.toFixed(4)}, {c.lng.toFixed(4)}
                 </Typography>
               </Box>

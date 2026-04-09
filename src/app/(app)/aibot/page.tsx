@@ -48,7 +48,7 @@ const defaultBot: BotConfig = {
 
 function CardHeader({ icon, title, action }: { icon: string; title: string; action?: React.ReactNode }) {
   return (
-    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.055)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
       <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
         {icon} {title}
       </Typography>
@@ -194,7 +194,7 @@ export default function AIBotPage() {
   };
 
   const Label = ({ text }: { text: string }) => (
-    <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>
+    <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>
   );
 
   return (
@@ -212,9 +212,9 @@ export default function AIBotPage() {
         {TABS.map((t) => (
           <Button key={t.key} size="small" onClick={() => setTab(t.key)} sx={{
             px: '14px', py: '6px', fontSize: 11, fontWeight: 700, borderRadius: '8px', minWidth: 'auto',
-            bgcolor: tab === t.key ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.05)',
-            color: tab === t.key ? '#00e5b0' : '#5a7080',
-            border: '1px solid ' + (tab === t.key ? 'rgba(0,229,176,0.3)' : 'rgba(255,255,255,0.09)'),
+            bgcolor: tab === t.key ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.03)',
+            color: tab === t.key ? '#4F46E5' : '#78716C',
+            border: '1px solid ' + (tab === t.key ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.08)'),
           }}>
             {t.icon} {t.label}
           </Button>
@@ -233,12 +233,12 @@ export default function AIBotPage() {
                 {VOICES.map((v) => (
                   <Box key={v.key} onClick={() => saveBotConfig({ voice: v.key })} sx={{
                     p: '12px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center',
-                    bgcolor: bot.voice === v.key ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.03)',
-                    border: '1px solid ' + (bot.voice === v.key ? 'rgba(0,229,176,0.3)' : 'rgba(255,255,255,0.055)'),
-                    transition: 'all 0.2s', '&:hover': { borderColor: 'rgba(255,255,255,0.15)' },
+                    bgcolor: bot.voice === v.key ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.02)',
+                    border: '1px solid ' + (bot.voice === v.key ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.06)'),
+                    transition: 'all 0.2s', '&:hover': { borderColor: 'rgba(0,0,0,0.10)' },
                   }}>
-                    <Typography sx={{ fontSize: 13, fontWeight: 700, mb: '2px', color: bot.voice === v.key ? '#00e5b0' : '#e8f0f4' }}>{v.label}</Typography>
-                    <Typography sx={{ fontSize: 10, color: '#5a7080' }}>{v.desc}</Typography>
+                    <Typography sx={{ fontSize: 13, fontWeight: 700, mb: '2px', color: bot.voice === v.key ? '#4F46E5' : '#e8f0f4' }}>{v.label}</Typography>
+                    <Typography sx={{ fontSize: 10, color: '#78716C' }}>{v.desc}</Typography>
                   </Box>
                 ))}
               </Box>
@@ -273,17 +273,17 @@ export default function AIBotPage() {
               {!twilioPhone ? (
                 /* ── Not yet provisioned ── */
                 <>
-                  <Box sx={{ bgcolor: 'rgba(0,229,176,0.06)', border: '1px solid rgba(0,229,176,0.15)', borderRadius: '12px', p: '18px 20px', textAlign: 'center' }}>
+                  <Box sx={{ bgcolor: 'rgba(0,229,176,0.06)', border: '1px solid rgba(79,70,229,0.12)', borderRadius: '12px', p: '18px 20px', textAlign: 'center' }}>
                     <Typography sx={{ fontSize: 36, mb: '8px' }}>🤖📞</Typography>
                     <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, mb: '6px' }}>
                       {region === 'IL' ? 'הפעל בוט טלפוני' : 'Activate AI Phone Bot'}
                     </Typography>
-                    <Typography sx={{ fontSize: 12, color: '#a8bcc8', lineHeight: 1.7, maxWidth: 380, mx: 'auto' }}>
+                    <Typography sx={{ fontSize: 12, color: '#A8A29E', lineHeight: 1.7, maxWidth: 380, mx: 'auto' }}>
                       {region === 'IL'
                         ? 'בלחיצה אחת תקבל מספר טלפון ייעודי לעסק שלך. הבוט יענה לשיחות 24/7, ישאל שאלות חכמות, ויצור לידים אוטומטית.'
                         : 'Get a dedicated phone number for your business with one click. The AI bot will answer calls 24/7, ask smart questions, and create leads automatically.'}
                     </Typography>
-                    <Box sx={{ mt: '10px', display: 'flex', gap: '16px', justifyContent: 'center', fontSize: 11, color: '#5a7080' }}>
+                    <Box sx={{ mt: '10px', display: 'flex', gap: '16px', justifyContent: 'center', fontSize: 11, color: '#78716C' }}>
                       <span>📱 {region === 'IL' ? 'מספר +972' : 'US Number'}</span>
                       <span>💰 ~$3/{region === 'IL' ? 'חודש' : 'month'}</span>
                       <span>🤖 AI 24/7</span>
@@ -295,7 +295,7 @@ export default function AIBotPage() {
                       <TextField fullWidth size="small" value={areaCodeInput} onChange={(e) => setAreaCodeInput(e.target.value)}
                         placeholder="e.g. 212 (New York), 310 (LA), 305 (Miami)"
                       />
-                      <Typography sx={{ fontSize: 10, color: '#5a7080', mt: '4px' }}>{L('Leave blank for any US number','השאר ריק למספר כלשהו')}</Typography>
+                      <Typography sx={{ fontSize: 10, color: '#78716C', mt: '4px' }}>{L('Leave blank for any US number','השאר ריק למספר כלשהו')}</Typography>
                     </Box>
                   ) : null}
 
@@ -344,8 +344,8 @@ export default function AIBotPage() {
                     }}
                     sx={{
                       py: '14px', fontSize: 15, fontWeight: 800, borderRadius: '14px',
-                      background: 'linear-gradient(135deg, #00e5b0, #00a882)',
-                      color: '#000', boxShadow: '0 8px 24px rgba(0,229,176,0.3)',
+                      background: 'linear-gradient(135deg, #4F46E5, #4F46E5)',
+                      color: '#000', boxShadow: '0 8px 24px rgba(79,70,229,0.25)',
                       '&:hover': { filter: 'brightness(1.08)', transform: 'translateY(-1px)', boxShadow: '0 12px 32px rgba(0,229,176,0.4)' },
                       '&.Mui-disabled': { opacity: 0.6 },
                     }}
@@ -368,10 +368,10 @@ export default function AIBotPage() {
                         {twilioPhone}
                       </Box>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <Typography sx={{ fontSize: 11, color: '#a8bcc8' }}>
+                        <Typography sx={{ fontSize: 11, color: '#A8A29E' }}>
                           {region === 'IL' ? 'המספר הייעודי של העסק' : 'Your dedicated business number'}
                         </Typography>
-                        <Typography sx={{ fontSize: 10, color: '#5a7080' }}>
+                        <Typography sx={{ fontSize: 10, color: '#78716C' }}>
                           {storedTwilio?.provisionedAt ? `Active since ${new Date(storedTwilio.provisionedAt).toLocaleDateString()}` : ''}
                         </Typography>
                       </Box>
@@ -381,7 +381,7 @@ export default function AIBotPage() {
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: '12px 16px', bgcolor: 'rgba(255,255,255,0.025)', borderRadius: '10px' }}>
                     <Box>
                       <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{region === 'IL' ? 'בוט פעיל' : 'Bot Enabled'}</Typography>
-                      <Typography sx={{ fontSize: 11, color: '#5a7080' }}>{region === 'IL' ? 'עונה לשיחות ו-SMS' : 'Answer calls and SMS'}</Typography>
+                      <Typography sx={{ fontSize: 11, color: '#78716C' }}>{region === 'IL' ? 'עונה לשיחות ו-SMS' : 'Answer calls and SMS'}</Typography>
                     </Box>
                     <Switch checked={twilioEnabled} onChange={async (e) => {
                       setTwilioEnabled(e.target.checked);
@@ -431,7 +431,7 @@ export default function AIBotPage() {
               <Box><Label text={region === 'IL' ? 'ערים / אזורים' : 'ZIP Codes or Cities'} />
                 <TextField fullWidth size="small" multiline rows={2} value={serviceAreaInput} onChange={(e) => setServiceAreaInput(e.target.value)}
                   placeholder={geoLabels.serviceAreaPlaceholder} />
-                <Typography sx={{ fontSize: 10, color: '#5a7080', mt: '4px' }}>
+                <Typography sx={{ fontSize: 10, color: '#78716C', mt: '4px' }}>
                   {region === 'IL' ? 'הפרד בפסיקים: תל אביב, רמת גן, גבעתיים' : 'Separate with commas: 10001, 10002 or Manhattan, Brooklyn'}
                 </Typography>
               </Box>
@@ -469,9 +469,9 @@ export default function AIBotPage() {
                   { label: region === 'IL' ? 'סוג עסק' : 'Business Type', ok: !!cfg.biz_type, value: cfg.biz_type || (region === 'IL' ? 'לא הוגדר' : 'Not set') },
                 ].map((item, i) => (
                   <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: '10px', p: '8px 12px', bgcolor: 'rgba(255,255,255,0.025)', borderRadius: '8px' }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.ok ? '#22c55e' : '#5a7080', boxShadow: item.ok ? '0 0 6px #22c55e' : 'none', flexShrink: 0 }} />
-                    <Typography sx={{ fontSize: 12, color: '#a8bcc8', flex: 1 }}>{item.label}</Typography>
-                    <Typography sx={{ fontSize: 11, fontWeight: 600, color: item.ok ? '#22c55e' : '#5a7080' }}>{item.value}</Typography>
+                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.ok ? '#22c55e' : '#78716C', boxShadow: item.ok ? '0 0 6px #22c55e' : 'none', flexShrink: 0 }} />
+                    <Typography sx={{ fontSize: 12, color: '#A8A29E', flex: 1 }}>{item.label}</Typography>
+                    <Typography sx={{ fontSize: 11, fontWeight: 600, color: item.ok ? '#22c55e' : '#78716C' }}>{item.value}</Typography>
                   </Box>
                 ))}
               </Box>
@@ -490,17 +490,17 @@ export default function AIBotPage() {
           {(bot.flows || []).length === 0 ? (
             <EmptyState icon="🔀" title="אין תהליכים" subtitle="צור תהליכי שיחה לבוט שלך." actionLabel="+ תהליך חדש" onAction={openNewFlow} />
           ) : (
-            <Box sx={{ bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.055)', borderRadius: '14px', overflow: 'hidden' }}>
+            <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
               <DataTable<BotFlow>
                 keyExtractor={(f) => f.id}
                 columns={[
                   { key: 'name', label: 'Flow Name', render: (f) => <Typography sx={{ fontWeight: 700, fontSize: 12 }}>{f.name}</Typography> },
                   { key: 'trigger', label: 'Trigger', render: (f) => <Badge label={f.trigger} variant="blue" /> },
-                  { key: 'response', label: 'Response', render: (f) => <Typography sx={{ fontSize: 11, color: '#a8bcc8', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.response}</Typography> },
-                  { key: 'action', label: 'Action', render: (f) => f.action ? <Badge label={f.action} variant="purple" /> : <Typography sx={{ color: '#5a7080', fontSize: 11 }}>—</Typography> },
+                  { key: 'response', label: 'Response', render: (f) => <Typography sx={{ fontSize: 11, color: '#A8A29E', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.response}</Typography> },
+                  { key: 'action', label: 'Action', render: (f) => f.action ? <Badge label={f.action} variant="purple" /> : <Typography sx={{ color: '#78716C', fontSize: 11 }}>—</Typography> },
                   { key: 'actions', label: '', width: 100, render: (f) => (
                     <Box sx={{ display: 'flex', gap: '4px' }}>
-                      <Button size="small" onClick={() => openEditFlow(f)} sx={{ fontSize: 10, minWidth: 'auto', p: '2px 8px', bgcolor: 'rgba(255,255,255,0.05)', color: '#a8bcc8', borderRadius: '6px' }}>✏️</Button>
+                      <Button size="small" onClick={() => openEditFlow(f)} sx={{ fontSize: 10, minWidth: 'auto', p: '2px 8px', bgcolor: 'rgba(0,0,0,0.03)', color: '#A8A29E', borderRadius: '6px' }}>✏️</Button>
                       <Button size="small" onClick={() => handleDeleteFlow(f)} sx={{ fontSize: 10, minWidth: 'auto', p: '2px 8px', bgcolor: 'rgba(255,77,109,0.08)', color: '#ff4d6d', borderRadius: '6px' }}>🗑️</Button>
                     </Box>
                   )},
@@ -535,7 +535,7 @@ export default function AIBotPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: '12px 16px', bgcolor: 'rgba(255,255,255,0.025)', borderRadius: '10px' }}>
               <Box>
                 <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{L("Email Notifications","התראות מייל")}</Typography>
-                <Typography sx={{ fontSize: 11, color: '#5a7080' }}>{L("Get notified when the bot receives calls","קבל התראה כשהבוט מקבל שיחות")}</Typography>
+                <Typography sx={{ fontSize: 11, color: '#78716C' }}>{L("Get notified when the bot receives calls","קבל התראה כשהבוט מקבל שיחות")}</Typography>
               </Box>
               <Switch checked={bot.emailNotifications || false} onChange={(e) => setBot({ ...bot, emailNotifications: e.target.checked })} size="small" />
             </Box>
@@ -558,12 +558,12 @@ export default function AIBotPage() {
       {tab === 'simulator' && (
         <Card>
           <CardHeader icon="🧪" title={L("Bot Simulator","סימולטור בוט")} action={
-            simHistory.length > 0 ? <Button size="small" onClick={() => setSimHistory([])} sx={{ fontSize: 10, color: '#5a7080' }}>{L("Clear","נקה")}</Button> : null
+            simHistory.length > 0 ? <Button size="small" onClick={() => setSimHistory([])} sx={{ fontSize: 10, color: '#78716C' }}>{L("Clear","נקה")}</Button> : null
           } />
           <CardContent>
-            <Box sx={{ minHeight: 300, maxHeight: 400, overflowY: 'auto', mb: '16px', p: '12px', bgcolor: '#141920', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.055)' }}>
+            <Box sx={{ minHeight: 300, maxHeight: 400, overflowY: 'auto', mb: '16px', p: '12px', bgcolor: '#FAF7F4', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.06)' }}>
               {simHistory.length === 0 ? (
-                <Typography sx={{ textAlign: 'center', color: '#5a7080', fontSize: 12, py: 6 }}>{L("Type a message to test the bot","הקלד הודעה לבדיקת הבוט")}</Typography>
+                <Typography sx={{ textAlign: 'center', color: '#78716C', fontSize: 12, py: 6 }}>{L("Type a message to test the bot","הקלד הודעה לבדיקת הבוט")}</Typography>
               ) : (
                 simHistory.map((sim, i) => (
                   <Box key={i} sx={{ mb: '12px' }}>
@@ -571,7 +571,7 @@ export default function AIBotPage() {
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '6px' }}>
                       <Box sx={{ maxWidth: '70%', bgcolor: 'rgba(0,229,176,0.1)', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '12px 12px 4px 12px', p: '8px 12px' }}>
                         <Typography sx={{ fontSize: 12 }}>{sim.input}</Typography>
-                        <Typography sx={{ fontSize: 9, color: '#5a7080', mt: '2px' }}>{formatTime(sim.timestamp)}</Typography>
+                        <Typography sx={{ fontSize: 9, color: '#78716C', mt: '2px' }}>{formatTime(sim.timestamp)}</Typography>
                       </Box>
                     </Box>
                     {/* Bot response */}
@@ -605,15 +605,15 @@ export default function AIBotPage() {
           <CardContent sx={{ p: '0 !important' }}>
             {botLog.length === 0 ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography sx={{ fontSize: 12, color: '#5a7080' }}>No bot activity yet. Calls will appear here.</Typography>
+                <Typography sx={{ fontSize: 12, color: '#78716C' }}>No bot activity yet. Calls will appear here.</Typography>
               </Box>
             ) : (
               <DataTable<BotLogEntry>
                 keyExtractor={(e) => e.time + e.msg}
                 columns={[
-                  { key: 'time', label: 'Time', render: (e) => <Typography sx={{ fontSize: 11, fontFamily: 'monospace', color: '#5a7080' }}>{e.time}</Typography>, width: 140 },
+                  { key: 'time', label: 'Time', render: (e) => <Typography sx={{ fontSize: 11, fontFamily: 'monospace', color: '#78716C' }}>{e.time}</Typography>, width: 140 },
                   { key: 'type', label: 'סוג', render: (e) => <Badge label={e.type || 'call'} variant={e.type === 'missed' ? 'hot' : e.type === 'answered' ? 'green' : 'blue'} />, width: 100 },
-                  { key: 'msg', label: 'Message', render: (e) => <Typography sx={{ fontSize: 12, color: '#a8bcc8' }}>{e.msg}</Typography> },
+                  { key: 'msg', label: 'Message', render: (e) => <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>{e.msg}</Typography> },
                 ]}
                 data={[...botLog].reverse()}
               />
@@ -637,7 +637,7 @@ export default function AIBotPage() {
               <Box key={item.key} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: '12px 16px', bgcolor: 'rgba(255,255,255,0.025)', borderRadius: '10px' }}>
                 <Box>
                   <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{item.label}</Typography>
-                  <Typography sx={{ fontSize: 11, color: '#5a7080' }}>{item.desc}</Typography>
+                  <Typography sx={{ fontSize: 11, color: '#78716C' }}>{item.desc}</Typography>
                 </Box>
                 <Switch checked={bot.followUps[item.key] || false} onChange={(e) => {
                   const updated = { ...bot.followUps, [item.key]: e.target.checked };
@@ -684,12 +684,12 @@ export default function AIBotPage() {
                 <Box key={item.step} sx={{
                   display: 'flex', alignItems: 'center', gap: '14px', p: '14px 16px',
                   bgcolor: item.done ? 'rgba(34,197,94,0.06)' : 'rgba(255,255,255,0.025)',
-                  border: '1px solid ' + (item.done ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.055)'),
+                  border: '1px solid ' + (item.done ? 'rgba(34,197,94,0.15)' : 'rgba(0,0,0,0.06)'),
                   borderRadius: '12px',
                 }}>
                   <Box sx={{
                     width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    bgcolor: item.done ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)', fontSize: 16, flexShrink: 0,
+                    bgcolor: item.done ? 'rgba(34,197,94,0.15)' : 'rgba(0,0,0,0.03)', fontSize: 16, flexShrink: 0,
                   }}>
                     {item.done ? '✅' : item.icon}
                   </Box>
@@ -697,7 +697,7 @@ export default function AIBotPage() {
                     <Typography sx={{ fontSize: 13, fontWeight: 700, color: item.done ? '#22c55e' : '#e8f0f4' }}>
                       Step {item.step}: {item.title}
                     </Typography>
-                    <Typography sx={{ fontSize: 11, color: '#5a7080', lineHeight: 1.5 }}>{item.desc}</Typography>
+                    <Typography sx={{ fontSize: 11, color: '#78716C', lineHeight: 1.5 }}>{item.desc}</Typography>
                   </Box>
                   <Badge label={item.done ? 'Done' : 'Pending'} variant={item.done ? 'green' : 'grey'} />
                 </Box>

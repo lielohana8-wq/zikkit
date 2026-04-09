@@ -259,15 +259,15 @@ export default function QuotesPage() {
       {/* Filters */}
       <Box sx={{ display: 'flex', gap: '10px', mb: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField placeholder={L("L('חיפוש הצעות מחיר...','חפש הצעות...')","חפש הצעות...")} value={search} onChange={(e) => setSearch(e.target.value)} size="small" sx={{ minWidth: 220 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#5a7080' }} /></InputAdornment> }} />
+          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#78716C' }} /></InputAdornment> }} />
       </Box>
       <Box sx={{ display: 'flex', gap: '4px', flexWrap: 'wrap', mb: '12px' }}>
         {['all', 'draft', 'sent', 'approved', 'accepted', 'declined', 'expired'].map((s) => (
           <Button key={s} size="small" onClick={() => setStatusFilter(s)} sx={{
             px: '10px', py: '4px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto', textTransform: 'capitalize',
-            bgcolor: statusFilter === s ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.05)',
-            color: statusFilter === s ? '#00e5b0' : '#5a7080',
-            border: '1px solid ' + (statusFilter === s ? 'rgba(0,229,176,0.3)' : 'rgba(255,255,255,0.09)'),
+            bgcolor: statusFilter === s ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.03)',
+            color: statusFilter === s ? '#4F46E5' : '#78716C',
+            border: '1px solid ' + (statusFilter === s ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.08)'),
           }}>
             {s === 'all' ? L(`All (${statusCounts.all || 0})`,`הכל (${statusCounts.all || 0})`) : (() => { const heS: Record<string,string> = { draft: 'טיוטה', sent: 'נשלח', approved: 'אושר', accepted: 'אושר', declined: 'נדחה', expired: 'פג תוקף' }; return `${lang === 'he' ? heS[s] || s : s} (${statusCounts[s] || 0})`; })()}
           </Button>
@@ -294,7 +294,7 @@ export default function QuotesPage() {
               { key: 'created', label: L('Date','תאריך'), render: (q) => formatDate(q.created) },
               { key: 'actions', label: '', width: 80, render: (q) => (
                 <Button size="small" onClick={(e) => handleOpenMenu(e, q)}
-                  sx={{ fontSize: 11, minWidth: 'auto', p: '3px 10px', bgcolor: 'rgba(255,255,255,0.05)', color: '#a8bcc8', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '6px' }}>
+                  sx={{ fontSize: 11, minWidth: 'auto', p: '3px 10px', bgcolor: 'rgba(0,0,0,0.03)', color: '#A8A29E', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px' }}>
                   {L('⋮ פעולות','⋮ פעולות')}
                 </Button>
               )},
@@ -307,9 +307,9 @@ export default function QuotesPage() {
 
       {/* ── Actions Menu ── */}
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleCloseMenu}
-        PaperProps={{ sx: { bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', minWidth: 200 } }}>
+        PaperProps={{ sx: { bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', minWidth: 200 } }}>
         <MenuItem onClick={() => { if (menuQuote) openEdit(menuQuote); handleCloseMenu(); }}
-          sx={{ fontSize: 12, gap: '8px', color: '#a8bcc8', '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
+          sx={{ fontSize: 12, gap: '8px', color: '#A8A29E', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
           {L('✏️ עריכת הצעת מחיר','✏️ ערוך הצעה')}
         </MenuItem>
         <MenuItem onClick={() => { if (menuQuote) handleDuplicate(menuQuote); }}
@@ -391,7 +391,7 @@ export default function QuotesPage() {
 
         {menuQuote && menuQuote.status !== 'accepted' && (
           <MenuItem onClick={() => { if (menuQuote) handleConvertToJob(menuQuote); }}
-            sx={{ fontSize: 12, gap: '8px', color: '#00e5b0', fontWeight: 700, '&:hover': { bgcolor: 'rgba(0,229,176,0.08)' } }}>
+            sx={{ fontSize: 12, gap: '8px', color: '#4F46E5', fontWeight: 700, '&:hover': { bgcolor: 'rgba(79,70,229,0.08)' } }}>
             🔧 {L('המר לעבודה','\u05D4\u05DE\u05E8 \u05DC\u05E2\u05D1\u05D5\u05D3\u05D4')}
           </MenuItem>
         )}
@@ -403,20 +403,20 @@ export default function QuotesPage() {
           </MenuItem>
         )}
 
-        <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           {L('שנה סטטוס','שנה סטטוס')}
         </Box>
         {(['draft', 'sent', 'accepted', 'declined', 'expired'] as QuoteStatus[]).map((s) => {
           const heLabels: Record<string, string> = { draft: '\u05D8\u05D9\u05D5\u05D8\u05D4', sent: '\u05E0\u05E9\u05DC\u05D7', accepted: '\u05D0\u05D5\u05E9\u05E8', declined: '\u05E0\u05D3\u05D7\u05D4', expired: '\u05E4\u05D2 \u05EA\u05D5\u05E7\u05E3' };
           return (
             <MenuItem key={s} onClick={() => { if (menuQuote) handleStatusChange(menuQuote, s); }}
-              sx={{ fontSize: 12, gap: '8px', color: '#a8bcc8', pl: '24px', '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
+              sx={{ fontSize: 12, gap: '8px', color: '#A8A29E', pl: '24px', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
               {lang === 'he' ? heLabels[s] || s : s}
             </MenuItem>
           );
         })}
 
-        <Box sx={{ height: '1px', bgcolor: 'rgba(255,255,255,0.055)', my: '4px' }} />
+        <Box sx={{ height: '1px', bgcolor: 'rgba(0,0,0,0.06)', my: '4px' }} />
         <MenuItem onClick={() => { if (menuQuote) handleDelete(menuQuote); }}
           sx={{ fontSize: 12, gap: '8px', color: '#ff4d6d', '&:hover': { bgcolor: 'rgba(255,77,109,0.1)' } }}>
           {L('🗑️ Delete Quote','🗑️ מחק הצעה')}
@@ -505,14 +505,14 @@ export default function QuotesPage() {
               <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#22c55e', mb: 1 }}>
                 {L('Quote Approved & Signed','הצעה אושרה ונחתמה')}
               </Typography>
-              <Typography sx={{ fontSize: 12, color: '#a8bcc8' }}>
+              <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>
                 {L('Quote','הצעה')} Q-{sigQuote.id} · {sigQuote.client}
               </Typography>
             </Box>
 
             {sigQuote.signature && (
-              <Box sx={{ mb: 2, p: 2, bgcolor: '#0d1117', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <Typography sx={{ fontSize: 10, color: '#5a7080', mb: 1, textTransform: 'uppercase', fontWeight: 700 }}>
+              <Box sx={{ mb: 2, p: 2, bgcolor: '#0d1117', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <Typography sx={{ fontSize: 10, color: '#78716C', mb: 1, textTransform: 'uppercase', fontWeight: 700 }}>
                   {L('Signature','חתימה')}
                 </Typography>
                 <Box component="img" src={sigQuote.signature} alt="Signature" sx={{ maxWidth: '100%', height: 80, objectFit: 'contain' }} />
@@ -521,26 +521,26 @@ export default function QuotesPage() {
 
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, textAlign: 'right' }}>
               <Box sx={{ bgcolor: '#0d1117', borderRadius: '10px', p: 2 }}>
-                <Typography sx={{ fontSize: 9, color: '#5a7080', textTransform: 'uppercase', fontWeight: 700 }}>{L('Signed By','נחתם על ידי')}</Typography>
+                <Typography sx={{ fontSize: 9, color: '#78716C', textTransform: 'uppercase', fontWeight: 700 }}>{L('Signed By','נחתם על ידי')}</Typography>
                 <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#e8f0f4' }}>{sigQuote.signedName || '—'}</Typography>
               </Box>
               <Box sx={{ bgcolor: '#0d1117', borderRadius: '10px', p: 2 }}>
-                <Typography sx={{ fontSize: 9, color: '#5a7080', textTransform: 'uppercase', fontWeight: 700 }}>{L('Date & Time','תאריך ושעה')}</Typography>
+                <Typography sx={{ fontSize: 9, color: '#78716C', textTransform: 'uppercase', fontWeight: 700 }}>{L('Date & Time','תאריך ושעה')}</Typography>
                 <Typography sx={{ fontSize: 12, fontWeight: 600, color: '#e8f0f4' }}>
                   {sigQuote.signedAt ? new Date(sigQuote.signedAt).toLocaleString(lang === 'he' ? 'he-IL' : 'en-US') : '—'}
                 </Typography>
               </Box>
               <Box sx={{ bgcolor: '#0d1117', borderRadius: '10px', p: 2 }}>
-                <Typography sx={{ fontSize: 9, color: '#5a7080', textTransform: 'uppercase', fontWeight: 700 }}>{L('IP Address','כתובת IP')}</Typography>
+                <Typography sx={{ fontSize: 9, color: '#78716C', textTransform: 'uppercase', fontWeight: 700 }}>{L('IP Address','כתובת IP')}</Typography>
                 <Typography sx={{ fontSize: 12, fontWeight: 600, color: '#e8f0f4', fontFamily: 'monospace' }}>{sigQuote.signedIP || '—'}</Typography>
               </Box>
               <Box sx={{ bgcolor: '#0d1117', borderRadius: '10px', p: 2 }}>
-                <Typography sx={{ fontSize: 9, color: '#5a7080', textTransform: 'uppercase', fontWeight: 700 }}>{L('Status','סטטוס')}</Typography>
+                <Typography sx={{ fontSize: 9, color: '#78716C', textTransform: 'uppercase', fontWeight: 700 }}>{L('Status','סטטוס')}</Typography>
                 <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#22c55e' }}>{L('Legally Signed','חתום משפטית')} ✅</Typography>
               </Box>
             </Box>
 
-            <Typography sx={{ fontSize: 10, color: '#5a7080', mt: 2, lineHeight: 1.6 }}>
+            <Typography sx={{ fontSize: 10, color: '#78716C', mt: 2, lineHeight: 1.6 }}>
               {L(
                 'This digital signature is legally binding. The signer approved the quote by typing their full name, drawing their signature, and confirming. Timestamp and IP address are recorded for legal purposes.',
                 'חתימה דיגיטלית זו מחייבת משפטית. החותם אישר את ההצעה על ידי הקלדת שמו המלא, ציור חתימתו, ואישור. תאריך, שעה וכתובת IP נשמרו לצרכים משפטיים.'

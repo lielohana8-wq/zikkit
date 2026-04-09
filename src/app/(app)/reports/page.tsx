@@ -21,7 +21,7 @@ type Period = '7d' | '30d' | '90d' | 'ytd' | 'all';
 
 function CardHeader({ icon, title, action }: { icon: string; title: string; action?: React.ReactNode }) {
   return (
-    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.055)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
       <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
         {icon} {title}
       </Typography>
@@ -42,7 +42,7 @@ function getDateRange(period: Period): Date {
 }
 
 function Label({ text }: { text: string }) {
-  return <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>;
+  return <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>;
 }
 
 export default function ReportsPage() {
@@ -234,9 +234,9 @@ export default function ReportsPage() {
           {(['7d', '30d', '90d', 'ytd', 'all'] as Period[]).map((p) => (
             <Button key={p} size="small" onClick={() => setPeriod(p)} sx={{
               px: '12px', py: '5px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto',
-              bgcolor: period === p ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.05)',
-              color: period === p ? '#00e5b0' : '#5a7080',
-              border: '1px solid ' + (period === p ? 'rgba(0,229,176,0.3)' : 'rgba(255,255,255,0.09)'),
+              bgcolor: period === p ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.03)',
+              color: period === p ? '#4F46E5' : '#78716C',
+              border: '1px solid ' + (period === p ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.08)'),
             }}>
               {p === 'ytd' ? L('YTD','מתחילת השנה') : p === 'all' ? L('All','הכל') : p}
             </Button>
@@ -271,23 +271,23 @@ export default function ReportsPage() {
             <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: 140 }}>
               {revenueChart.map((d, i) => (
                 <Box key={i} sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
-                  <Typography sx={{ fontSize: 8, color: '#a8bcc8', fontWeight: 600 }}>
+                  <Typography sx={{ fontSize: 8, color: '#A8A29E', fontWeight: 600 }}>
                     {d.revenue > 0 ? formatCurrency(d.revenue, currency) : ''}
                   </Typography>
                   <Box sx={{
                     width: '100%', borderRadius: '3px 3px 0 0',
                     height: Math.max(2, (d.revenue / maxChartVal) * 90),
-                    background: d.revenue > 0 ? 'linear-gradient(180deg, #00e5b0, #00a882)' : 'rgba(255,255,255,0.04)',
+                    background: d.revenue > 0 ? 'linear-gradient(180deg, #4F46E5, #4F46E5)' : 'rgba(0,0,0,0.03)',
                     transition: 'height 0.5s ease',
                   }} />
-                  <Typography sx={{ fontSize: 8, color: '#5a7080', fontWeight: 600 }}>{d.label}</Typography>
+                  <Typography sx={{ fontSize: 8, color: '#78716C', fontWeight: 600 }}>{d.label}</Typography>
                 </Box>
               ))}
             </Box>
             <Box sx={{ display: 'flex', gap: '16px', mt: '12px', justifyContent: 'center' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <Box sx={{ width: 10, height: 10, borderRadius: '2px', background: 'linear-gradient(180deg, #00e5b0, #00a882)' }} />
-                <Typography sx={{ fontSize: 10, color: '#5a7080' }}>{L('Revenue','הכנסה')}</Typography>
+                <Box sx={{ width: 10, height: 10, borderRadius: '2px', background: 'linear-gradient(180deg, #4F46E5, #4F46E5)' }} />
+                <Typography sx={{ fontSize: 10, color: '#78716C' }}>{L('Revenue','הכנסה')}</Typography>
               </Box>
             </Box>
           </CardContent>
@@ -299,7 +299,7 @@ export default function ReportsPage() {
           } />
           <CardContent>
             {statusBreakdown.length === 0 ? (
-              <Typography sx={{ fontSize: 12, color: '#5a7080', textAlign: 'center', py: 3 }}>{L("No jobs in this period","אין עבודות בתקופה זו")}</Typography>
+              <Typography sx={{ fontSize: 12, color: '#78716C', textAlign: 'center', py: 3 }}>{L("No jobs in this period","אין עבודות בתקופה זו")}</Typography>
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {statusBreakdown.map((item) => {
@@ -307,13 +307,13 @@ export default function ReportsPage() {
                   return (
                     <Box key={item.status}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px' }}>
-                        <Typography sx={{ fontSize: 11, color: '#a8bcc8' }}>{lang === 'he' ? cfgItem?.he : cfgItem?.label || item.status}</Typography>
-                        <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#a8bcc8' }}>{item.count} ({formatPercent(item.pct)})</Typography>
+                        <Typography sx={{ fontSize: 11, color: '#A8A29E' }}>{lang === 'he' ? cfgItem?.he : cfgItem?.label || item.status}</Typography>
+                        <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#A8A29E' }}>{item.count} ({formatPercent(item.pct)})</Typography>
                       </Box>
-                      <Box sx={{ height: 6, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <Box sx={{ height: 6, bgcolor: 'rgba(0,0,0,0.03)', borderRadius: '3px', overflow: 'hidden' }}>
                         <Box sx={{
                           height: '100%', width: item.pct + '%', borderRadius: '3px',
-                          bgcolor: cfgItem?.color === 'green' ? '#22c55e' : cfgItem?.color === 'blue' ? '#4f8fff' : cfgItem?.color === 'warm' ? '#f59e0b' : cfgItem?.color === 'hot' ? '#ff4d6d' : cfgItem?.color === 'purple' ? '#a78bfa' : '#00e5b0',
+                          bgcolor: cfgItem?.color === 'green' ? '#22c55e' : cfgItem?.color === 'blue' ? '#4f8fff' : cfgItem?.color === 'warm' ? '#f59e0b' : cfgItem?.color === 'hot' ? '#ff4d6d' : cfgItem?.color === 'purple' ? '#a78bfa' : '#4F46E5',
                           transition: 'width 0.5s ease',
                         }} />
                       </Box>
@@ -332,7 +332,7 @@ export default function ReportsPage() {
           <CardHeader icon="👷" title={L("Technician Performance","ביצועי טכנאים")} />
           <CardContent sx={{ p: '0 !important' }}>
             {techPerformance.length === 0 ? (
-              <Typography sx={{ p: 3, textAlign: 'center', fontSize: 12, color: '#5a7080' }}>{L("אין עבודות שהושלמו ע״י טכנאים","אין עבודות שהושלמו ע״י טכנאים")}</Typography>
+              <Typography sx={{ p: 3, textAlign: 'center', fontSize: 12, color: '#78716C' }}>{L("אין עבודות שהושלמו ע״י טכנאים","אין עבודות שהושלמו ע״י טכנאים")}</Typography>
             ) : (
               <Box>
                 {techPerformance.map((t, i) => {
@@ -341,23 +341,23 @@ export default function ReportsPage() {
                   return (
                     <Box key={t.name} sx={{
                       display: 'flex', alignItems: 'center', gap: '12px', p: '12px 16px',
-                      borderBottom: i < techPerformance.length - 1 ? '1px solid rgba(255,255,255,0.055)' : 'none',
+                      borderBottom: i < techPerformance.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
                     }}>
                       <Box sx={{
                         width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        bgcolor: i === 0 ? 'rgba(0,229,176,0.15)' : 'rgba(255,255,255,0.05)', fontSize: 12,
+                        bgcolor: i === 0 ? 'rgba(79,70,229,0.12)' : 'rgba(0,0,0,0.03)', fontSize: 12,
                       }}>
                         {i === 0 ? '🏆' : '👷'}
                       </Box>
                       <Box sx={{ flex: 1 }}>
                         <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{t.name}</Typography>
-                        <Typography sx={{ fontSize: 10, color: '#5a7080' }}>
+                        <Typography sx={{ fontSize: 10, color: '#78716C' }}>
                           {t.jobs} {L('jobs','עבודות')} · {formatPercent(margin)} {L('margin','מרווח')}
                         </Typography>
                       </Box>
                       <Box sx={{ textAlign: 'right' }}>
                         <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#22c55e' }}>{formatCurrency(t.revenue, currency)}</Typography>
-                        <Typography sx={{ fontSize: 10, color: '#5a7080' }}>{L('Profit','רווח')}: {formatCurrency(profit, currency)}</Typography>
+                        <Typography sx={{ fontSize: 10, color: '#78716C' }}>{L('Profit','רווח')}: {formatCurrency(profit, currency)}</Typography>
                       </Box>
                     </Box>
                   );
@@ -371,7 +371,7 @@ export default function ReportsPage() {
           <CardHeader icon="📈" title={L("Revenue by Source","הכנסה לפי מקור")} />
           <CardContent>
             {revenueBySource.length === 0 ? (
-              <Typography sx={{ fontSize: 12, color: '#5a7080', textAlign: 'center', py: 3 }}>{L("No revenue data","אין נתוני הכנסה")}</Typography>
+              <Typography sx={{ fontSize: 12, color: '#78716C', textAlign: 'center', py: 3 }}>{L("No revenue data","אין נתוני הכנסה")}</Typography>
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {revenueBySource.map((item) => {
@@ -380,17 +380,17 @@ export default function ReportsPage() {
                   return (
                     <Box key={item.source}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px' }}>
-                        <Typography sx={{ fontSize: 11, color: '#a8bcc8' }}>
+                        <Typography sx={{ fontSize: 11, color: '#A8A29E' }}>
                           {sourceIcons[item.source] || '📋'} {item.source}
                         </Typography>
                         <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#22c55e' }}>
                           {formatCurrency(item.revenue, currency)} ({item.jobs})
                         </Typography>
                       </Box>
-                      <Box sx={{ height: 6, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <Box sx={{ height: 6, bgcolor: 'rgba(0,0,0,0.03)', borderRadius: '3px', overflow: 'hidden' }}>
                         <Box sx={{
                           height: '100%', width: pct + '%', borderRadius: '3px',
-                          background: 'linear-gradient(90deg, #00e5b0, #06b6d4)',
+                          background: 'linear-gradient(90deg, #4F46E5, #06b6d4)',
                           transition: 'width 0.5s',
                         }} />
                       </Box>
@@ -408,7 +408,7 @@ export default function ReportsPage() {
         <CardHeader icon="⭐" title={L("Top Revenue Jobs","עבודות מובילות")} action={<Badge label={topJobs.length + ' jobs'} variant="green" />} />
         <CardContent sx={{ p: '0 !important' }}>
           {topJobs.length === 0 ? (
-            <Typography sx={{ p: 3, textAlign: 'center', fontSize: 12, color: '#5a7080' }}>{L("אין עבודות עם הכנסה","אין עבודות עם הכנסה")}</Typography>
+            <Typography sx={{ p: 3, textAlign: 'center', fontSize: 12, color: '#78716C' }}>{L("אין עבודות עם הכנסה","אין עבודות עם הכנסה")}</Typography>
           ) : (
             <DataTable<Job>
               keyExtractor={(j) => j.id}
@@ -420,7 +420,7 @@ export default function ReportsPage() {
                 { key: 'materials', label: L('Materials','חומרים'), render: (j) => <Typography sx={{ fontSize: 12, color: '#ff4d6d' }}>{formatCurrency(j.materials || 0, currency)}</Typography> },
                 { key: 'profit', label: 'רווח', render: (j) => {
                   const p = (j.revenue || 0) - (j.materials || 0);
-                  return <Typography sx={{ fontWeight: 700, fontSize: 12, color: p >= 0 ? '#00e5b0' : '#ff4d6d' }}>{formatCurrency(p, currency)}</Typography>;
+                  return <Typography sx={{ fontWeight: 700, fontSize: 12, color: p >= 0 ? '#4F46E5' : '#ff4d6d' }}>{formatCurrency(p, currency)}</Typography>;
                 }},
                 { key: 'created', label: L('Date','תאריך'), render: (j) => formatDate(j.created) },
               ]}
@@ -433,50 +433,50 @@ export default function ReportsPage() {
       {/* Financial Summary */}
       <Card>
         <CardHeader icon="📋" title={L("Financial Summary","סיכום פיננסי")} action={
-          <Typography sx={{ fontSize: 11, color: '#5a7080' }}>{periodLabels[period]}</Typography>
+          <Typography sx={{ fontSize: 11, color: '#78716C' }}>{periodLabels[period]}</Typography>
         } />
         <CardContent>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', '@media(max-width:768px)': { gridTemplateColumns: '1fr !important' } }}>
             <Box sx={{ bgcolor: 'rgba(255,255,255,0.025)', borderRadius: '10px', p: '14px' }}>
-              <Typography sx={{ fontSize: 9, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', letterSpacing: '0.5px', mb: '8px' }}>{L('Income','הכנסות')}</Typography>
+              <Typography sx={{ fontSize: 9, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.5px', mb: '8px' }}>{L('Income','הכנסות')}</Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '6px' }}>
-                <Typography sx={{ fontSize: 12, color: '#a8bcc8' }}>{L("Total Revenue","סה\"כ הכנסה")}</Typography>
+                <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>{L("Total Revenue","סה\"כ הכנסה")}</Typography>
                 <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#22c55e' }}>{formatCurrency(totalRevenue, currency)}</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '6px' }}>
-                <Typography sx={{ fontSize: 12, color: '#a8bcc8' }}>{L('Completed Jobs','עבודות שהושלמו')}</Typography>
+                <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>{L('Completed Jobs','עבודות שהושלמו')}</Typography>
                 <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{completedJobs.length}</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography sx={{ fontSize: 12, color: '#a8bcc8' }}>{L('Avg Job Value','ממוצע לעבודה')}</Typography>
+                <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>{L('Avg Job Value','ממוצע לעבודה')}</Typography>
                 <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(avgJobRevenue, currency)}</Typography>
               </Box>
             </Box>
             <Box sx={{ bgcolor: 'rgba(255,255,255,0.025)', borderRadius: '10px', p: '14px' }}>
-              <Typography sx={{ fontSize: 9, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', letterSpacing: '0.5px', mb: '8px' }}>{L('Expenses','הוצאות')}</Typography>
+              <Typography sx={{ fontSize: 9, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.5px', mb: '8px' }}>{L('Expenses','הוצאות')}</Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '6px' }}>
-                <Typography sx={{ fontSize: 12, color: '#a8bcc8' }}>{L('Materials','חומרים')}</Typography>
+                <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>{L('Materials','חומרים')}</Typography>
                 <Typography sx={{ fontSize: 12, color: '#ff4d6d' }}>-{formatCurrency(totalMaterials, currency)}</Typography>
               </Box>
               {totalTax > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '6px' }}>
-                  <Typography sx={{ fontSize: 12, color: '#a8bcc8' }}>{L(`Tax (${taxRate}%)`,`מס (${taxRate}%)`)}</Typography>
+                  <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>{L(`Tax (${taxRate}%)`,`מס (${taxRate}%)`)}</Typography>
                   <Typography sx={{ fontSize: 12, color: '#f59e0b' }}>-{formatCurrency(totalTax, currency)}</Typography>
                 </Box>
               )}
               {totalCommissions > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '6px' }}>
-                  <Typography sx={{ fontSize: 12, color: '#a8bcc8' }}>{L('Commissions','עמלות טכנאים')}</Typography>
+                  <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>{L('Commissions','עמלות טכנאים')}</Typography>
                   <Typography sx={{ fontSize: 12, color: '#a78bfa' }}>-{formatCurrency(totalCommissions, currency)}</Typography>
                 </Box>
               )}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '6px' }}>
-                <Typography sx={{ fontSize: 12, color: '#a8bcc8' }}>{L('Other Expenses','הוצאות אחרות')}</Typography>
+                <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>{L('Other Expenses','הוצאות אחרות')}</Typography>
                 <Typography sx={{ fontSize: 12, color: '#ff4d6d' }}>-{formatCurrency(periodExpenses, currency)}</Typography>
               </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '8px', borderTop: '1px solid rgba(255,255,255,0.055)' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '8px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                 <Typography sx={{ fontSize: 14, fontWeight: 800 }}>{L('Net Profit','רווח נקי')}</Typography>
-                <Typography sx={{ fontSize: 14, fontWeight: 800, color: netProfit >= 0 ? '#00e5b0' : '#ff4d6d' }}>{formatCurrency(netProfit, currency)}</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 800, color: netProfit >= 0 ? '#4F46E5' : '#ff4d6d' }}>{formatCurrency(netProfit, currency)}</Typography>
               </Box>
             </Box>
           </Box>
@@ -489,14 +489,14 @@ export default function ReportsPage() {
           <Button size="small" onClick={() => {
             setEditExpense({ date: new Date().toISOString().slice(0, 10), category: 'office', amount: 0, desc: '', vendor: '' });
             setShowExpenseModal(true);
-          }} sx={{ fontSize: 10, fontWeight: 700, bgcolor: 'rgba(0,229,176,0.08)', color: '#00e5b0', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '8px', px: '12px' }}>
+          }} sx={{ fontSize: 10, fontWeight: 700, bgcolor: 'rgba(79,70,229,0.08)', color: '#4F46E5', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '8px', px: '12px' }}>
             {L("+ Add Expense","+ הוסף הוצאה")}
           </Button>
         } />
         <CardContent sx={{ p: '0 !important' }}>
           {periodFilteredExpenses.length === 0 ? (
             <Box sx={{ p: 3, textAlign: 'center' }}>
-              <Typography sx={{ fontSize: 12, color: '#5a7080' }}>{L('No expenses recorded for this period','אין הוצאות בתקופה זו')}</Typography>
+              <Typography sx={{ fontSize: 12, color: '#78716C' }}>{L('No expenses recorded for this period','אין הוצאות בתקופה זו')}</Typography>
             </Box>
           ) : (
             <DataTable
@@ -529,7 +529,7 @@ export default function ReportsPage() {
         footer={<>
           <Button variant="outlined" size="small" onClick={() => setShowExpenseModal(false)}>{L('Cancel','ביטול')}</Button>
           <Button size="small" onClick={handleSaveExpense}
-            sx={{ bgcolor: 'rgba(0,229,176,0.1)', color: '#00e5b0', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', fontWeight: 700, '&:hover': { bgcolor: '#00e5b0', color: '#000' } }}>
+            sx={{ bgcolor: 'rgba(0,229,176,0.1)', color: '#4F46E5', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', fontWeight: 700, '&:hover': { bgcolor: '#4F46E5', color: '#000' } }}>
             {editExpense.id ? L("Update","עדכן") : L("Add","הוסף")}
           </Button>
         </>}>

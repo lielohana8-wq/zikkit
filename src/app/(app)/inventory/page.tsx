@@ -75,7 +75,7 @@ export default function InventoryPage() {
       </Box>
 
       {parts.length === 0 ? <EmptyState icon="📦" title="אין פריטי מלאי" subtitle="הוסף את הפריט הראשון" actionLabel="+ פריט חדש" onAction={() => { setEditPart({}); setShowModal(true); }} /> : (
-        <Box sx={{ bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.055)', borderRadius: '14px', overflow: 'hidden' }}>
+        <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
           <DataTable keyExtractor={(p: Part) => p.id} data={parts} onRowClick={(p: Part) => { setEditPart(p); setShowModal(true); }} columns={[
             { key: 'name', label: 'פריט', render: (p: Part) => <Box><Typography fontWeight={600} fontSize={12}>{p.name}</Typography><Typography variant="caption" color="text.secondary">{p.sku}</Typography></Box> },
             { key: 'category', label: 'קטגוריה', render: (p: Part) => p.category || '—' },

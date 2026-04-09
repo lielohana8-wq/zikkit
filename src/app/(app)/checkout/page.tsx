@@ -3,89 +3,46 @@ import { Box, Typography, Button } from '@mui/material';
 import { zikkitColors as c } from '@/styles/theme';
 import { openCheckout } from '@/lib/paddle';
 import { useAuth } from '@/features/auth/AuthProvider';
-import { useData } from '@/hooks/useFirestore';
-import { useL } from '@/hooks/useL';
+import { useGeoDetection } from '@/hooks/useGeoDetection';
+
+const plansUS = [
+  { id: 'pri_starter', name: 'Business', price: '$699', period: '/mo', annual: '$6,290/yr', desc: 'Up to 10 techs', features: ['AI Voice Bot 24/7','Job management','Quotes & invoices','CRM & Leads','SMS automation','Client portal','GPS tracking','Reports & Payroll'] },
+  { id: 'pri_unlimited', name: 'Unlimited', price: '$1,099', period: '/mo', annual: '$9,990/yr', desc: 'Unlimited everything', popular: true, features: ['Everything in Business','Unlimited technicians','Unlimited AI calls','Advanced reports','Priority support','Custom branding','Multi-location'] },
+];
+
+const plansIL = [
+  { id: 'pri_starter', name: 'Business', price: '₪499', period: '/חודש', annual: '₪4,490/שנה', desc: 'עד 10 טכנאים', features: ['בוט AI קולי 24/7','ניהול עבודות','הצעות מחיר','CRM ולידים','SMS אוטומטי','פורטל לקוחות','מעקב GPS','דוחות ושכר'] },
+  { id: 'pri_unlimited', name: 'Unlimited', price: '₪799', period: '/חודש', annual: '₪7,490/שנה', desc: 'הכל ללא הגבלה', popular: true, features: ['הכל ב-Business','טכנאים ללא הגבלה','שיחות AI ללא הגבלה','דוחות מתקדמים','תמיכה עדיפה','מיתוג מותאם','ריבוי סניפים'] },
+];
 
 export default function CheckoutPage() {
   const { bizId } = useAuth();
-  const { cfg } = useData();
-  const L = useL();
-  const isIL = cfg.region === 'IL' || cfg.lang === 'he';
-
-  const plans = isIL ? [
-    { id: 'pri_starter', name: 'Business', price: '₪499', period: '/חודש', annual: '₪4,490/שנה', desc: 'עד 10 טכנאים', popular: false,
-      features: ['בוט AI קולי 24/7','ניהול עבודות','הצעות מחיר','CRM ולידים','SMS אוטומטי','פורטל לקוחות','מעקב GPS','דוחות ושכר'] },
-    { id: 'pri_unlimited', name: 'Unlimited', price: '₪799', period: '/חודש', annual: '₪7,490/שנה', desc: 'הכל ללא הגבלה', popular: true,
-      features: ['הכל ב-Business','טכנאים ללא הגבלה','שיחות AI ללא הגבלה','דוחות מתקדמים','תמיכה עדיפה','מיתוג מותאם','ריבוי סניפים'] },
-  ] : [
-    { id: 'pri_starter', name: 'Business', price: '$699', period: '/mo', annual: '$6,290/yr', desc: 'Up to 10 techs', popular: false,
-      features: ['AI Voice Bot 24/7','Job management','Quotes & invoices','CRM & Leads','SMS automation','Client portal','GPS tracking','Reports & Payroll'] },
-    { id: 'pri_unlimited', name: 'Unlimited', price: '$1,099', period: '/mo', annual: '$9,990/yr', desc: 'Unlimited everything', popular: true,
-      features: ['Everything in Business','Unlimited technicians','Unlimited AI calls','Advanced reports','Priority support','Custom branding','Multi-location'] },
-  ];
-
-  const handleSubscribe = (priceId: string) => {
-    openCheckout(priceId, { bizId: bizId || '' });
-  };
+  const { isIL } = useGeoDetection();
+  const plans = isIL ? plansIL : plansUS;
 
   return (
-    <Box className="zk-fade-up" sx={{ p: { xs: '20px', md: '32px' }, maxWidth: 820, mx: 'auto' }}>
-      <Typography sx={{ fontSize: 26, fontWeight: 800, color: c.text, textAlign: 'center', mb: '4px' }}>
+    <Box sx={{ p: { xs: '16px', md: '24px 28px' }, maxWidth: 800, mx: 'auto' }}>
+      <Typography sx={{ fontSize: 24, fontWeight: 900, fontFamily: 'Syne', textAlign: 'center', mb: 1 }}>
         {isIL ? 'בחר תוכנית' : 'Choose Your Plan'}
       </Typography>
       <Typography sx={{ fontSize: 13, color: c.text3, textAlign: 'center', mb: 4 }}>
-        {isIL ? 'שדרג כדי להמשיך להשתמש ב-Zikkit' : 'Subscribe to keep using Zikkit'}
+        {isIL ? 'שדרג כדי להמשיך להשתמש בבוט AI.' : 'Subscribe to keep your AI bot active.'}
       </Typography>
-
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '16px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
         {plans.map((p) => (
-          <Box key={p.id} sx={{
-            p: '28px', borderRadius: '14px',
-            bgcolor: '#fff',
-            border: p.popular ? ('2px solid ' + c.accent) : ('1px solid ' + c.border),
-            position: 'relative',
-            transition: 'all 0.2s',
-            '&:hover': { boxShadow: '0 8px 24px rgba(0,0,0,0.06)', transform: 'translateY(-2px)' },
-          }}>
-            {p.popular && (
-              <Box sx={{ position: 'absolute', top: -12, right: 20, px: '12px', py: '3px', borderRadius: '6px', bgcolor: c.accent, color: '#fff', fontSize: 11, fontWeight: 700 }}>
-                {isIL ? 'מומלץ' : 'Recommended'}
-              </Box>
-            )}
-
-            <Typography sx={{ fontSize: 14, fontWeight: 600, color: c.accent, mb: '4px' }}>{p.name}</Typography>
-            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: '4px', mb: '2px' }}>
-              <Typography sx={{ fontSize: 38, fontWeight: 800, color: c.text, lineHeight: 1 }}>{p.price}</Typography>
-              <Typography sx={{ fontSize: 13, color: c.text3 }}>{p.period}</Typography>
-            </Box>
-            <Typography sx={{ fontSize: 12, color: c.text3, mb: '2px' }}>{p.desc}</Typography>
-            <Typography sx={{ fontSize: 11, color: c.warm, fontWeight: 600, mb: '16px' }}>
-              {isIL ? 'או ' : 'or '}{p.annual} ({isIL ? 'חסכון ~25%' : 'save ~25%'})
-            </Typography>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px', mb: '20px' }}>
-              {p.features.map((f) => (
-                <Box key={f} sx={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: 13, color: c.text2 }}>
-                  <Box sx={{ color: c.green, fontSize: 14, lineHeight: 1 }}>✓</Box>
-                  {f}
-                </Box>
-              ))}
-            </Box>
-
-            <Button
-              fullWidth variant={p.popular ? 'contained' : 'outlined'}
-              onClick={() => handleSubscribe(p.id)}
-              sx={{ fontWeight: 700, fontSize: 14, py: 1.2, borderRadius: '10px' }}
-            >
+          <Box key={p.id} sx={{ p: 3.5, borderRadius: '16px', bgcolor: p.popular ? 'rgba(0,229,176,0.04)' : c.glass, border: p.popular ? '2px solid rgba(0,229,176,0.15)' : '1px solid '+c.border, position: 'relative' }}>
+            {p.popular && <Box sx={{ position: 'absolute', top: -12, right: 20, px: 2, py: 0.4, borderRadius: '8px', bgcolor: c.accent, color: '#000', fontSize: 11, fontWeight: 700 }}>{isIL ? 'מומלץ' : 'Recommended'}</Box>}
+            <Typography sx={{ fontSize: 13, fontWeight: 600, color: c.accent }}>{p.name}</Typography>
+            <Typography sx={{ fontSize: 36, fontWeight: 900, fontFamily: 'Syne', mt: 0.5 }}>{p.price}<Box component='span' sx={{ fontSize: 14, color: c.text3 }}>{p.period}</Box></Typography>
+            <Typography sx={{ fontSize: 12, color: c.text3, mb: 0.5 }}>{p.desc}</Typography>
+            <Typography sx={{ fontSize: 11, color: c.warm, mb: 2 }}>{isIL ? 'או ' : 'or '}{p.annual}</Typography>
+            {p.features.map((f) => <Box key={f} sx={{ display: 'flex', gap: 1, py: 0.4, fontSize: 13, color: c.text2 }}><span style={{ color: c.green }}>✓</span>{f}</Box>)}
+            <Button fullWidth onClick={() => openCheckout(p.id, { bizId: bizId || '' })} sx={{ mt: 2.5, bgcolor: p.popular ? c.accent : c.glass2, color: p.popular ? '#000' : c.text2, fontWeight: 800, fontSize: 14, py: 1.3, borderRadius: '10px', textTransform: 'none' }}>
               {isIL ? 'הירשם' : 'Subscribe'}
             </Button>
           </Box>
         ))}
       </Box>
-
-      <Typography sx={{ textAlign: 'center', mt: 3, fontSize: 11, color: c.text3 }}>
-        {isIL ? 'ניתן לבטל בכל עת. תשלום מאובטח דרך Paddle.' : 'Cancel anytime. Secure payment via Paddle.'}
-      </Typography>
     </Box>
   );
 }

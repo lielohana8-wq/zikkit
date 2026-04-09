@@ -89,7 +89,7 @@ export function LoginForm() {
             <Button key={l} size="small" onClick={() => setLang(l)}
               sx={{
                 px: '14px', py: '5px', borderRadius: '8px', fontSize: 11, fontWeight: 600, minWidth: 'auto',
-                border: '1px solid ' + (lang === l ? 'rgba(0,229,176,0.3)' : c.border2),
+                border: '1px solid ' + (lang === l ? 'rgba(79,70,229,0.25)' : c.border2),
                 bgcolor: lang === l ? c.accentDim : 'transparent',
                 color: lang === l ? c.accent : c.text3,
                 '&:hover': lang !== l ? { bgcolor: c.glass2, color: c.text2 } : {},

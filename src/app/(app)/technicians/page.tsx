@@ -140,7 +140,7 @@ export default function TechniciansPage() {
             keyExtractor={(t) => String(t.id)}
             columns={[
               { key: 'status', label: '', width: 30, render: (t) => (
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: t.isActive ? '#22c55e' : '#5a7080', boxShadow: t.isActive ? '0 0 6px #22c55e' : 'none' }} />
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: t.isActive ? '#22c55e' : '#78716C', boxShadow: t.isActive ? '0 0 6px #22c55e' : 'none' }} />
               )},
               { key: 'name', label: L('Name','שם'), render: (t) => (
                 <Box>
@@ -154,11 +154,11 @@ export default function TechniciansPage() {
               { key: 'jobs', label: L('Jobs','עבודות'), render: (t) => (
                 <Box>
                   <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{t.jobsCompleted}</Typography>
-                  <Typography sx={{ fontSize: 9, color: '#5a7080' }}>{t.activeJobs} active</Typography>
+                  <Typography sx={{ fontSize: 9, color: '#78716C' }}>{t.activeJobs} active</Typography>
                 </Box>
               )},
               { key: 'revenue', label: L(L('Revenue','הכנסה'),'הכנסה'), render: (t) => (
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: t.totalRevenue > 0 ? '#22c55e' : '#5a7080' }}>
+                <Typography sx={{ fontSize: 12, fontWeight: 700, color: t.totalRevenue > 0 ? '#22c55e' : '#78716C' }}>
                   {formatCurrency(t.totalRevenue, currency)}
                 </Typography>
               )},

@@ -83,7 +83,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
     onComplete();
   };
 
-  const c = { bg: '#07090b', surface: '#0f1318', accent: '#00e5b0', blue: '#4f8fff', text: '#e8f0f4', text2: '#a8bcc8', text3: '#5a7080', border: 'rgba(255,255,255,0.055)' };
+  const c = { bg: '#07090b', surface: '#FAF7F4', accent: '#4F46E5', blue: '#4f8fff', text: '#e8f0f4', text2: '#A8A29E', text3: '#78716C', border: 'rgba(0,0,0,0.06)' };
 
   const inputSx = { '& .MuiInputBase-root': { bgcolor: '#0a0c10', borderRadius: '10px', fontSize: 13, color: c.text }, '& .MuiOutlinedInput-notchedOutline': { borderColor: c.border }, '& .MuiInputLabel-root': { fontSize: 11, fontWeight: 700, color: c.text3, textTransform: 'uppercase' as const } };
 
@@ -110,7 +110,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
               }}>
                 {i < step ? '✓' : s.icon}
               </Box>
-              {i < STEPS.length - 1 && <Box sx={{ width: 30, height: 2, bgcolor: i < step ? c.accent : 'rgba(255,255,255,0.06)', borderRadius: 1 }} />}
+              {i < STEPS.length - 1 && <Box sx={{ width: 30, height: 2, bgcolor: i < step ? c.accent : 'rgba(0,0,0,0.06)', borderRadius: 1 }} />}
             </Box>
           ))}
         </Box>
@@ -138,7 +138,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
               </Box>
               <Button onClick={handleSaveStep1} variant="contained" fullWidth sx={{
                 mt: 1, py: 1.5, fontSize: 14, fontWeight: 800, borderRadius: '12px',
-                background: 'linear-gradient(135deg, #00e5b0, #00a882)', color: '#000',
+                background: 'linear-gradient(135deg, #4F46E5, #00a882)', color: '#000',
               }}>
                 המשך →
               </Button>
@@ -166,7 +166,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                 </Button>
                 <Button onClick={handleSaveStep2} variant="contained" sx={{
                   flex: 2, py: 1.5, fontSize: 14, fontWeight: 800, borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #00e5b0, #00a882)', color: '#000',
+                  background: 'linear-gradient(135deg, #4F46E5, #00a882)', color: '#000',
                 }}>
                   המשך →
                 </Button>
@@ -190,7 +190,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                 </Button>
                 <Button onClick={handleSaveStep3} variant="contained" sx={{
                   flex: 2, py: 1.5, fontSize: 14, fontWeight: 800, borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #00e5b0, #00a882)', color: '#000',
+                  background: 'linear-gradient(135deg, #4F46E5, #00a882)', color: '#000',
                 }}>
                   {techName.trim() ? 'הוסף והמשך →' : 'דלג →'}
                 </Button>
@@ -209,7 +209,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
               </Typography>
               <Button onClick={handleFinish} variant="contained" fullWidth sx={{
                 py: 1.5, fontSize: 16, fontWeight: 800, borderRadius: '12px',
-                background: 'linear-gradient(135deg, #00e5b0, #00a882)', color: '#000',
+                background: 'linear-gradient(135deg, #4F46E5, #00a882)', color: '#000',
                 boxShadow: '0 8px 24px rgba(0,229,176,0.2)',
               }}>
                 🚀 יאללה, מתחילים!

@@ -148,7 +148,7 @@ export default function LeadsPage() {
   };
 
   const Label = ({ text }: { text: string }) => (
-    <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>
+    <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>
   );
 
   return (
@@ -179,11 +179,11 @@ export default function LeadsPage() {
         <TextField
           placeholder="חיפוש לידים..." value={search} onChange={(e) => setSearch(e.target.value)}
           size="small" sx={{ minWidth: 220 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#5a7080' }} /></InputAdornment> }}
+          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#78716C' }} /></InputAdornment> }}
         />
         {/* Source filter */}
         <Select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} size="small" displayEmpty
-          sx={{ minWidth: 140, bgcolor: '#141920', borderRadius: '10px', fontSize: 11, '& fieldset': { borderColor: 'rgba(255,255,255,0.09)' } }}>
+          sx={{ minWidth: 140, bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 11, '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } }}>
           {SOURCE_OPTIONS.map((s) => (
             <MenuItem key={s.key} value={s.key} sx={{ fontSize: 12 }}>{s.icon} {lang === 'he' ? s.he : s.label}</MenuItem>
           ))}
@@ -198,9 +198,9 @@ export default function LeadsPage() {
           return (
             <Button key={s} size="small" onClick={() => setStatusFilter(s)} sx={{
               px: '10px', py: '4px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto', textTransform: 'capitalize',
-              bgcolor: statusFilter === s ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.05)',
-              color: statusFilter === s ? '#00e5b0' : '#5a7080',
-              border: '1px solid ' + (statusFilter === s ? 'rgba(0,229,176,0.3)' : 'rgba(255,255,255,0.09)'),
+              bgcolor: statusFilter === s ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.03)',
+              color: statusFilter === s ? '#4F46E5' : '#78716C',
+              border: '1px solid ' + (statusFilter === s ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.08)'),
             }}>
               {s === 'all' ? `הכל (${count})` : `${(lang==='he'?cfgItem?.he:cfgItem?.label) || s} (${count})`}
             </Button>
@@ -212,7 +212,7 @@ export default function LeadsPage() {
       {leads.length === 0 ? (
         <EmptyState icon="👥" title="אין לידים עדיין" subtitle="הוסף את הליד הראשון." actionLabel="+ ליד חדש" onAction={openNew} />
       ) : (
-        <Box sx={{ bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.055)', borderRadius: '14px', overflow: 'hidden' }}>
+        <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
           <DataTable<Lead>
             keyExtractor={(l) => l.id}
             columns={[
@@ -229,16 +229,16 @@ export default function LeadsPage() {
               }},
               { key: 'value', label: 'ערך', render: (l) => l.value ? (
                 <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#22c55e' }}>{formatCurrency(l.value, currency)}</Typography>
-              ) : <Typography sx={{ color: '#5a7080', fontSize: 11 }}>—</Typography> },
+              ) : <Typography sx={{ color: '#78716C', fontSize: 11 }}>—</Typography> },
               { key: 'followUp', label: 'מעקב', render: (l) => {
-                if (!l.followUpDate) return <Typography sx={{ color: '#5a7080', fontSize: 11 }}>—</Typography>;
+                if (!l.followUpDate) return <Typography sx={{ color: '#78716C', fontSize: 11 }}>—</Typography>;
                 const isOverdue = l.followUpDate < today && !['converted', 'lost'].includes(l.status);
                 const isToday = l.followUpDate === today;
                 return (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     {isOverdue && <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ff4d6d', boxShadow: '0 0 6px #ff4d6d', flexShrink: 0 }} />}
                     {isToday && <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#f59e0b', boxShadow: '0 0 6px #f59e0b', flexShrink: 0 }} />}
-                    <Typography sx={{ fontSize: 11, color: isOverdue ? '#ff4d6d' : isToday ? '#f59e0b' : '#a8bcc8', fontWeight: isOverdue || isToday ? 700 : 400 }}>
+                    <Typography sx={{ fontSize: 11, color: isOverdue ? '#ff4d6d' : isToday ? '#f59e0b' : '#A8A29E', fontWeight: isOverdue || isToday ? 700 : 400 }}>
                       {formatDate(l.followUpDate)}
                     </Typography>
                   </Box>
@@ -247,7 +247,7 @@ export default function LeadsPage() {
               { key: 'created', label: 'נוצר', render: (l) => formatDate(l.created) },
               { key: 'actions', label: '', width: 80, render: (l) => (
                 <Button size="small" onClick={(e) => handleOpenMenu(e, l)}
-                  sx={{ fontSize: 11, minWidth: 'auto', p: '3px 10px', bgcolor: 'rgba(255,255,255,0.05)', color: '#a8bcc8', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '6px' }}>
+                  sx={{ fontSize: 11, minWidth: 'auto', p: '3px 10px', bgcolor: 'rgba(0,0,0,0.03)', color: '#A8A29E', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px' }}>
                   ⋮ פעולות
                 </Button>
               )},
@@ -261,13 +261,13 @@ export default function LeadsPage() {
       {/* ── Actions Menu ── */}
       <Menu
         anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleCloseMenu}
-        PaperProps={{ sx: { bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', minWidth: 200 } }}>
+        PaperProps={{ sx: { bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', minWidth: 200 } }}>
         <MenuItem onClick={() => { if (menuLead) openEdit(menuLead); handleCloseMenu(); }}
-          sx={{ fontSize: 12, gap: '8px', color: '#a8bcc8', '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
+          sx={{ fontSize: 12, gap: '8px', color: '#A8A29E', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
           ✏️ עריכת ליד
         </MenuItem>
 
-        <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           שנה סטטוס
         </Box>
         {[
@@ -279,15 +279,15 @@ export default function LeadsPage() {
         ].map((item) => (
           <MenuItem key={item.status}
             onClick={() => { if (menuLead) handleStatusChange(menuLead, item.status); }}
-            sx={{ fontSize: 12, gap: '8px', color: '#a8bcc8', '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
+            sx={{ fontSize: 12, gap: '8px', color: '#A8A29E', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
             {item.icon} {item.label}
           </MenuItem>
         ))}
 
-        <Box sx={{ height: '1px', bgcolor: 'rgba(255,255,255,0.055)', my: '4px' }} />
+        <Box sx={{ height: '1px', bgcolor: 'rgba(0,0,0,0.06)', my: '4px' }} />
 
         <MenuItem onClick={() => { if (menuLead) handleConvertToJob(menuLead); }}
-          sx={{ fontSize: 12, gap: '8px', color: '#00e5b0', fontWeight: 700, '&:hover': { bgcolor: 'rgba(0,229,176,0.08)' } }}>
+          sx={{ fontSize: 12, gap: '8px', color: '#4F46E5', fontWeight: 700, '&:hover': { bgcolor: 'rgba(79,70,229,0.08)' } }}>
           🔧 המר לעבודה
         </MenuItem>
 
@@ -320,7 +320,7 @@ export default function LeadsPage() {
               <TextField fullWidth size="small" type="number" value={editLead.value || ''} onChange={(e) => setEditLead({ ...editLead, value: parseFloat(e.target.value) || 0 })} placeholder="0" /></Box>
             <Box><Label text={L("Source","מקור")} />
               <Select fullWidth size="small" value={editLead.source || 'manual'} onChange={(e) => setEditLead({ ...editLead, source: e.target.value as LeadSource })}
-                sx={{ bgcolor: '#141920', borderRadius: '10px', fontSize: 13, '& fieldset': { borderColor: 'rgba(255,255,255,0.09)' } }}>
+                sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13, '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } }}>
                 {SOURCE_OPTIONS.filter((s) => s.key !== 'all').map((s) => (
                   <MenuItem key={s.key} value={s.key}>{s.icon} {lang === 'he' ? s.he : s.label}</MenuItem>
                 ))}
@@ -338,9 +338,9 @@ export default function LeadsPage() {
                   <Button key={s} size="small" onClick={() => setEditLead({ ...editLead, status: s })}
                     sx={{
                       px: '12px', py: '5px', fontSize: 11, fontWeight: 700, borderRadius: '8px', minWidth: 'auto', textTransform: 'capitalize',
-                      bgcolor: editLead.status === s ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.05)',
-                      color: editLead.status === s ? '#00e5b0' : '#5a7080',
-                      border: '1px solid ' + (editLead.status === s ? 'rgba(0,229,176,0.3)' : 'rgba(255,255,255,0.09)'),
+                      bgcolor: editLead.status === s ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.03)',
+                      color: editLead.status === s ? '#4F46E5' : '#78716C',
+                      border: '1px solid ' + (editLead.status === s ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.08)'),
                     }}>
                     {s}
                   </Button>

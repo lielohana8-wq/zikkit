@@ -19,7 +19,7 @@ export function SignatureCanvas({ onSave, width = 400, height = 160 }: Signature
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.fillStyle = '#0f1318';
+    ctx.fillStyle = '#FAF7F4';
     ctx.fillRect(0, 0, width, height);
     ctx.strokeStyle = '#e8f0f4';
     ctx.lineWidth = 2;
@@ -65,7 +65,7 @@ export function SignatureCanvas({ onSave, width = 400, height = 160 }: Signature
   const clear = () => {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
-    ctx.fillStyle = '#0f1318';
+    ctx.fillStyle = '#FAF7F4';
     ctx.fillRect(0, 0, width, height);
     setHasSignature(false);
   };

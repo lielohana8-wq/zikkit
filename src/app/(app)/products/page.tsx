@@ -168,7 +168,7 @@ export default function ProductsPage() {
           <Button key={cat} size="small" onClick={() => setCatFilter(cat)}
             sx={{ px: '10px', py: '4px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto', textTransform: 'capitalize',
               bgcolor: catFilter === cat ? c.accentDim : c.glass2, color: catFilter === cat ? c.accent : c.text3,
-              border: '1px solid ' + (catFilter === cat ? 'rgba(0,229,176,0.3)' : c.border2) }}>
+              border: '1px solid ' + (catFilter === cat ? 'rgba(79,70,229,0.25)' : c.border2) }}>
             {cat === 'all' ? 'All' : cat}
           </Button>
         ))}
@@ -184,8 +184,8 @@ export default function ProductsPage() {
               { key: 'image', label: '', width: 44, render: (p) => (
                 <Box sx={{
                   width: 32, height: 32, borderRadius: '6px', overflow: 'hidden',
-                  bgcolor: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '1px solid rgba(255,255,255,0.055)', flexShrink: 0,
+                  bgcolor: 'rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid rgba(0,0,0,0.06)', flexShrink: 0,
                 }}>
                   {p.image ? (
                     <Box component="img" src={p.image} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -225,7 +225,7 @@ export default function ProductsPage() {
             <Box sx={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               <Box sx={{
                 width: 72, height: 72, borderRadius: '10px', overflow: 'hidden', flexShrink: 0,
-                bgcolor: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.12)',
+                bgcolor: 'rgba(0,0,0,0.02)', border: '1px dashed rgba(0,0,0,0.08)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 {editProduct.image ? (
@@ -260,7 +260,7 @@ export default function ProductsPage() {
                     ✕ Remove
                   </Button>
                 )}
-                <Typography sx={{ fontSize: 9, color: '#5a7080' }}>PNG, JPG — max 500KB</Typography>
+                <Typography sx={{ fontSize: 9, color: '#78716C' }}>PNG, JPG — max 500KB</Typography>
               </Box>
             </Box>
           </Box>
@@ -281,7 +281,7 @@ export default function ProductsPage() {
           {/* Live margin preview */}
           {(editProduct.price || 0) > 0 && (
             <Box sx={{ bgcolor: 'rgba(255,255,255,0.025)', borderRadius: '10px', p: '10px 14px', display: 'flex', justifyContent: 'space-between' }}>
-              <Typography sx={{ fontSize: 11, color: '#5a7080' }}>{L("Profit Margin","מרווח רווח")}</Typography>
+              <Typography sx={{ fontSize: 11, color: '#78716C' }}>{L("Profit Margin","מרווח רווח")}</Typography>
               <Typography sx={{ fontSize: 11, fontWeight: 700, color: ((editProduct.price! - (editProduct.cost || 0)) / editProduct.price!) * 100 > 50 ? '#22c55e' : '#f59e0b' }}>
                 {Math.round(((editProduct.price! - (editProduct.cost || 0)) / editProduct.price!) * 100)}% ({formatCurrency(editProduct.price! - (editProduct.cost || 0))})
               </Typography>
@@ -298,12 +298,12 @@ export default function ProductsPage() {
           <Button variant="contained" size="small" onClick={handleBulkPriceUpdate}>{L("Apply","החל")}</Button>
         </>}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <Box sx={{ bgcolor: 'rgba(0,229,176,0.08)', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', p: '12px 16px', fontSize: 12, color: '#a8bcc8', lineHeight: 1.7 }}>
+          <Box sx={{ bgcolor: 'rgba(79,70,229,0.08)', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', p: '12px 16px', fontSize: 12, color: '#A8A29E', lineHeight: 1.7 }}>
             💰 Adjust prices by a percentage. Positive values increase prices, negative values decrease them.
           </Box>
           <Box><Label text={L("Category","קטגוריה")} />
             <Select fullWidth size="small" value={bulkCategory} onChange={(e) => setBulkCategory(e.target.value)}
-              sx={{ bgcolor: '#141920', borderRadius: '10px', fontSize: 13, '& fieldset': { borderColor: 'rgba(255,255,255,0.09)' } }}>
+              sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13, '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } }}>
               <MenuItem value="all">{L("All Categories","כל הקטגוריות")}</MenuItem>
               {CATEGORIES.map((cat) => <MenuItem key={cat.value} value={cat.value}>{lang === 'he' ? cat.he : cat.label}</MenuItem>)}
             </Select>
@@ -312,7 +312,7 @@ export default function ProductsPage() {
             <TextField fullWidth size="small" type="number" value={bulkPercent} onChange={(e) => setBulkPercent(parseFloat(e.target.value) || 0)} placeholder={L("e.g. 10 for +10%","למשל: 10 ל-+10%")} />
           </Box>
           {bulkPercent !== 0 && (
-            <Box sx={{ bgcolor: '#141920', borderRadius: '10px', p: '10px 14px', fontSize: 11, color: bulkPercent > 0 ? '#22c55e' : '#ff4d6d' }}>
+            <Box sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', p: '10px 14px', fontSize: 11, color: bulkPercent > 0 ? '#22c55e' : '#ff4d6d' }}>
               {bulkPercent > 0 ? '📈' : '📉'} Prices will {bulkPercent > 0 ? 'increase' : 'decrease'} by {Math.abs(bulkPercent)}%
               {bulkCategory !== 'all' ? ` for ${bulkCategory} products` : ' for all products'}
             </Box>

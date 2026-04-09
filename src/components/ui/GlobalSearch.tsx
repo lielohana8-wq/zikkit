@@ -74,18 +74,18 @@ export function GlobalSearch() {
         InputProps={{
           startAdornment: <InputAdornment position="start"><Search sx={{ fontSize: 16, color: c.text3 }} /></InputAdornment>,
         }}
-        sx={{ '& .MuiOutlinedInput-root': { fontSize: 12, borderRadius: 2, bgcolor: c.glass2 || 'rgba(255,255,255,0.05)' } }}
+        sx={{ '& .MuiOutlinedInput-root': { fontSize: 12, borderRadius: 2, bgcolor: c.glass2 || 'rgba(0,0,0,0.03)' } }}
       />
       {open && results.length > 0 && (
         <Paper sx={{
           position: 'absolute', top: '100%', left: 0, right: 0, mt: 0.5, zIndex: 999,
           maxHeight: 400, overflow: 'auto', borderRadius: 2,
-          bgcolor: c.surface2 || '#111830', border: `1px solid ${c.border2 || 'rgba(255,255,255,0.1)'}`,
+          bgcolor: c.surface2 || '#F5F0EB', border: `1px solid ${c.border2 || 'rgba(0,0,0,0.08)'}`,
           boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
         }}>
           {results.map((r, i) => (
             <Box key={i} onClick={() => { router.push(r.href); setOpen(false); setQuery(''); }}
-              sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, cursor: 'pointer', borderBottom: `1px solid ${c.border}`, '&:hover': { bgcolor: c.glass2 || 'rgba(255,255,255,0.05)' }, '&:last-child': { borderBottom: 'none' } }}>
+              sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, cursor: 'pointer', borderBottom: `1px solid ${c.border}`, '&:hover': { bgcolor: c.glass2 || 'rgba(0,0,0,0.03)' }, '&:last-child': { borderBottom: 'none' } }}>
               <Box sx={{ width: 28, height: 28, borderRadius: 1, bgcolor: `${r.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: r.color }}>{r.icon}</Box>
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography sx={{ fontSize: 12, fontWeight: 600 }} noWrap>{r.label}</Typography>

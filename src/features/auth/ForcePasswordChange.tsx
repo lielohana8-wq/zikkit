@@ -91,7 +91,7 @@ export function ForcePasswordChange() {
               {[1, 2, 3, 4].map((i) => (
                 <Box key={i} sx={{
                   flex: 1, height: 3, borderRadius: '2px',
-                  bgcolor: newPass.length >= i * 3 ? (newPass.length >= 10 ? '#22c55e' : newPass.length >= 6 ? '#f59e0b' : '#ff4d6d') : 'rgba(255,255,255,0.05)',
+                  bgcolor: newPass.length >= i * 3 ? (newPass.length >= 10 ? '#22c55e' : newPass.length >= 6 ? '#f59e0b' : '#ff4d6d') : 'rgba(0,0,0,0.03)',
                 }} />
               ))}
             </Box>

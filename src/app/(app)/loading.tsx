@@ -9,7 +9,7 @@ function Skeleton({ width = '100%', height = 16, radius = 8 }: { width?: string 
         width,
         height,
         borderRadius: `${radius}px`,
-        bgcolor: 'rgba(255,255,255,0.04)',
+        bgcolor: 'rgba(0,0,0,0.03)',
         animation: 'pulse 1.5s ease-in-out infinite',
         '@keyframes pulse': {
           '0%, 100%': { opacity: 1 },
@@ -33,7 +33,7 @@ export default function Loading() {
               p: 2.5,
               borderRadius: '14px',
               bgcolor: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.05)',
+              border: '1px solid rgba(0,0,0,0.03)',
             }}
           >
             <Skeleton width={80} height={12} />
@@ -44,7 +44,7 @@ export default function Loading() {
       </Box>
       {/* Content area skeleton */}
       <Box sx={{ mt: 3, display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-        <Box sx={{ p: 2.5, borderRadius: '14px', bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <Box sx={{ p: 2.5, borderRadius: '14px', bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(0,0,0,0.03)' }}>
           <Skeleton width={140} height={16} />
           <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {[1, 2, 3, 4, 5].map((i) => (
@@ -52,7 +52,7 @@ export default function Loading() {
             ))}
           </Box>
         </Box>
-        <Box sx={{ p: 2.5, borderRadius: '14px', bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <Box sx={{ p: 2.5, borderRadius: '14px', bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(0,0,0,0.03)' }}>
           <Skeleton width={140} height={16} />
           <Box sx={{ mt: 2 }}><Skeleton height={200} radius={12} /></Box>
         </Box>

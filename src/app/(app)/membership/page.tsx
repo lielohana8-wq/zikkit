@@ -61,7 +61,7 @@ export default function MembershipPage() {
   };
 
   const Stat = ({ label, value, color, icon }: any) => (
-    <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', flex: 1, minWidth: 140 }}>
+    <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', flex: 1, minWidth: 140 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>{icon}<Typography variant="caption" color="text.secondary">{label}</Typography></Box>
       <Typography variant="h4" fontWeight={900} sx={{ color, fontFamily: 'Syne' }}>{value}</Typography>
     </Box>
@@ -90,7 +90,7 @@ export default function MembershipPage() {
           </Paper>
         ))}
         <Paper onClick={() => { setEditPlan({ id: 0, name: '', price: 0, period: 'monthly', features: [], active: true, color: '#3B82F6' }); setShowPlanModal(true); }}
-          sx={{ p: 2.5, borderRadius: 3, border: '2px dashed rgba(255,255,255,0.1)', flex: '1 1 200px', minWidth: 200, maxWidth: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { borderColor: 'rgba(255,255,255,0.3)' } }}>
+          sx={{ p: 2.5, borderRadius: 3, border: '2px dashed rgba(0,0,0,0.08)', flex: '1 1 200px', minWidth: 200, maxWidth: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { borderColor: 'rgba(255,255,255,0.3)' } }}>
           <Box sx={{ textAlign: 'center' }}><Add sx={{ fontSize: 32, color: 'text.secondary' }} /><Typography variant="body2" color="text.secondary">תוכנית חדשה</Typography></Box>
         </Paper>
       </Box>
@@ -100,7 +100,7 @@ export default function MembershipPage() {
       {subs.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 6 }}><Typography fontSize={40}>🏆</Typography><Typography fontWeight={700} sx={{ mt: 1 }}>אין מנויים עדיין</Typography><Typography variant="body2" color="text.secondary">הוסף את המנוי הראשון</Typography></Box>
       ) : (
-        <Box sx={{ bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.055)', borderRadius: '14px', overflow: 'hidden' }}>
+        <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
           <DataTable keyExtractor={(s: MemberSub) => s.id} data={subs} columns={[
             { key: 'client', label: 'לקוח', render: (s: MemberSub) => <Typography fontWeight={600} fontSize={12}>{s.clientName}</Typography> },
             { key: 'phone', label: 'טלפון', render: (s: MemberSub) => s.phone || '—' },

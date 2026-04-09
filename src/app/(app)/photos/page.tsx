@@ -19,15 +19,15 @@ export default function PhotosPage() {
     <Box className="zk-fade-up">
       <SectionHeader title="תמונות לפני/אחרי" subtitle={`${photoSets.length} סטים`} />
       <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap' }}>
-        <Paper sx={{ p: 2, borderRadius: 2, flex: 1, minWidth: 140, border: '1px solid rgba(255,255,255,0.06)' }}>
+        <Paper sx={{ p: 2, borderRadius: 2, flex: 1, minWidth: 140, border: '1px solid rgba(0,0,0,0.06)' }}>
           <Typography variant="h4" fontWeight={900} sx={{ fontFamily: 'Syne', color: '#3B82F6' }}>{photoSets.length}</Typography>
           <Typography variant="caption" color="text.secondary">סטים</Typography>
         </Paper>
-        <Paper sx={{ p: 2, borderRadius: 2, flex: 1, minWidth: 140, border: '1px solid rgba(255,255,255,0.06)' }}>
+        <Paper sx={{ p: 2, borderRadius: 2, flex: 1, minWidth: 140, border: '1px solid rgba(0,0,0,0.06)' }}>
           <Typography variant="h4" fontWeight={900} sx={{ fontFamily: 'Syne', color: '#10B981' }}>{photoSets.reduce((s, p) => s + p.before.length + p.after.length, 0)}</Typography>
           <Typography variant="caption" color="text.secondary">תמונות</Typography>
         </Paper>
-        <Paper sx={{ p: 2, borderRadius: 2, flex: 1, minWidth: 140, border: '1px solid rgba(255,255,255,0.06)' }}>
+        <Paper sx={{ p: 2, borderRadius: 2, flex: 1, minWidth: 140, border: '1px solid rgba(0,0,0,0.06)' }}>
           <Typography variant="h4" fontWeight={900} sx={{ fontFamily: 'Syne', color: '#8B5CF6' }}>{photoSets.filter(p => p.aiReport).length}</Typography>
           <Typography variant="caption" color="text.secondary">דוחות AI</Typography>
         </Paper>
@@ -38,12 +38,12 @@ export default function PhotosPage() {
       ) : (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
           {photoSets.map(ps => (
-            <Paper key={ps.id} onClick={() => setViewSet(ps)} sx={{ borderRadius: 3, overflow: 'hidden', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.06)', '&:hover': { borderColor: 'rgba(255,255,255,0.15)' } }}>
+            <Paper key={ps.id} onClick={() => setViewSet(ps)} sx={{ borderRadius: 3, overflow: 'hidden', cursor: 'pointer', border: '1px solid rgba(0,0,0,0.06)', '&:hover': { borderColor: 'rgba(0,0,0,0.10)' } }}>
               <Box sx={{ display: 'flex', height: 120 }}>
                 <Box sx={{ flex: 1, bgcolor: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Typography color="text.secondary" fontSize={12}>{ps.before.length > 0 ? `${ps.before.length} לפני` : 'לפני'}</Typography>
                 </Box>
-                <Box sx={{ width: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+                <Box sx={{ width: 2, bgcolor: 'rgba(0,0,0,0.08)' }} />
                 <Box sx={{ flex: 1, bgcolor: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Typography color="text.secondary" fontSize={12}>{ps.after.length > 0 ? `${ps.after.length} אחרי` : 'אחרי'}</Typography>
                 </Box>

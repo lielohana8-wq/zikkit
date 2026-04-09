@@ -26,7 +26,7 @@ const HOUR_H = 64;
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 6);
 const DAYS_HE = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 const DAYS_SHORT = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
-const TECH_COLORS = ['#5C8AFF','#00E676','#FF9100','#A78BFA','#FF5A7E','#00E5FF','#EC4899','#84CC16','#F59E0B','#6366F1'];
+const TECH_COLORS = ['#5C8AFF','#00E676','#FF9100','#A78BFA','#FF5A7E','#4F46E5','#EC4899','#84CC16','#F59E0B','#6366F1'];
 
 type ViewMode = 'day' | 'week' | 'month' | 'timeline';
 
@@ -35,7 +35,7 @@ const STATUS: Record<string, { color: string; bg: string; he: string }> = {
   assigned: { color: '#5C8AFF', bg: 'rgba(92,138,255,0.12)', he: 'שויך' },
   in_progress: { color: '#FF9100', bg: 'rgba(255,145,0,0.12)', he: 'בטיפול' },
   waiting_parts: { color: '#A78BFA', bg: 'rgba(167,139,250,0.12)', he: 'ממתין לחלקים' },
-  parts_arrived: { color: '#00E5FF', bg: 'rgba(0,229,255,0.12)', he: 'חלקים הגיעו' },
+  parts_arrived: { color: '#4F46E5', bg: 'rgba(0,229,255,0.12)', he: 'חלקים הגיעו' },
   scheduled: { color: '#5C8AFF', bg: 'rgba(92,138,255,0.12)', he: 'מתוכנן' },
   completed: { color: '#00E676', bg: 'rgba(0,230,118,0.12)', he: 'הושלם' },
   cancelled: { color: '#EF4444', bg: 'rgba(239,68,68,0.12)', he: 'בוטל' },
@@ -161,7 +161,7 @@ function TechPill({ tech, index, jobCount, capacity }: { tech: User; index: numb
         <Typography noWrap sx={{ fontSize: 12, fontWeight: 700, color: c.text, lineHeight: 1.2 }}>{tech.name}</Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', mt: '2px' }}>
           <LinearProgress variant="determinate" value={capacity} sx={{
-            flex: 1, height: 3, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.06)',
+            flex: 1, height: 3, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.06)',
             '& .MuiLinearProgress-bar': { borderRadius: 2, bgcolor: capacity > 90 ? '#EF4444' : capacity > 60 ? '#FF9100' : '#00E676' },
           }} />
           <Typography sx={{ fontSize: 9, color: c.text3, fontWeight: 600, minWidth: 20, textAlign: 'left' }}>{jobCount}</Typography>
@@ -246,12 +246,12 @@ function WeekView({ dates, jobs, techs, onEdit, onCreate, onDragStart, onDrop }:
             <Box sx={{
               height: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               borderBottom: '1px solid ' + c.border,
-              bgcolor: today ? 'rgba(0,229,255,0.06)' : 'transparent',
+              bgcolor: today ? 'rgba(79,70,229,0.06)' : 'transparent',
               position: 'sticky', top: 0, zIndex: 2,
             }}>
               <Typography sx={{ fontSize: 9, color: today ? c.accent : c.text3, fontWeight: 600, lineHeight: 1 }}>{DAYS_SHORT[d.getDay()]}</Typography>
               <Typography sx={{ fontSize: 14, fontWeight: today ? 800 : 600, color: today ? c.accent : c.text, lineHeight: 1.2,
-                ...(today && { bgcolor: 'rgba(0,229,255,0.15)', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }),
+                ...(today && { bgcolor: 'rgba(79,70,229,0.12)', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }),
               }}>{d.getDate()}</Typography>
             </Box>
             <Box
@@ -302,7 +302,7 @@ function MonthView({ dates, curMonth, jobs, techs, onEdit, onDayClick }: any) {
                 bgcolor: today ? 'rgba(0,229,255,0.04)' : inMonth ? 'transparent' : 'rgba(0,0,0,0.15)',
                 border: '1px solid ' + (today ? 'rgba(0,229,255,0.2)' : c.border),
                 borderRadius: '6px', cursor: 'pointer', transition: 'all 0.15s',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.03)', borderColor: c.border2 },
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.02)', borderColor: c.border2 },
               }}>
                 <Typography sx={{ fontSize: 11, fontWeight: today ? 800 : inMonth ? 500 : 400, color: today ? c.accent : inMonth ? c.text : c.text4, textAlign: 'center', mb: '2px', lineHeight: 1.4 }}>{d.getDate()}</Typography>
                 {dayJobs.slice(0, 3).map((job: Job) => {
@@ -336,7 +336,7 @@ function TimelineView({ dates, jobs, allJobs, techs, onEdit, onDragStart, onDrop
           return (
             <Chip key={date} label={DAYS_SHORT[d.getDay()] + ' ' + d.getDate()} onClick={() => setSelDate(date)} size="small" sx={{
               fontWeight: sel ? 700 : 500, fontSize: 11,
-              bgcolor: sel ? (today ? 'rgba(0,229,255,0.15)' : c.glass3) : 'transparent',
+              bgcolor: sel ? (today ? 'rgba(79,70,229,0.12)' : c.glass3) : 'transparent',
               color: sel ? (today ? c.accent : c.text) : c.text3,
               border: '1px solid ' + (sel ? (today ? 'rgba(0,229,255,0.3)' : c.border2) : c.border),
               '&:hover': { bgcolor: c.glass2 },
@@ -366,7 +366,7 @@ function TimelineView({ dates, jobs, allJobs, techs, onEdit, onDragStart, onDrop
                   </Box>
                 </Box>
                 <Box sx={{ position: 'relative', flex: 1, height: '100%' }}>
-                  {HOURS.map(h => <Box key={h} sx={{ position: 'absolute', left: (h - 6) * 70, top: 0, bottom: 0, width: '1px', bgcolor: 'rgba(255,255,255,0.03)' }} />)}
+                  {HOURS.map(h => <Box key={h} sx={{ position: 'absolute', left: (h - 6) * 70, top: 0, bottom: 0, width: '1px', bgcolor: 'rgba(0,0,0,0.02)' }} />)}
                   {techJobs.map((job: Job) => {
                     const [hh, mm] = jobTime(job).split(':').map(Number);
                     const left = ((hh * 60 + mm - 360) / 60) * 70;

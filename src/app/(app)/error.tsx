@@ -50,7 +50,7 @@ export default function Error({
         <Button
           href="/dashboard"
           sx={{
-            bgcolor: 'rgba(255,255,255,0.05)',
+            bgcolor: 'rgba(0,0,0,0.03)',
             color: c.text2,
             fontWeight: 600,
             fontSize: 13,
@@ -58,7 +58,7 @@ export default function Error({
             py: 1,
             borderRadius: '10px',
             textTransform: 'none',
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+            '&:hover': { bgcolor: 'rgba(0,0,0,0.06)' },
           }}
         >
           Go to Dashboard

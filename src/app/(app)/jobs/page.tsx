@@ -24,7 +24,7 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string; dot: strin
   urgent: { label: 'דחוף', he: 'דחוף', color: '#ff4d6d', dot: '🔴' },
   high: { label: 'גבוה', he: 'גבוה', color: '#f59e0b', dot: '🟠' },
   normal: { label: 'רגיל', he: 'רגיל', color: '#4f8fff', dot: '🔵' },
-  low: { label: 'נמוך', he: 'נמוך', color: '#5a7080', dot: '⚪' },
+  low: { label: 'נמוך', he: 'נמוך', color: '#78716C', dot: '⚪' },
 };
 
 export default function JobsPage() {
@@ -206,7 +206,7 @@ export default function JobsPage() {
             bizPhone: cfg.biz_phone || '',
             bizEmail: cfg.biz_email || '',
             bizAddress: cfg.biz_address || '',
-            bizColor: cfg.biz_color || '#00e5b0',
+            bizColor: cfg.biz_color || '#4F46E5',
             currency: cfg.currency || 'USD',
             taxRate: cfg.tax_rate || 0,
             quoteFooter: cfg.quote_footer || '',
@@ -303,7 +303,7 @@ export default function JobsPage() {
   const statusOptions = ['all', ...Object.keys(JOB_STATUS_CONFIG)];
 
   const Label = ({ text }: { text: string }) => (
-    <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>
+    <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>
   );
 
   const handleInvoice = (job: Job) => {
@@ -350,10 +350,10 @@ export default function JobsPage() {
       {/* ── Filters ── */}
       <Box sx={{ display: 'flex', gap: '10px', mb: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField placeholder={L("חיפוש עבודות...","חפש עבודות...")} value={search} onChange={(e) => setSearch(e.target.value)} size="small" sx={{ minWidth: 220 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#5a7080' }} /></InputAdornment> }} />
+          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#78716C' }} /></InputAdornment> }} />
         {/* Tech filter */}
         <Select value={techFilter} onChange={(e) => setTechFilter(e.target.value)} size="small" displayEmpty
-          sx={{ minWidth: 140, bgcolor: '#141920', borderRadius: '10px', fontSize: 11, '& fieldset': { borderColor: 'rgba(255,255,255,0.09)' } }}>
+          sx={{ minWidth: 140, bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 11, '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } }}>
           <MenuItem value="all" sx={{ fontSize: 12 }}>{L('👷 כל הטכנאים','👷 כל הטכנאים')}</MenuItem>
           <MenuItem value="" sx={{ fontSize: 12 }}>— לא שובץ</MenuItem>
           {techs.map((t) => <MenuItem key={String(t.id)} value={t.name} sx={{ fontSize: 12 }}>👷 {t.name}</MenuItem>)}
@@ -368,9 +368,9 @@ export default function JobsPage() {
           return (
             <Button key={s} size="small" onClick={() => setStatusFilter(s)} sx={{
               px: '10px', py: '4px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto', textTransform: 'capitalize',
-              bgcolor: statusFilter === s ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.05)',
-              color: statusFilter === s ? '#00e5b0' : '#5a7080',
-              border: '1px solid ' + (statusFilter === s ? 'rgba(0,229,176,0.3)' : 'rgba(255,255,255,0.09)'),
+              bgcolor: statusFilter === s ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.03)',
+              color: statusFilter === s ? '#4F46E5' : '#78716C',
+              border: '1px solid ' + (statusFilter === s ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.08)'),
             }}>
               {s === 'all' ? L('All','הכל') + ` (${count})` : `${(lang==='he'?cfgItem?.he:cfgItem?.label) || s} (${count})`}
             </Button>
@@ -384,17 +384,17 @@ export default function JobsPage() {
           display: 'flex', gap: '8px', alignItems: 'center', mb: '12px', p: '10px 14px',
           bgcolor: 'rgba(0,229,176,0.06)', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px',
         }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#00e5b0' }}>
+          <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#4F46E5' }}>
             {selectedIds.size} selected
           </Typography>
           <Button size="small" onClick={(e) => setBulkMenuAnchor(e.currentTarget)} sx={{
-            fontSize: 10, px: '10px', py: '3px', bgcolor: 'rgba(255,255,255,0.05)', color: '#a8bcc8',
-            border: '1px solid rgba(255,255,255,0.09)', borderRadius: '6px',
+            fontSize: 10, px: '10px', py: '3px', bgcolor: 'rgba(0,0,0,0.03)', color: '#A8A29E',
+            border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px',
           }}>
             {L('⚡ Bulk Actions','⚡ פעולות מרובות')}
           </Button>
           <Button size="small" onClick={() => setSelectedIds(new Set())} sx={{
-            fontSize: 10, px: '8px', py: '3px', color: '#5a7080', minWidth: 'auto',
+            fontSize: 10, px: '8px', py: '3px', color: '#78716C', minWidth: 'auto',
           }}>
             ✕ Clear
           </Button>
@@ -403,31 +403,31 @@ export default function JobsPage() {
 
       {/* Bulk Actions Menu */}
       <Menu anchorEl={bulkMenuAnchor} open={Boolean(bulkMenuAnchor)} onClose={() => setBulkMenuAnchor(null)}
-        PaperProps={{ sx: { bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', minWidth: 220 } }}>
-        <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        PaperProps={{ sx: { bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', minWidth: 220 } }}>
+        <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           שנה סטטוס
         </Box>
         {['open', 'assigned', 'in_progress', 'scheduled', 'completed', 'cancelled'].map((s) => (
           <MenuItem key={s} onClick={() => handleBulkStatus(s as JobStatus)}
-            sx={{ fontSize: 12, gap: '8px', color: '#a8bcc8', pl: '24px', '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
+            sx={{ fontSize: 12, gap: '8px', color: '#A8A29E', pl: '24px', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
             {(lang==='he'?JOB_STATUS_CONFIG[s as keyof typeof JOB_STATUS_CONFIG]?.he:JOB_STATUS_CONFIG[s as keyof typeof JOB_STATUS_CONFIG]?.label) || s}
           </MenuItem>
         ))}
         {techs.length > 0 && (
           <>
-            <Box sx={{ height: '1px', bgcolor: 'rgba(255,255,255,0.055)', my: '4px' }} />
-            <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <Box sx={{ height: '1px', bgcolor: 'rgba(0,0,0,0.06)', my: '4px' }} />
+            <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Assign Tech
             </Box>
             {techs.map((t) => (
               <MenuItem key={String(t.id)} onClick={() => handleBulkAssign(t.name)}
-                sx={{ fontSize: 12, gap: '8px', color: '#a8bcc8', pl: '24px', '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
+                sx={{ fontSize: 12, gap: '8px', color: '#A8A29E', pl: '24px', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
                 👷 {t.name}
               </MenuItem>
             ))}
           </>
         )}
-        <Box sx={{ height: '1px', bgcolor: 'rgba(255,255,255,0.055)', my: '4px' }} />
+        <Box sx={{ height: '1px', bgcolor: 'rgba(0,0,0,0.06)', my: '4px' }} />
         <MenuItem onClick={handleBulkDelete}
           sx={{ fontSize: 12, gap: '8px', color: '#ff4d6d', '&:hover': { bgcolor: 'rgba(255,77,109,0.1)' } }}>
           🗑️ Delete Selected
@@ -438,14 +438,14 @@ export default function JobsPage() {
       {jobs.length === 0 ? (
         <EmptyState icon="🔧" title={L("אין עבודות","אין עבודות עדיין")} subtitle={L("Create your first job to get started.","צור את העבודה הראשונה שלך.")} actionLabel={L("+ עבודה חדשה","+ עבודה חדשה")} onAction={openNew} />
       ) : (
-        <Box sx={{ bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.055)', borderRadius: '14px', overflow: 'hidden' }}>
+        <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
           <DataTable<Job>
             keyExtractor={(j) => j.id}
             columns={[
               { key: 'select', label: '', width: 40, render: (j) => (
                 <Checkbox size="small" checked={selectedIds.has(j.id)}
                   onClick={(e) => { e.stopPropagation(); toggleSelect(j.id); }}
-                  sx={{ p: 0, '& .MuiSvgIcon-root': { fontSize: 16 }, color: '#5a7080', '&.Mui-checked': { color: '#00e5b0' } }} />
+                  sx={{ p: 0, '& .MuiSvgIcon-root': { fontSize: 16 }, color: '#78716C', '&.Mui-checked': { color: '#4F46E5' } }} />
               )},
               { key: 'priority', label: '', width: 30, render: (j) => {
                 const p = PRIORITY_CONFIG[j.priority || 'normal'];
@@ -463,7 +463,7 @@ export default function JobsPage() {
               { key: 'created', label: L('Created','נוצר'), render: (j) => formatDate(j.created) },
               { key: 'actions', label: '', width: 80, render: (j) => (
                 <Button size="small" onClick={(e) => handleOpenMenu(e, j)}
-                  sx={{ fontSize: 11, minWidth: 'auto', p: '3px 10px', bgcolor: 'rgba(255,255,255,0.05)', color: '#a8bcc8', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '6px' }}>
+                  sx={{ fontSize: 11, minWidth: 'auto', p: '3px 10px', bgcolor: 'rgba(0,0,0,0.03)', color: '#A8A29E', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px' }}>
                   {L('⋮ פעולות','⋮ פעולות')}
                 </Button>
               )},
@@ -476,10 +476,10 @@ export default function JobsPage() {
 
       {/* ══ Actions Menu ══ */}
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleCloseMenu}
-        PaperProps={{ sx: { bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', minWidth: 220 } }}>
+        PaperProps={{ sx: { bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', minWidth: 220 } }}>
 
         <MenuItem onClick={() => { if (menuJob) openEdit(menuJob); handleCloseMenu(); }}
-          sx={{ fontSize: 12, gap: '8px', color: '#a8bcc8', '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
+          sx={{ fontSize: 12, gap: '8px', color: '#A8A29E', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
           {L('✏️ עריכת עבודה','✏️ ערוך עבודה')}
         </MenuItem>
 
@@ -505,21 +505,21 @@ export default function JobsPage() {
         {/* Assign Tech submenu */}
         {techs.length > 0 && (
           <Box>
-            <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Assign Technician
             </Box>
             {techs.map((t) => (
               <MenuItem key={String(t.id)} onClick={() => { if (menuJob) handleAssignTech(menuJob, t.name); }}
-                sx={{ fontSize: 12, gap: '8px', color: '#a8bcc8', pl: '24px', '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
+                sx={{ fontSize: 12, gap: '8px', color: '#A8A29E', pl: '24px', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
                 👷 {t.name}
               </MenuItem>
             ))}
           </Box>
         )}
 
-        <Box sx={{ height: '1px', bgcolor: 'rgba(255,255,255,0.055)', my: '4px' }} />
+        <Box sx={{ height: '1px', bgcolor: 'rgba(0,0,0,0.06)', my: '4px' }} />
 
-        <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#5a7080', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <Box sx={{ px: '16px', py: '6px', fontSize: 10, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           {L('שנה סטטוס','שנה סטטוס')}
         </Box>
         {[
@@ -534,12 +534,12 @@ export default function JobsPage() {
           { status: 'cancelled' as JobStatus, icon: '🚫', label: 'Cancelled', he: 'בוטל' },
         ].map((item) => (
           <MenuItem key={item.status} onClick={() => { if (menuJob) handleStatusChange(menuJob, item.status); }}
-            sx={{ fontSize: 12, gap: '8px', color: '#a8bcc8', pl: '24px', '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
+            sx={{ fontSize: 12, gap: '8px', color: '#A8A29E', pl: '24px', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
             {item.icon} {lang === 'he' ? item.he : item.label}
           </MenuItem>
         ))}
 
-        <Box sx={{ height: '1px', bgcolor: 'rgba(255,255,255,0.055)', my: '4px' }} />
+        <Box sx={{ height: '1px', bgcolor: 'rgba(0,0,0,0.06)', my: '4px' }} />
 
         {/* Send Portal — for completed jobs */}
         {menuJob && menuJob.status === 'completed' && (
@@ -663,9 +663,9 @@ export default function JobsPage() {
                 {(['low', 'normal', 'high', 'urgent'] as const).map((p) => (
                   <Button key={p} size="small" onClick={() => setEditJob({ ...editJob, priority: p })} sx={{
                     px: '10px', py: '4px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto', textTransform: 'capitalize', flex: 1,
-                    bgcolor: editJob.priority === p ? `${PRIORITY_CONFIG[p].color}18` : 'rgba(255,255,255,0.05)',
-                    color: editJob.priority === p ? PRIORITY_CONFIG[p].color : '#5a7080',
-                    border: `1px solid ${editJob.priority === p ? PRIORITY_CONFIG[p].color + '44' : 'rgba(255,255,255,0.09)'}`,
+                    bgcolor: editJob.priority === p ? `${PRIORITY_CONFIG[p].color}18` : 'rgba(0,0,0,0.03)',
+                    color: editJob.priority === p ? PRIORITY_CONFIG[p].color : '#78716C',
+                    border: `1px solid ${editJob.priority === p ? PRIORITY_CONFIG[p].color + '44' : 'rgba(0,0,0,0.08)'}`,
                   }}>
                     {PRIORITY_CONFIG[p].dot} {lang === 'he' ? PRIORITY_CONFIG[p].he : p}
                   </Button>
@@ -674,7 +674,7 @@ export default function JobsPage() {
             </Box>
             <Box><Label text={L("Assign Technician","שיך טכנאי")} />
               <Select fullWidth size="small" value={editJob.tech || ''} displayEmpty onChange={(e) => setEditJob({ ...editJob, tech: e.target.value })}
-                sx={{ bgcolor: '#141920', borderRadius: '10px', fontSize: 13, '& fieldset': { borderColor: 'rgba(255,255,255,0.09)' } }}>
+                sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13, '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } }}>
                 <MenuItem value="">{L('Unassigned','לא שויך')}</MenuItem>
                 {techs.map((t) => <MenuItem key={String(t.id)} value={t.name}>{t.name}</MenuItem>)}
               </Select>
@@ -690,7 +690,7 @@ export default function JobsPage() {
             <>
               <Box><Label text={L("Status","סטטוס")} />
                 <Select fullWidth size="small" value={editJob.status || 'open'} onChange={(e) => setEditJob({ ...editJob, status: e.target.value as JobStatus })}
-                  sx={{ bgcolor: '#141920', borderRadius: '10px', fontSize: 13, '& fieldset': { borderColor: 'rgba(255,255,255,0.09)' } }}>
+                  sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13, '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } }}>
                   {Object.entries(JOB_STATUS_CONFIG).map(([key, val]) => (
                     <MenuItem key={key} value={key}>{lang === 'he' ? val.he : val.label}</MenuItem>
                   ))}
@@ -716,7 +716,7 @@ export default function JobsPage() {
           </Button>
         </>}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <Box sx={{ bgcolor: 'rgba(0,229,176,0.08)', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', p: '12px 16px', fontSize: 12, color: '#a8bcc8', lineHeight: 1.7 }}>
+          <Box sx={{ bgcolor: 'rgba(79,70,229,0.08)', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', p: '12px 16px', fontSize: 12, color: '#A8A29E', lineHeight: 1.7 }}>
             {L('Client','לקוח')}: <strong>{closeJob?.client}</strong><br />
             {L('Address','כתובת')}: {closeJob?.address || '—'}<br />
             {L('Technician','טכנאי')}: {closeJob?.tech || L('Unassigned','לא שויך')}
@@ -735,35 +735,35 @@ export default function JobsPage() {
             <MenuItem value="other">{L('Other','אחר')}</MenuItem>
           </Select></Box>
           {closeRevenue > 0 && (
-            <Box sx={{ bgcolor: '#141920', border: '1px solid rgba(255,255,255,0.055)', borderRadius: '10px', p: '12px 16px' }}>
+            <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '10px', p: '12px 16px' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px' }}>
-                <Typography sx={{ fontSize: 12, color: '#5a7080' }}>{L('Revenue','הכנסה')}</Typography>
+                <Typography sx={{ fontSize: 12, color: '#78716C' }}>{L('Revenue','הכנסה')}</Typography>
                 <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#22c55e' }}>{formatCurrency(closeRevenue, currency)}</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px' }}>
-                <Typography sx={{ fontSize: 12, color: '#5a7080' }}>{L('Materials','חומרים')}</Typography>
+                <Typography sx={{ fontSize: 12, color: '#78716C' }}>{L('Materials','חומרים')}</Typography>
                 <Typography sx={{ fontSize: 12, color: '#ff4d6d' }}>-{formatCurrency(closeMaterials, currency)}</Typography>
               </Box>
               {taxRate > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px' }}>
-                  <Typography sx={{ fontSize: 12, color: '#5a7080' }}>{L(`Tax (${taxRate}%)`,`מס (${taxRate}%)`)}</Typography>
+                  <Typography sx={{ fontSize: 12, color: '#78716C' }}>{L(`Tax (${taxRate}%)`,`מס (${taxRate}%)`)}</Typography>
                   <Typography sx={{ fontSize: 12, color: '#f59e0b' }}>-{formatCurrency(closeTax, currency)}</Typography>
                 </Box>
               )}
               {taxRate === 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px' }}>
-                  <Typography sx={{ fontSize: 11, color: '#5a7080', fontStyle: 'italic' }}>{L('No tax configured — set in Settings','לא הוגדר מס — הגדר בהגדרות')}</Typography>
+                  <Typography sx={{ fontSize: 11, color: '#78716C', fontStyle: 'italic' }}>{L('No tax configured — set in Settings','לא הוגדר מס — הגדר בהגדרות')}</Typography>
                 </Box>
               )}
               {closeCommRate > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px' }}>
-                  <Typography sx={{ fontSize: 12, color: '#5a7080' }}>{L(`Commission (${closeCommRate}%)`,`עמלה (${closeCommRate}%)`)}</Typography>
+                  <Typography sx={{ fontSize: 12, color: '#78716C' }}>{L(`Commission (${closeCommRate}%)`,`עמלה (${closeCommRate}%)`)}</Typography>
                   <Typography sx={{ fontSize: 12, color: '#a78bfa' }}>-{formatCurrency(closeCommission, currency)}</Typography>
                 </Box>
               )}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '8px', borderTop: '1px solid rgba(255,255,255,0.055)' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '8px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                 <Typography sx={{ fontSize: 14, fontWeight: 800 }}>{L("Net Profit","רווח נקי")}</Typography>
-                <Typography sx={{ fontSize: 14, fontWeight: 800, color: closeProfit >= 0 ? '#00e5b0' : '#ff4d6d' }}>{formatCurrency(closeProfit, currency)}</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 800, color: closeProfit >= 0 ? '#4F46E5' : '#ff4d6d' }}>{formatCurrency(closeProfit, currency)}</Typography>
               </Box>
             </Box>
           )}

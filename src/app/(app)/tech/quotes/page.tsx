@@ -118,7 +118,7 @@ export default function TechQuotesPage() {
   };
 
   const Label = ({ text }: { text: string }) => (
-    <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>
+    <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>
   );
 
   return (
@@ -135,19 +135,19 @@ export default function TechQuotesPage() {
       <Box sx={{ display: 'flex', gap: '10px', mb: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
         <Button size="small" onClick={openNew} sx={{
           px: '14px', py: '6px', fontSize: 11, fontWeight: 700, borderRadius: '10px',
-          bgcolor: 'rgba(0,229,176,0.08)', color: '#00e5b0', border: '1px solid rgba(0,229,176,0.2)',
-          '&:hover': { bgcolor: '#00e5b0', color: '#000' },
+          bgcolor: 'rgba(79,70,229,0.08)', color: '#4F46E5', border: '1px solid rgba(0,229,176,0.2)',
+          '&:hover': { bgcolor: '#4F46E5', color: '#000' },
         }}>
           + הצעת מחיר חדשה
         </Button>
         <TextField placeholder="חיפוש הצעות מחיר..." value={search} onChange={(e) => setSearch(e.target.value)} size="small" sx={{ minWidth: 200 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#5a7080' }} /></InputAdornment> }} />
+          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#78716C' }} /></InputAdornment> }} />
         {['all', 'draft', 'sent', 'accepted', 'declined'].map((s) => (
           <Button key={s} size="small" onClick={() => setStatusFilter(s)} sx={{
             px: '10px', py: '4px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto', textTransform: 'capitalize',
-            bgcolor: statusFilter === s ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.05)',
-            color: statusFilter === s ? '#00e5b0' : '#5a7080',
-            border: '1px solid ' + (statusFilter === s ? 'rgba(0,229,176,0.3)' : 'rgba(255,255,255,0.09)'),
+            bgcolor: statusFilter === s ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.03)',
+            color: statusFilter === s ? '#4F46E5' : '#78716C',
+            border: '1px solid ' + (statusFilter === s ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.08)'),
           }}>
             {s === 'all' ? 'הכל' : s}
           </Button>
@@ -157,19 +157,19 @@ export default function TechQuotesPage() {
       {myQuotes.length === 0 ? (
         <EmptyState icon="📄" title="אין הצעות מחיר" subtitle="צור את הצעת המחיר הראשונה שלך." />
       ) : (
-        <Box sx={{ bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.055)', borderRadius: '14px', overflow: 'hidden' }}>
+        <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
           <DataTable<Quote>
             keyExtractor={(q) => String(q.id)}
             columns={[
               { key: 'client', label: 'לקוח', render: (q) => <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{q.client}</Typography> },
               { key: 'phone', label: 'טלפון', render: (q) => q.phone || '—' },
               { key: 'items', label: 'פריטים', render: (q) => String((q.items || []).length) + ' פריטים' },
-              { key: 'total', label: 'סה"כ', render: (q) => <Typography sx={{ fontWeight: 700, fontSize: 12, color: '#00e5b0' }}>{formatCurrency(q.total || 0, currency)}</Typography> },
+              { key: 'total', label: 'סה"כ', render: (q) => <Typography sx={{ fontWeight: 700, fontSize: 12, color: '#4F46E5' }}>{formatCurrency(q.total || 0, currency)}</Typography> },
               { key: 'status', label: 'סטטוס', render: (q) => <Badge label={q.status} variant={STATUS_MAP[q.status] || 'grey'} /> },
               { key: 'created', label: 'תאריך', render: (q) => formatDate(q.created) },
               { key: 'actions', label: '', width: 80, render: (q) => (
                 <Button size="small" onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); setMenuQuote(q); }}
-                  sx={{ fontSize: 11, minWidth: 'auto', p: '3px 10px', bgcolor: 'rgba(255,255,255,0.05)', color: '#a8bcc8', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '6px' }}>
+                  sx={{ fontSize: 11, minWidth: 'auto', p: '3px 10px', bgcolor: 'rgba(0,0,0,0.03)', color: '#A8A29E', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px' }}>
                   ⋮
                 </Button>
               )},
@@ -180,7 +180,7 @@ export default function TechQuotesPage() {
       )}
 
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => { setMenuAnchor(null); setMenuQuote(null); }}
-        PaperProps={{ sx: { bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', minWidth: 180 } }}>
+        PaperProps={{ sx: { bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', minWidth: 180 } }}>
         <MenuItem onClick={() => { if (menuQuote) handleSendWhatsApp(menuQuote); }}
           sx={{ fontSize: 12, gap: '8px', color: '#25d366', '&:hover': { bgcolor: 'rgba(37,211,102,0.08)' } }}>
           💬 Send via WhatsApp
@@ -204,7 +204,7 @@ export default function TechQuotesPage() {
         footer={<>
           <Button variant="outlined" size="small" onClick={() => setShowModal(false)}>{L('Cancel','ביטול')}</Button>
           <Button size="small" onClick={handleSave}
-            sx={{ bgcolor: 'rgba(0,229,176,0.1)', color: '#00e5b0', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', fontWeight: 700, '&:hover': { bgcolor: '#00e5b0', color: '#000' } }}>
+            sx={{ bgcolor: 'rgba(0,229,176,0.1)', color: '#4F46E5', border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', fontWeight: 700, '&:hover': { bgcolor: '#4F46E5', color: '#000' } }}>
             💾 {editQuote.id ? 'עדכן' : 'Create'} Quote
           </Button>
         </>}>
@@ -215,10 +215,10 @@ export default function TechQuotesPage() {
           </Box>
           <Box><Label text={L("Address","כתובת")} /><TextField fullWidth size="small" value={editQuote.address || ''} onChange={(e) => setEditQuote({ ...editQuote, address: e.target.value })} /></Box>
 
-          <Box sx={{ bgcolor: '#141920', border: '1px solid rgba(255,255,255,0.055)', borderRadius: '10px', p: '12px' }}>
+          <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '10px', p: '12px' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '10px' }}>
-              <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#a8bcc8' }}>{L("Line Items","פריטים")}</Typography>
-              <Button size="small" onClick={addItem} sx={{ fontSize: 10, color: '#00e5b0', minWidth: 'auto' }}>+ Add</Button>
+              <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#A8A29E' }}>{L("Line Items","פריטים")}</Typography>
+              <Button size="small" onClick={addItem} sx={{ fontSize: 10, color: '#4F46E5', minWidth: 'auto' }}>+ Add</Button>
             </Box>
             {items.map((item) => (
               <Box key={item.id} sx={{ display: 'flex', gap: '8px', mb: '8px', alignItems: 'center' }}>
@@ -232,22 +232,22 @@ export default function TechQuotesPage() {
                 </TextField>
                 <TextField size="small" type="number" value={item.qty} onChange={(e) => updateItem(item.id, 'qty', parseInt(e.target.value) || 1)} sx={{ width: 60 }} />
                 <TextField size="small" type="number" value={item.price} onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)} sx={{ width: 90 }} />
-                <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#00e5b0', minWidth: 70, textAlign: 'right' }}>{formatCurrency(item.qty * item.price, currency)}</Typography>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#4F46E5', minWidth: 70, textAlign: 'right' }}>{formatCurrency(item.qty * item.price, currency)}</Typography>
                 <IconButton size="small" onClick={() => removeItem(item.id)} sx={{ color: '#ef4444', opacity: 0.6 }}><DeleteIcon sx={{ fontSize: 14 }} /></IconButton>
               </Box>
             ))}
-            <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.055)', pt: '10px', mt: '6px' }}>
+            <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.06)', pt: '10px', mt: '6px' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px' }}>
-                <Typography sx={{ fontSize: 11, color: '#5a7080' }}>{L("Subtotal","סיכום ביניים")}</Typography>
+                <Typography sx={{ fontSize: 11, color: '#78716C' }}>{L("Subtotal","סיכום ביניים")}</Typography>
                 <Typography sx={{ fontSize: 11, fontWeight: 600 }}>{formatCurrency(subtotal, currency)}</Typography>
               </Box>
               {taxRate > 0 && <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px' }}>
-                <Typography sx={{ fontSize: 11, color: '#5a7080' }}>Tax ({taxRate}%)</Typography>
+                <Typography sx={{ fontSize: 11, color: '#78716C' }}>Tax ({taxRate}%)</Typography>
                 <Typography sx={{ fontSize: 11, fontWeight: 600 }}>{formatCurrency(tax, currency)}</Typography>
               </Box>}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '6px', borderTop: '1px solid rgba(255,255,255,0.055)' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '6px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                 <Typography sx={{ fontSize: 13, fontWeight: 800 }}>{L("Total","סה\"כ")}</Typography>
-                <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#00e5b0' }}>{formatCurrency(total, currency)}</Typography>
+                <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#4F46E5' }}>{formatCurrency(total, currency)}</Typography>
               </Box>
             </Box>
           </Box>

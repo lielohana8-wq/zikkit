@@ -81,13 +81,13 @@ export default function CustomersPage() {
 
       <Box sx={{ mb: 2 }}>
         <TextField placeholder="חיפוש לקוח..." value={search} onChange={e => setSearch(e.target.value)} size="small" sx={{ minWidth: 260 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ fontSize: 16, color: '#5a7080' }} /></InputAdornment> }} />
+          InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ fontSize: 16, color: '#78716C' }} /></InputAdornment> }} />
       </Box>
 
       {filtered.length === 0 ? (
         <EmptyState icon="👥" title="אין לקוחות" subtitle="לקוחות ייווצרו אוטומטית מעבודות ולידים" />
       ) : (
-        <Box sx={{ bgcolor: c.surface2 || '#0f1318', border: `1px solid ${c.border}`, borderRadius: '14px', overflow: 'hidden' }}>
+        <Box sx={{ bgcolor: c.surface2 || '#FAF7F4', border: `1px solid ${c.border}`, borderRadius: '14px', overflow: 'hidden' }}>
           <DataTable keyExtractor={(cust: Customer) => cust.phone || cust.name} data={filtered} onRowClick={(cust: Customer) => setSelectedCustomer(cust)} columns={[
             { key: 'name', label: 'לקוח', render: (cust: Customer) => (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

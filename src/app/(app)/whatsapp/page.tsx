@@ -45,7 +45,7 @@ export default function WhatsAppPage() {
   };
 
   const Stat = ({ label, value, color }: { label: string; value: number; color: string }) => (
-    <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', flex: 1, minWidth: 110 }}>
+    <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', flex: 1, minWidth: 110 }}>
       <Typography variant="h4" fontWeight={900} sx={{ color, fontFamily: 'Syne' }}>{value.toLocaleString()}</Typography>
       <Typography variant="caption" color="text.secondary">{label}</Typography>
     </Box>
@@ -73,7 +73,7 @@ export default function WhatsAppPage() {
           <Button variant="contained" size="small" startIcon={<Add />} onClick={() => { setEditTemplate({ id: 0, name: '', trigger: '', message: '', enabled: true }); setShowModal(true); }} sx={{ bgcolor: '#25D366' }}>תבנית חדשה</Button>
         </Box>
         {templates.map(t => (
-          <Paper key={t.id} sx={{ p: 2, mb: 1.5, borderRadius: 2, border: '1px solid rgba(255,255,255,0.06)', borderRight: `4px solid ${t.enabled ? '#25D366' : '#5a7080'}` }}>
+          <Paper key={t.id} sx={{ p: 2, mb: 1.5, borderRadius: 2, border: '1px solid rgba(0,0,0,0.06)', borderRight: `4px solid ${t.enabled ? '#25D366' : '#78716C'}` }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <Typography fontWeight={700} fontSize={13}>{t.name}</Typography>
               <Chip label={t.trigger} size="small" sx={{ fontSize: 10 }} />

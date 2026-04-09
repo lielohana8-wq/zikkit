@@ -17,7 +17,7 @@ import type { Job } from '@/types';
 
 function CardHeader({ icon, title, action }: { icon: string; title: string; action?: React.ReactNode }) {
   return (
-    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.055)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
       <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
         {icon} {title}
       </Typography>
@@ -67,8 +67,8 @@ export default function TechDashboardPage() {
     <Box sx={{ animation: 'fadeIn 0.2s ease' }}>
       {/* Welcome */}
       <Box sx={{
-        background: 'linear-gradient(135deg, rgba(0,229,176,0.08), rgba(79,143,255,0.08))',
-        border: '1px solid rgba(255,255,255,0.09)', borderRadius: '14px',
+        background: 'linear-gradient(135deg, rgba(79,70,229,0.08), rgba(79,143,255,0.08))',
+        border: '1px solid rgba(0,0,0,0.08)', borderRadius: '14px',
         p: '16px 20px', mb: '16px', display: 'flex', alignItems: 'center', gap: '16px',
       }}>
         <Box sx={{ fontSize: 36 }}>👷</Box>
@@ -76,7 +76,7 @@ export default function TechDashboardPage() {
           <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, mb: '4px' }}>
             Hey, {techName || 'Technician'}!
           </Typography>
-          <Typography sx={{ fontSize: 12, color: '#a8bcc8' }}>
+          <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>
             {todayJobs.length > 0
               ? `You have ${todayJobs.length} job${todayJobs.length > 1 ? 's' : ''} scheduled today.`
               : 'אין עבודות מתוכננות להיום. בדוק את השיבוצים שלך.'}
@@ -101,20 +101,20 @@ export default function TechDashboardPage() {
           <CardHeader icon="📅" title={L("Today's Schedule","לוח זמנים היום")} action={<Badge label={todayJobs.length + ' jobs'} variant="accent" />} />
           <CardContent sx={{ p: '0 !important' }}>
             {todayJobs.length === 0 ? (
-              <Typography sx={{ p: 3, textAlign: 'center', fontSize: 12, color: '#5a7080' }}>{L("No jobs for today","אין עבודות להיום")}</Typography>
+              <Typography sx={{ p: 3, textAlign: 'center', fontSize: 12, color: '#78716C' }}>{L("No jobs for today","אין עבודות להיום")}</Typography>
             ) : (
               todayJobs.map((j, i) => (
                 <Box key={j.id} onClick={() => router.push('/tech/jobs')} sx={{
                   display: 'flex', alignItems: 'center', gap: '10px', p: '10px 16px', cursor: 'pointer',
-                  borderBottom: i < todayJobs.length - 1 ? '1px solid rgba(255,255,255,0.055)' : 'none',
+                  borderBottom: i < todayJobs.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
                   '&:hover': { bgcolor: 'rgba(255,255,255,0.025)' },
                 }}>
-                  <Box sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', fontFamily: 'monospace', minWidth: 45 }}>
+                  <Box sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', fontFamily: 'monospace', minWidth: 45 }}>
                     {j.time || '—'}
                   </Box>
                   <Box sx={{ flex: 1 }}>
                     <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{j.client}</Typography>
-                    <Typography sx={{ fontSize: 10, color: '#5a7080' }}>{j.address || j.desc || ''}</Typography>
+                    <Typography sx={{ fontSize: 10, color: '#78716C' }}>{j.address || j.desc || ''}</Typography>
                   </Box>
                   <Badge label={(lang==='he'?JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.he:JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.label) || j.status}
                     variant={JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.color || 'grey'} />
@@ -129,19 +129,19 @@ export default function TechDashboardPage() {
           <CardHeader icon="🔧" title={L("עבודות אחרונות","עבודות אחרונות")} />
           <CardContent sx={{ p: '0 !important' }}>
             {recentJobs.length === 0 ? (
-              <Typography sx={{ p: 3, textAlign: 'center', fontSize: 12, color: '#5a7080' }}>{L("No jobs assigned yet","עדיין לא שויכו עבודות")}</Typography>
+              <Typography sx={{ p: 3, textAlign: 'center', fontSize: 12, color: '#78716C' }}>{L("No jobs assigned yet","עדיין לא שויכו עבודות")}</Typography>
             ) : (
               recentJobs.map((j, i) => (
                 <Box key={j.id} sx={{
                   display: 'flex', alignItems: 'center', gap: '10px', p: '10px 16px',
-                  borderBottom: i < recentJobs.length - 1 ? '1px solid rgba(255,255,255,0.055)' : 'none',
+                  borderBottom: i < recentJobs.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
                 }}>
-                  <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', fontFamily: 'monospace', minWidth: 50 }}>
+                  <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', fontFamily: 'monospace', minWidth: 50 }}>
                     {j.num || formatJobNumber(j.id)}
                   </Typography>
                   <Box sx={{ flex: 1 }}>
                     <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{j.client}</Typography>
-                    <Typography sx={{ fontSize: 10, color: '#5a7080' }}>{formatDate(j.created)}</Typography>
+                    <Typography sx={{ fontSize: 10, color: '#78716C' }}>{formatDate(j.created)}</Typography>
                   </Box>
                   <Badge label={(lang==='he'?JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.he:JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.label) || j.status}
                     variant={JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG]?.color || 'grey'} />

@@ -201,7 +201,7 @@ export default function UsersPage() {
   };
 
   const Label = ({ text }: { text: string }) => (
-    <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#5a7080', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>
+    <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>
   );
 
   // Count active permissions for a user
@@ -220,13 +220,13 @@ export default function UsersPage() {
       {/* Filters */}
       <Box sx={{ display: 'flex', gap: '10px', mb: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField placeholder={L("חיפוש משתמשים...","חפש משתמשים...")} value={search} onChange={(e) => setSearch(e.target.value)} size="small" sx={{ minWidth: 220 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#5a7080' }} /></InputAdornment> }} />
+          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16, color: '#78716C' }} /></InputAdornment> }} />
         {['all', 'owner', 'manager', 'dispatcher', 'technician', 'custom'].map((r) => (
           <Button key={r} size="small" onClick={() => setRoleFilter(r)} sx={{
             px: '10px', py: '4px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto', textTransform: 'capitalize',
-            bgcolor: roleFilter === r ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.05)',
-            color: roleFilter === r ? '#00e5b0' : '#5a7080',
-            border: '1px solid ' + (roleFilter === r ? 'rgba(0,229,176,0.3)' : 'rgba(255,255,255,0.09)'),
+            bgcolor: roleFilter === r ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.03)',
+            color: roleFilter === r ? '#4F46E5' : '#78716C',
+            border: '1px solid ' + (roleFilter === r ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.08)'),
           }}>
             {r === 'all' ? `${L('All','הכל')} (${(db.users || []).length})` : `${ROLE_CONFIG[r]?.icon || ''} ${lang === 'he' ? (ROLE_CONFIG[r]?.he || r) : (ROLE_CONFIG[r]?.label || r)} (${roleCounts[r] || 0})`}
           </Button>
@@ -237,14 +237,14 @@ export default function UsersPage() {
       {users.length === 0 ? (
         <EmptyState icon="👤" title={L("No Users","אין משתמשים")} subtitle={L("Add team members to your business.","הוסף חברי צוות לעסק שלך.")} actionLabel={L("+ משתמש חדש","+ משתמש חדש")} onAction={openNew} />
       ) : (
-        <Box sx={{ bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.055)', borderRadius: '14px', overflow: 'hidden' }}>
+        <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
           <DataTable<User>
             keyExtractor={(u) => u.id}
             columns={[
               { key: 'name', label: 'שם', render: (u) => (
                 <Box>
                   <Typography sx={{ fontWeight: 700, fontSize: 12 }}>{u.name}</Typography>
-                  <Typography sx={{ fontSize: 10, color: '#5a7080' }}>{u.email}</Typography>
+                  <Typography sx={{ fontSize: 10, color: '#78716C' }}>{u.email}</Typography>
                 </Box>
               )},
               { key: 'phone', label: 'טלפון', render: (u) => u.phone || '—' },
@@ -258,7 +258,7 @@ export default function UsersPage() {
                 const isCustom = !!u.customPermissions;
                 return (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Typography sx={{ fontSize: 11, fontWeight: 600, color: count > 7 ? '#22c55e' : count > 3 ? '#f59e0b' : '#5a7080' }}>
+                    <Typography sx={{ fontSize: 11, fontWeight: 600, color: count > 7 ? '#22c55e' : count > 3 ? '#f59e0b' : '#78716C' }}>
                       {count}/10
                     </Typography>
                     {isCustom && <Badge label="Custom" variant="teal" />}
@@ -268,7 +268,7 @@ export default function UsersPage() {
               { key: 'commission', label: 'עמלה', render: (u) => (u.role === 'tech' || u.role === 'technician') ? (u.commission || 0) + '%' : '—' },
               { key: 'actions', label: '', width: 80, render: (u) => (
                 <Button size="small" onClick={(e) => handleOpenMenu(e, u)}
-                  sx={{ fontSize: 11, minWidth: 'auto', p: '3px 10px', bgcolor: 'rgba(255,255,255,0.05)', color: '#a8bcc8', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '6px' }}>
+                  sx={{ fontSize: 11, minWidth: 'auto', p: '3px 10px', bgcolor: 'rgba(0,0,0,0.03)', color: '#A8A29E', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px' }}>
                   ⋮
                 </Button>
               )},
@@ -281,9 +281,9 @@ export default function UsersPage() {
 
       {/* Actions Menu */}
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleCloseMenu}
-        PaperProps={{ sx: { bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', minWidth: 200 } }}>
+        PaperProps={{ sx: { bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', minWidth: 200 } }}>
         <MenuItem onClick={() => { if (menuUser) openEdit(menuUser); handleCloseMenu(); }}
-          sx={{ fontSize: 12, gap: '8px', color: '#a8bcc8', '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
+          sx={{ fontSize: 12, gap: '8px', color: '#A8A29E', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
           ✏️ עריכת משתמש & Permissions
         </MenuItem>
         <MenuItem onClick={() => { if (menuUser) handleResetPassword(menuUser); }}
@@ -317,9 +317,9 @@ export default function UsersPage() {
               {(['owner', 'manager', 'dispatcher', 'technician', 'custom'] as UserRole[]).map((r) => (
                 <Button key={r} size="small" onClick={() => handleRoleSelect(r)} sx={{
                   px: '14px', py: '6px', fontSize: 11, fontWeight: 700, borderRadius: '8px', minWidth: 'auto',
-                  bgcolor: editUser.role === r ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.05)',
-                  color: editUser.role === r ? '#00e5b0' : '#5a7080',
-                  border: '1px solid ' + (editUser.role === r ? 'rgba(0,229,176,0.3)' : 'rgba(255,255,255,0.09)'),
+                  bgcolor: editUser.role === r ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.03)',
+                  color: editUser.role === r ? '#4F46E5' : '#78716C',
+                  border: '1px solid ' + (editUser.role === r ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.08)'),
                 }}>
                   {ROLE_CONFIG[r]?.icon} {lang === 'he' ? ROLE_CONFIG[r]?.he : ROLE_CONFIG[r]?.label}
                 </Button>
@@ -344,14 +344,14 @@ export default function UsersPage() {
           )}
 
           {/* ── Permissions Section ── */}
-          <Box sx={{ bgcolor: '#0f1318', border: '1px solid rgba(255,255,255,0.055)', borderRadius: '12px', overflow: 'hidden' }}>
+          <Box sx={{ bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
             {/* Header */}
-            <Box sx={{ p: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.055)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography sx={{ fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                 🔐 Permissions
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Typography sx={{ fontSize: 10, color: useCustomPerms ? '#00e5b0' : '#5a7080' }}>
+                <Typography sx={{ fontSize: 10, color: useCustomPerms ? '#4F46E5' : '#78716C' }}>
                   {useCustomPerms ? 'Custom' : 'Role Default'}
                 </Typography>
                 <Switch size="small" checked={useCustomPerms} onChange={() => {
@@ -360,7 +360,7 @@ export default function UsersPage() {
                     setEditPerms({ ...(ROLE_PERMS[editUser.role || 'technician'] || ROLE_PERMS.technician) });
                   }
                   setUseCustomPerms(!useCustomPerms);
-                }} sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#00e5b0' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: 'rgba(0,229,176,0.3)' } }} />
+                }} sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#4F46E5' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: 'rgba(79,70,229,0.25)' } }} />
               </Box>
             </Box>
 
@@ -372,25 +372,25 @@ export default function UsersPage() {
                   <Box key={perm.key} onClick={() => { if (useCustomPerms) togglePerm(perm.key); }} sx={{
                     display: 'flex', alignItems: 'center', gap: '12px', p: '8px 12px', borderRadius: '8px',
                     cursor: useCustomPerms ? 'pointer' : 'default', opacity: useCustomPerms ? 1 : 0.6,
-                    '&:hover': useCustomPerms ? { bgcolor: 'rgba(255,255,255,0.03)' } : {},
+                    '&:hover': useCustomPerms ? { bgcolor: 'rgba(0,0,0,0.02)' } : {},
                     transition: 'all 0.15s',
                   }}>
                     <Box sx={{
                       width: 32, height: 18, borderRadius: '9px', position: 'relative',
-                      bgcolor: isOn ? 'rgba(0,229,176,0.2)' : 'rgba(255,255,255,0.08)',
-                      border: '1px solid ' + (isOn ? 'rgba(0,229,176,0.4)' : 'rgba(255,255,255,0.1)'),
+                      bgcolor: isOn ? 'rgba(0,229,176,0.2)' : 'rgba(0,0,0,0.06)',
+                      border: '1px solid ' + (isOn ? 'rgba(0,229,176,0.4)' : 'rgba(0,0,0,0.08)'),
                       transition: 'all 0.2s', flexShrink: 0,
                     }}>
                       <Box sx={{
                         width: 12, height: 12, borderRadius: '50%', position: 'absolute', top: 2,
                         left: isOn ? 16 : 2,
-                        bgcolor: isOn ? '#00e5b0' : '#5a7080',
+                        bgcolor: isOn ? '#4F46E5' : '#78716C',
                         transition: 'all 0.2s',
                       }} />
                     </Box>
                     <Typography sx={{ fontSize: 16, lineHeight: 1 }}>{perm.icon}</Typography>
                     <Box sx={{ flex: 1 }}>
-                      <Typography sx={{ fontSize: 12, fontWeight: 600, color: isOn ? '#e0e8ef' : '#5a7080' }}>
+                      <Typography sx={{ fontSize: 12, fontWeight: 600, color: isOn ? '#e0e8ef' : '#78716C' }}>
                         {lang === 'he' ? perm.he : perm.label}
                       </Typography>
                       <Typography sx={{ fontSize: 10, color: '#3a4a55' }}>{lang === 'he' ? perm.descHe : perm.desc}</Typography>
@@ -402,7 +402,7 @@ export default function UsersPage() {
 
             {/* Quick actions */}
             {useCustomPerms && (
-              <Box sx={{ p: '8px 16px 12px', display: 'flex', gap: '6px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+              <Box sx={{ p: '8px 16px 12px', display: 'flex', gap: '6px', borderTop: '1px solid rgba(0,0,0,0.03)' }}>
                 <Button size="small" onClick={() => {
                   const all: RolePermissions = {} as RolePermissions;
                   PERM_CONFIG.forEach((p) => { (all as Record<string, boolean>)[p.key] = true; });
@@ -425,7 +425,7 @@ export default function UsersPage() {
 
           {/* First login note */}
           {!editUser.id && (
-            <Box sx={{ bgcolor: 'rgba(0,229,176,0.04)', border: '1px solid rgba(0,229,176,0.15)', borderRadius: '10px', p: '11px 14px', fontSize: 12, color: '#a8bcc8', lineHeight: 1.7 }}>
+            <Box sx={{ bgcolor: 'rgba(0,229,176,0.04)', border: '1px solid rgba(79,70,229,0.12)', borderRadius: '10px', p: '11px 14px', fontSize: 12, color: '#A8A29E', lineHeight: 1.7 }}>
               💡 L('Login with email. Default password:','05DB05E005D905E105D4 05E205DD 05DE05D905D905DC. 05E105D905E105DE05D4 05E805D005E905D505E005D905EA:') + ' <strong>Tech1234!</strong><br />
               🔐 {L('Must change password on first login.','05D705D905D905D1 05DC05E905E005D505EA 05E105D905E105DE05D4 05D105DB05E005D905E105D4 05E805D005E905D505E005D4.')}
             </Box>

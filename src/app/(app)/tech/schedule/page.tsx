@@ -17,7 +17,7 @@ type ViewMode = 'day' | 'week';
 
 function CardHeader({ icon, title, action }: { icon: string; title: string; action?: React.ReactNode }) {
   return (
-    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.055)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
       <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
         {icon} {title}
       </Typography>
@@ -111,18 +111,18 @@ export default function TechSchedulePage() {
       <Box sx={{
         display: 'flex', alignItems: 'flex-start', gap: '10px', p: '10px 14px', borderRadius: '10px',
         bgcolor: job.status === 'in_progress' ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.02)',
-        border: '1px solid ' + (job.status === 'in_progress' ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.055)'),
-        mb: '6px', transition: 'all 0.15s', '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' },
+        border: '1px solid ' + (job.status === 'in_progress' ? 'rgba(245,158,11,0.15)' : 'rgba(0,0,0,0.06)'),
+        mb: '6px', transition: 'all 0.15s', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' },
       }}>
         <Box sx={{ minWidth: 44, textAlign: 'center', pt: '2px' }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 800, color: '#00e5b0', fontFamily: 'monospace' }}>
+          <Typography sx={{ fontSize: 12, fontWeight: 800, color: '#4F46E5', fontFamily: 'monospace' }}>
             {job.scheduledTime || job.time || '—'}
           </Typography>
         </Box>
         <Box sx={{ flex: 1 }}>
           <Typography sx={{ fontSize: 12, fontWeight: 700, mb: '2px' }}>{job.client}</Typography>
-          {job.address && <Typography sx={{ fontSize: 10, color: '#5a7080', mb: '3px' }}>📍 {job.address}</Typography>}
-          {job.desc && <Typography sx={{ fontSize: 10, color: '#5a7080' }}>{job.desc}</Typography>}
+          {job.address && <Typography sx={{ fontSize: 10, color: '#78716C', mb: '3px' }}>📍 {job.address}</Typography>}
+          {job.desc && <Typography sx={{ fontSize: 10, color: '#78716C' }}>{job.desc}</Typography>}
           {job.phone && <Typography sx={{ fontSize: 10, color: '#4f8fff', cursor: 'pointer' }} onClick={() => window.open('tel:' + job.phone)}>📞 {job.phone}</Typography>}
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
@@ -150,18 +150,18 @@ export default function TechSchedulePage() {
             {(['day', 'week'] as ViewMode[]).map((m) => (
               <Button key={m} size="small" onClick={() => setViewMode(m)} sx={{
                 px: '12px', py: '4px', fontSize: 10, fontWeight: 700, borderRadius: '8px', minWidth: 'auto', textTransform: 'capitalize',
-                bgcolor: viewMode === m ? 'rgba(0,229,176,0.08)' : 'rgba(255,255,255,0.05)',
-                color: viewMode === m ? '#00e5b0' : '#5a7080',
-                border: '1px solid ' + (viewMode === m ? 'rgba(0,229,176,0.3)' : 'rgba(255,255,255,0.09)'),
+                bgcolor: viewMode === m ? 'rgba(79,70,229,0.08)' : 'rgba(0,0,0,0.03)',
+                color: viewMode === m ? '#4F46E5' : '#78716C',
+                border: '1px solid ' + (viewMode === m ? 'rgba(79,70,229,0.25)' : 'rgba(0,0,0,0.08)'),
               }}>
                 {m === 'day' ? '📅 Day' : '🗓️ Week'}
               </Button>
             ))}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Button size="small" onClick={() => navigate(-1)} sx={{ minWidth: 30, fontSize: 14, color: '#a8bcc8' }}>←</Button>
+            <Button size="small" onClick={() => navigate(-1)} sx={{ minWidth: 30, fontSize: 14, color: '#A8A29E' }}>←</Button>
             <Typography sx={{ fontSize: 13, fontWeight: 700, minWidth: 180, textAlign: 'center' }}>{dateLabel}</Typography>
-            <Button size="small" onClick={() => navigate(1)} sx={{ minWidth: 30, fontSize: 14, color: '#a8bcc8' }}>→</Button>
+            <Button size="small" onClick={() => navigate(1)} sx={{ minWidth: 30, fontSize: 14, color: '#A8A29E' }}>→</Button>
           </Box>
           {!isToday && (
             <Button size="small" onClick={() => setCurrentDate(new Date())} sx={{
@@ -202,9 +202,9 @@ export default function TechSchedulePage() {
                 border: isDayToday ? '1px solid rgba(0,229,176,0.25)' : undefined,
                 bgcolor: isDayToday ? 'rgba(0,229,176,0.03)' : undefined,
               }}>
-                <Box sx={{ p: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.055)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Typography sx={{ fontSize: 11, fontWeight: 700, color: isDayToday ? '#00e5b0' : '#a8bcc8' }}>{DAY_NAMES[i]}</Typography>
-                  <Typography sx={{ fontSize: 10, fontWeight: 600, color: isDayToday ? '#00e5b0' : '#5a7080' }}>{d.getDate()}/{d.getMonth() + 1}</Typography>
+                <Box sx={{ p: '8px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Typography sx={{ fontSize: 11, fontWeight: 700, color: isDayToday ? '#4F46E5' : '#A8A29E' }}>{DAY_NAMES[i]}</Typography>
+                  <Typography sx={{ fontSize: 10, fontWeight: 600, color: isDayToday ? '#4F46E5' : '#78716C' }}>{d.getDate()}/{d.getMonth() + 1}</Typography>
                 </Box>
                 <CardContent sx={{ p: '8px !important', minHeight: 80 }}>
                   {jobs.length === 0 ? (
@@ -212,9 +212,9 @@ export default function TechSchedulePage() {
                   ) : jobs.map((j) => {
                     const sc = JOB_STATUS_CONFIG[j.status as keyof typeof JOB_STATUS_CONFIG];
                     return (
-                      <Box key={j.id} sx={{ p: '6px 8px', mb: '4px', borderRadius: '6px', bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.055)' }}>
+                      <Box key={j.id} sx={{ p: '6px 8px', mb: '4px', borderRadius: '6px', bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '2px' }}>
-                          <Typography sx={{ fontSize: 9, fontWeight: 700, color: '#00e5b0', fontFamily: 'monospace' }}>{j.scheduledTime || j.time || '—'}</Typography>
+                          <Typography sx={{ fontSize: 9, fontWeight: 700, color: '#4F46E5', fontFamily: 'monospace' }}>{j.scheduledTime || j.time || '—'}</Typography>
                           <Badge label={sc?.label || j.status} variant={sc?.color || 'grey'} />
                         </Box>
                         <Typography sx={{ fontSize: 10, fontWeight: 600 }}>{j.client}</Typography>

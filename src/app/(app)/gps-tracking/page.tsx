@@ -22,7 +22,7 @@ interface TechLocation {
 
 function CardHeader({ icon, title, action }: { icon: string; title: string; action?: React.ReactNode }) {
   return (
-    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.055)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+    <Box className="zk-fade-up" sx={{ p: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
       <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '-0.2px' }}>
         {icon} {title}
       </Typography>
@@ -108,7 +108,7 @@ export default function GPSTrackingPage() {
               } />
               <CardContent>
                 <Box sx={{
-                  height: 300, borderRadius: '10px', bgcolor: '#141920', border: '1px solid rgba(255,255,255,0.055)',
+                  height: 300, borderRadius: '10px', bgcolor: '#FAF7F4', border: '1px solid rgba(0,0,0,0.06)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden',
                 }}>
                   {/* Simulated map grid */}
@@ -136,8 +136,8 @@ export default function GPSTrackingPage() {
                       }}>
                         <Box sx={{
                           width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          bgcolor: t.status === 'on_job' ? 'rgba(34,197,94,0.2)' : t.status === 'available' ? 'rgba(79,143,255,0.2)' : 'rgba(255,255,255,0.08)',
-                          border: '2px solid ' + (t.status === 'on_job' ? '#22c55e' : t.status === 'available' ? '#4f8fff' : '#5a7080'),
+                          bgcolor: t.status === 'on_job' ? 'rgba(34,197,94,0.2)' : t.status === 'available' ? 'rgba(79,143,255,0.2)' : 'rgba(0,0,0,0.06)',
+                          border: '2px solid ' + (t.status === 'on_job' ? '#22c55e' : t.status === 'available' ? '#4f8fff' : '#78716C'),
                           boxShadow: t.status !== 'offline' ? `0 0 12px ${t.status === 'on_job' ? 'rgba(34,197,94,0.4)' : 'rgba(79,143,255,0.3)'}` : 'none',
                           fontSize: 12,
                         }}>
@@ -145,8 +145,8 @@ export default function GPSTrackingPage() {
                         </Box>
                         <Typography sx={{
                           fontSize: 8, fontWeight: 700, px: '4px', py: '1px', borderRadius: '4px',
-                          bgcolor: selectedTech === t.name ? 'rgba(0,229,176,0.15)' : 'rgba(0,0,0,0.6)',
-                          color: selectedTech === t.name ? '#00e5b0' : '#a8bcc8',
+                          bgcolor: selectedTech === t.name ? 'rgba(79,70,229,0.12)' : 'rgba(0,0,0,0.6)',
+                          color: selectedTech === t.name ? '#4F46E5' : '#A8A29E',
                           whiteSpace: 'nowrap',
                         }}>
                           {t.name}
@@ -156,7 +156,7 @@ export default function GPSTrackingPage() {
                   })}
 
                   {allCheckins.length === 0 && (
-                    <Typography sx={{ fontSize: 12, color: '#5a7080', zIndex: 1 }}>
+                    <Typography sx={{ fontSize: 12, color: '#78716C', zIndex: 1 }}>
                       GPS data will appear here when technicians check in
                     </Typography>
                   )}
@@ -171,23 +171,23 @@ export default function GPSTrackingPage() {
                 {techLocations.map((t, i) => (
                   <Box key={t.name} onClick={() => setSelectedTech(selectedTech === t.name ? null : t.name)} sx={{
                     display: 'flex', alignItems: 'center', gap: '12px', p: '12px 16px', cursor: 'pointer',
-                    borderBottom: i < techLocations.length - 1 ? '1px solid rgba(255,255,255,0.055)' : 'none',
+                    borderBottom: i < techLocations.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
                     bgcolor: selectedTech === t.name ? 'rgba(0,229,176,0.04)' : 'transparent',
                     '&:hover': { bgcolor: 'rgba(255,255,255,0.025)' },
                   }}>
                     <Box sx={{
                       width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                      bgcolor: t.status === 'on_job' ? '#22c55e' : t.status === 'available' ? '#4f8fff' : '#5a7080',
-                      boxShadow: '0 0 6px ' + (t.status === 'on_job' ? '#22c55e' : t.status === 'available' ? '#4f8fff' : '#5a7080'),
+                      bgcolor: t.status === 'on_job' ? '#22c55e' : t.status === 'available' ? '#4f8fff' : '#78716C',
+                      boxShadow: '0 0 6px ' + (t.status === 'on_job' ? '#22c55e' : t.status === 'available' ? '#4f8fff' : '#78716C'),
                     }} />
                     <Box sx={{ flex: 1 }}>
                       <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{t.name}</Typography>
                       {t.currentJob ? (
                         <Typography sx={{ fontSize: 10, color: '#22c55e' }}>Working on: {t.currentJob.client}</Typography>
                       ) : t.lastCheckin ? (
-                        <Typography sx={{ fontSize: 10, color: '#5a7080' }}>Last seen: {timeAgo(t.lastCheckin.time)}</Typography>
+                        <Typography sx={{ fontSize: 10, color: '#78716C' }}>Last seen: {timeAgo(t.lastCheckin.time)}</Typography>
                       ) : (
-                        <Typography sx={{ fontSize: 10, color: '#5a7080' }}>{L("No GPS data","אין נתוני GPS")}</Typography>
+                        <Typography sx={{ fontSize: 10, color: '#78716C' }}>{L("No GPS data","אין נתוני GPS")}</Typography>
                       )}
                     </Box>
                     <Badge
@@ -195,7 +195,7 @@ export default function GPSTrackingPage() {
                       variant={t.status === 'on_job' ? 'green' : t.status === 'available' ? 'blue' : 'grey'}
                     />
                     {t.totalCheckins > 0 && (
-                      <Typography sx={{ fontSize: 10, color: '#5a7080' }}>{t.totalCheckins} check-ins</Typography>
+                      <Typography sx={{ fontSize: 10, color: '#78716C' }}>{t.totalCheckins} check-ins</Typography>
                     )}
                   </Box>
                 ))}
@@ -207,7 +207,7 @@ export default function GPSTrackingPage() {
           <Card>
             <CardHeader icon="📍" title={selectedTech ? `Check-ins — ${selectedTech}` : 'Recent Check-ins'} action={
               selectedTech ? (
-                <Button size="small" onClick={() => setSelectedTech(null)} sx={{ fontSize: 10, color: '#5a7080' }}>{L("Show All","הצג הכל")}</Button>
+                <Button size="small" onClick={() => setSelectedTech(null)} sx={{ fontSize: 10, color: '#78716C' }}>{L("Show All","הצג הכל")}</Button>
               ) : (
                 <Badge label={allCheckins.length + ' total'} variant="accent" />
               )
@@ -215,7 +215,7 @@ export default function GPSTrackingPage() {
             <CardContent sx={{ p: '0 !important' }}>
               {selectedTechCheckins.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: 'center' }}>
-                  <Typography sx={{ fontSize: 12, color: '#5a7080' }}>No GPS check-ins recorded yet</Typography>
+                  <Typography sx={{ fontSize: 12, color: '#78716C' }}>No GPS check-ins recorded yet</Typography>
                 </Box>
               ) : (
                 <DataTable
@@ -227,14 +227,14 @@ export default function GPSTrackingPage() {
                     )},
                     { key: 'job', label: 'Job', render: (c: typeof selectedTechCheckins[0]) => c.jobClient || '—' },
                     { key: 'coords', label: 'Coordinates', render: (c: typeof selectedTechCheckins[0]) => (
-                      <Typography sx={{ fontSize: 10, fontFamily: 'monospace', color: '#5a7080' }}>
+                      <Typography sx={{ fontSize: 10, fontFamily: 'monospace', color: '#78716C' }}>
                         {(c.lat || 0).toFixed(4)}, {(c.lng || 0).toFixed(4)}
                       </Typography>
                     )},
                     { key: 'time', label: 'Time', render: (c: typeof selectedTechCheckins[0]) => (
                       <Box>
                         <Typography sx={{ fontSize: 11 }}>{formatDate(c.time)}</Typography>
-                        <Typography sx={{ fontSize: 10, color: '#5a7080' }}>{formatTime(c.time)}</Typography>
+                        <Typography sx={{ fontSize: 10, color: '#78716C' }}>{formatTime(c.time)}</Typography>
                       </Box>
                     )},
                   ]}

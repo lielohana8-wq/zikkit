@@ -33,7 +33,7 @@ export default function ReviewsPage() {
   };
 
   const Stat = ({ label, value, color, icon }: any) => (
-    <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', flex: 1, minWidth: 120, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+    <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', flex: 1, minWidth: 120, display: 'flex', alignItems: 'center', gap: 1.5 }}>
       <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>{icon}</Box>
       <Box><Typography variant="h5" fontWeight={900} sx={{ fontFamily: 'Syne' }}>{value}</Typography><Typography variant="caption" color="text.secondary">{label}</Typography></Box>
     </Box>
@@ -53,13 +53,13 @@ export default function ReviewsPage() {
       </Box>
 
       {/* Rating Distribution */}
-      <Paper sx={{ p: 2, mb: 3, borderRadius: 2, border: '1px solid rgba(255,255,255,0.06)' }}>
+      <Paper sx={{ p: 2, mb: 3, borderRadius: 2, border: '1px solid rgba(0,0,0,0.06)' }}>
         <Typography fontWeight={700} fontSize={13} sx={{ mb: 1.5 }}>התפלגות דירוגים</Typography>
         {[5,4,3,2,1].map(n => (
           <Box key={n} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <Typography variant="caption" sx={{ width: 20, textAlign: 'center' }}>{n}</Typography>
             <Star sx={{ fontSize: 14, color: '#F59E0B' }} />
-            <LinearProgress variant="determinate" value={dist[n-1]?.pct || 0} sx={{ flex: 1, height: 8, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.06)', '& .MuiLinearProgress-bar': { bgcolor: n >= 4 ? '#10B981' : n === 3 ? '#F59E0B' : '#EF4444' } }} />
+            <LinearProgress variant="determinate" value={dist[n-1]?.pct || 0} sx={{ flex: 1, height: 8, borderRadius: 4, bgcolor: 'rgba(0,0,0,0.06)', '& .MuiLinearProgress-bar': { bgcolor: n >= 4 ? '#10B981' : n === 3 ? '#F59E0B' : '#EF4444' } }} />
             <Typography variant="caption" color="text.secondary" sx={{ width: 35, textAlign: 'left' }}>{dist[n-1]?.count || 0}</Typography>
           </Box>
         ))}
@@ -72,7 +72,7 @@ export default function ReviewsPage() {
       {(tab === 0 || tab === 1) && (
         <Box>
           {(tab === 1 ? reviews.filter(r => !r.replied) : reviews).map(r => (
-            <Paper key={r.id} sx={{ p: 2, mb: 1.5, borderRadius: 2, border: '1px solid rgba(255,255,255,0.06)', borderRight: `4px solid ${r.rating >= 4 ? '#10B981' : r.rating === 3 ? '#F59E0B' : '#EF4444'}` }}>
+            <Paper key={r.id} sx={{ p: 2, mb: 1.5, borderRadius: 2, border: '1px solid rgba(0,0,0,0.06)', borderRight: `4px solid ${r.rating >= 4 ? '#10B981' : r.rating === 3 ? '#F59E0B' : '#EF4444'}` }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Avatar sx={{ width: 32, height: 32, bgcolor: r.rating >= 4 ? '#10B981' : '#F59E0B', fontSize: 13 }}>{r.client[0]}</Avatar>
                 <Box sx={{ flex: 1 }}>
