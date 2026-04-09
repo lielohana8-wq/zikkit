@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZIKKIT — פיילוט ישראל</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060a10;--card:#111827;--ac:#00E5B0;--bl:#3B82F6;--pr:#8B5CF6;--or:#F59E0B;--rd:#EF4444;--tx:#F0F4F8;--sb:#7A8BA0;--dm:#3A4A5C;--bd:rgba(255,255,255,0.06)}
+html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx)}
+.S{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:clamp(28px,4vw,64px);opacity:0;transform:translateX(40px);transition:all 0.5s cubic-bezier(0.4,0,0.2,1);pointer-events:none;overflow-y:auto}
+.S.on{opacity:1;transform:none;pointer-events:auto}.S.off{opacity:0;transform:translateX(-40px)}
+.S::before{content:'';position:absolute;inset:0;pointer-events:none}
+.gg::before{background:radial-gradient(ellipse 60% 50% at 30% 20%,rgba(0,229,176,0.06),transparent 70%)}
+.gr::before{background:radial-gradient(ellipse 60% 50% at 70% 30%,rgba(239,68,68,0.06),transparent 70%)}
+.gb::before{background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(59,130,246,0.05),transparent 70%)}
+.gc::before{background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(0,229,176,0.07),transparent 60%)}
+h1{font-family:'Syne',sans-serif;font-size:clamp(32px,5.5vw,56px);font-weight:800;line-height:1.08;letter-spacing:-1px}
+h2{font-family:'Syne',sans-serif;font-size:clamp(22px,3vw,36px);font-weight:800;letter-spacing:-0.5px;margin-bottom:14px}
+h3{font-family:'Syne',sans-serif;font-size:clamp(15px,1.8vw,20px);font-weight:700}
+.ac{color:var(--ac)}.rd{color:var(--rd)}.bl{color:var(--bl)}.pr{color:var(--pr)}.or{color:var(--or)}
+.sb{color:var(--sb);font-size:clamp(12px,1.4vw,15px);line-height:1.6}
+.mono{font-family:'Space Mono',monospace}
+.cd{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:clamp(12px,1.5vw,20px)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(8px,1.2vw,14px)}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:clamp(8px,1.2vw,14px)}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1vw,10px)}
+.st{text-align:center;padding:clamp(10px,1.2vw,16px)}
+.st .n{font-family:'Space Mono';font-size:clamp(22px,3vw,36px);font-weight:700;line-height:1}
+.st .l{font-size:clamp(9px,1vw,12px);color:var(--sb);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:clamp(10px,1vw,13px)}
+th{background:rgba(0,229,176,0.1);color:var(--ac);font-weight:700;padding:7px 10px}
+td{padding:6px 10px;border-bottom:1px solid var(--bd)}
+tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
+tr.hi td{background:rgba(0,229,176,0.05);font-weight:700;color:var(--ac)}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vo{border-radius:12px;padding:clamp(14px,1.8vw,22px);background:rgba(239,68,68,0.03);border:1px solid rgba(239,68,68,0.1)}
+.vn{border-radius:12px;padding:clamp(14px,1.8vw,22px);background:rgba(0,229,176,0.03);border:1px solid rgba(0,229,176,0.12)}
+.vs li{list-style:none;padding:4px 0;font-size:clamp(11px,1.1vw,13px);color:var(--sb);border-bottom:1px solid var(--bd)}
+.bar{display:flex;align-items:flex-end;gap:clamp(6px,1.2vw,16px);height:clamp(80px,12vh,150px)}
+.bc{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bb{width:100%;border-radius:5px 5px 0 0;min-height:3px}
+.ck li{list-style:none;padding:4px 0;font-size:clamp(11px,1.2vw,14px);color:var(--sb);display:flex;gap:7px}
+.ck li::before{content:'✓';color:var(--ac);font-weight:700}
+.tl{position:relative;padding-right:24px}
+.tl::before{content:'';position:absolute;right:8px;top:0;bottom:0;width:2px;background:var(--bd)}
+.tl-i{position:relative;margin-bottom:14px;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:10px}
+.tl-i::before{content:'';position:absolute;right:-20px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--ac);border:2px solid var(--bg)}
+.nav{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:100;background:rgba(6,10,16,0.85);backdrop-filter:blur(16px);padding:5px 12px;border-radius:99px;border:1px solid var(--bd)}
+.nd{width:7px;height:7px;border-radius:50%;background:var(--dm);cursor:pointer;transition:0.3s}
+.nd.on{background:var(--ac);box-shadow:0 0 6px var(--ac)}
+.sn{position:fixed;top:14px;left:16px;font-family:'Space Mono';font-size:10px;color:var(--dm);z-index:100}
+.lm{position:fixed;top:14px;right:16px;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--ac);z-index:100;opacity:0.4}
+.S.on .cd,.S.on .st,.S.on .tl-i{animation:fi 0.4s ease both}
+.S.on .cd:nth-child(2),.S.on .st:nth-child(2),.S.on .tl-i:nth-child(2){animation-delay:0.07s}
+.S.on .cd:nth-child(3),.S.on .st:nth-child(3),.S.on .tl-i:nth-child(3){animation-delay:0.14s}
+.S.on .cd:nth-child(4),.S.on .tl-i:nth-child(4){animation-delay:0.21s}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:768px){.g2,.g3,.g4,.vs{grid-template-columns:1fr}.bar{height:60px}}
+.sec-num{font-family:'Space Mono';font-size:clamp(48px,8vw,96px);font-weight:700;opacity:0.1;position:absolute;top:15%;right:8%}
+th:first-child{text-align:right}td:first-child{text-align:right}.tl{padding-right:24px;padding-left:0}.tl::before{right:8px;left:auto}.tl-i::before{right:-20px;left:auto}.sec-num{right:8%}</style>
+</head>
+<body>
+<div class="lm">ZIKKIT</div>
+<div class="sn" id="sn">1 / 9</div>
+<div class="S gg on">
+<div style="margin-bottom:16px"><span class="mono ac" style="font-size:12px;letter-spacing:2px">תוכנית פיילוט — מרץ 2026</span></div>
+<h1>הצטרף כשותף<br><span class="ac">פיילוט</span></h1>
+<p class="sb" style="max-width:500px;margin-top:14px">מערכת ניהול שטח חכמה שמחליפה מזכירה + תוכנות.<br>חודש ראשון חינם. בלי התחייבות. 10 מקומות בלבד.</p>
+</div>
+<div class="S gr">
+<h2>הבעיה שלך — ואנחנו יודעים שהיא מוכרת</h2>
+<div class="g2">
+<div class="cd">
+<h3 class="rd" style="margin-bottom:8px">מה קורה היום?</h3>
+<ul class="ck">
+<li style="color:var(--rd)">משלם ₪8,500/חודש על מזכירה — או מפספס שיחות</li>
+<li>לידים נשכחים בווטסאפ, בפתקים, בראש</li>
+<li>מנהל עבודות באקסל או ביומן נייר</li>
+<li>טכנאים בשטח בלי מידע — חוזרים פעמיים</li>
+<li>חיוב ידני — שוכח, טועה, מפסיד</li>
+<li>משלם על 3-4 תוכנות שונות שלא מדברות</li>
+<li style="color:var(--rd)">בסוף החודש — לא יודע כמה הרוויח</li>
+</ul>
+</div>
+<div class="cd">
+<h3 style="margin-bottom:8px">כמה זה עולה לך?</h3>
+<table>
+<tr><th>סעיף</th><th>חודשי</th><th>שנתי</th></tr>
+<tr><td>מזכירה</td><td style="color:var(--rd)">₪8,500</td><td>₪102,000</td></tr>
+<tr><td>תוכנות</td><td>₪800</td><td>₪9,600</td></tr>
+<tr><td>SMS</td><td>₪350</td><td>₪4,200</td></tr>
+<tr><td>רו״ח/שכר</td><td>₪1,200</td><td>₪14,400</td></tr>
+<tr><td>לידים אבודים</td><td style="color:var(--rd)">₪4,000</td><td>₪48,000</td></tr>
+<tr class="hi"><td>סה״כ</td><td>₪16,350</td><td>₪196,200</td></tr>
+</table>
+</div>
+</div>
+</div>
+<div class="S gg">
+<h2>מה ZIKKIT עושה — ואיך זה משנה לך את היום</h2>
+<div class="g2">
+<div class="cd"><h3 class="ac">🤖 AI עונה לטלפון 24/7</h3><p class="sb" style="margin-top:6px">לקוח מתקשר ב-11 בלילה? הבוט עונה, שואל פרטים, קובע פגישה, שולח SMS. אתה ישן — הליד כבר במערכת.</p></div>
+<div class="cd"><h3 class="bl">👥 כל הלידים במקום אחד</h3><p class="sb" style="margin-top:6px">לא עוד ווטסאפ + אקסל + פתקים. CRM אחד, סטטוסים, follow-up, והמרה לעבודה בלחיצה.</p></div>
+<div class="cd"><h3 class="pr">👷 טכנאים מנוהלים</h3><p class="sb" style="margin-top:6px">GPS, שיבוץ, עמלות אוטומטיות. לקוח לא עונה? SMS אוטומטי. ממתין לחלקים? מעקב עם ETA.</p></div>
+<div class="cd"><h3 class="or">📄 הצעות מחיר + תשלום</h3><p class="sb" style="margin-top:6px">יצירה ממחירון, שליחה ב-SMS, חתימה דיגיטלית. הלקוח מאשר מהפלאפון. בלי נייר.</p></div>
+<div class="cd"><h3 class="bl">📊 דוחות — סוף סוף תדע כמה הרווחת</h3><p class="sb" style="margin-top:6px">הכנסות, רווחיות לפי טכנאי, לפי סוג עבודה. גרפים ויזואליים. ייצוא Excel.</p></div>
+<div class="cd"><h3 class="pr">🌐 הלקוח לא מתקשר — רואה הכל</h3><p class="sb" style="margin-top:6px">פורטל לקוחות: סטטוס עבודה, אישור הצעה, תשלום, דירוג. פחות טלפונים.</p></div>
+</div>
+</div>
+<div class="S">
+<h2>איך היום שלך משתנה עם ZIKKIT</h2>
+<div class="vs">
+<div class="vo">
+<h3 class="rd" style="margin-bottom:10px">היום — בלי ZIKKIT</h3>
+<ul>
+<li>7:00 — קם, בודק ווטסאפ, 12 הודעות שלא ענית</li>
+<li>8:00 — מתקשרים, לא עונה כי בעבודה</li>
+<li>10:00 — מנסה לזכור מה הבטחת ללקוח אתמול</li>
+<li>12:00 — טכנאי מתקשר: "מה הכתובת?"</li>
+<li>15:00 — שכחת לשלוח הצעת מחיר</li>
+<li>18:00 — עוד 5 שיחות שלא נענו</li>
+<li>22:00 — מנסה לעשות חיוב באקסל</li>
+<li style="font-weight:700;color:var(--rd)">לא יודע כמה הרוויח החודש</li>
+</ul>
+</div>
+<div class="vn">
+<h3 class="ac" style="margin-bottom:10px">מחר — עם ZIKKIT</h3>
+<ul>
+<li>7:00 — קם, 3 לידים חדשים כבר במערכת מהלילה</li>
+<li>8:00 — AI עונה לטלפון, אתה עובד</li>
+<li>10:00 — מקצה טכנאי בלחיצה, GPS מראה מי קרוב</li>
+<li>12:00 — טכנאי רואה הכל באפליקציה</li>
+<li>15:00 — הצעת מחיר נשלחה אוטומטית ב-SMS</li>
+<li>18:00 — כל שיחה נענתה. אפס לידים אבודים.</li>
+<li>22:00 — פותח Dashboard, רואה ₪12,400 הכנסה היום</li>
+<li style="font-weight:700;color:var(--ac)">יודע בדיוק כמה הרוויח — ויש לו זמן למשפחה</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="S">
+<h2>כמה אתה חוסך</h2>
+<div class="cd" style="text-align:center;background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.12);margin-bottom:10px">
+<p class="sb" style="margin-bottom:4px">היום אתה משלם</p>
+<p class="mono rd" style="font-size:clamp(28px,4vw,44px);font-weight:700">₪16,350 / חודש</p>
+<p style="font-size:11px;color:var(--dm)">מזכירה + תוכנות + לידים אבודים + טעויות</p>
+</div>
+<div class="cd" style="text-align:center;background:rgba(0,229,176,0.04);border:1px solid rgba(0,229,176,0.15);margin-bottom:10px">
+<p class="sb" style="margin-bottom:4px">עם ZIKKIT</p>
+<p class="mono ac" style="font-size:clamp(28px,4vw,44px);font-weight:700">₪499 / חודש</p>
+<p style="font-size:11px;color:var(--dm)">הכל כלול — AI Bot, CRM, טכנאים, הצעות, דוחות, פורטל</p>
+</div>
+<div class="cd" style="text-align:center;background:rgba(0,229,176,0.08);border:1px solid rgba(0,229,176,0.2)">
+<p class="sb" style="margin-bottom:4px">חיסכון שנתי</p>
+<p class="mono ac" style="font-size:clamp(32px,5vw,52px);font-weight:700">₪191,710</p>
+</div>
+</div>
+<div class="S">
+<h2>איפה אנחנו עכשיו</h2>
+<div class="g2">
+<div class="cd">
+<h3 class="ac" style="margin-bottom:8px">מוצר מוכן</h3>
+<ul class="ck">
+<li>15+ דפים עובדים — Dashboard, Jobs, Leads, Quotes, AI Bot, Reports, GPS...</li>
+<li>AI Voice Bot אמיתי — מנוע AI מתקדם + Twilio</li>
+<li>עברית + אנגלית + ספרדית</li>
+<li>ממשק טכנאי עם "לקוח לא עונה" + מעקב חלקים</li>
+<li>סימולטור בוט לבדיקות</li>
+</ul>
+</div>
+<div class="cd">
+<h3 class="bl" style="margin-bottom:8px">השותף האידיאלי</h3>
+<ul class="ck">
+<li><strong>10 בעלי עסקי שטח</strong> שמוכנים לנסות</li>
+<li>HVAC, אינסטלציה, חשמל, ניקיון, מנעולנות</li>
+<li>עסקים עם 2-15 עובדים</li>
+<li>שמשלמים על מזכירה או מפספסים שיחות</li>
+<li>שמוכנים לתת פידבק כנה</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="S gg">
+<h2>תנאי הפיילוט</h2>
+<div class="tl">
+<div class="tl-i"><h3 class="ac">חודש ראשון — חינם לגמרי</h3><p class="sb">100% פונקציונליות. AI Bot, CRM, הכל. בלי הגבלות.</p></div>
+<div class="tl-i"><h3 class="ac">התקנה + הדרכה — חינם</h3><p class="sb">אני מגדיר לך הכל. מלמד אותך ואת הצוות. תמיכה ישירה בווטסאפ.</p></div>
+<div class="tl-i"><h3 class="ac">ללא התחייבות</h3><p class="sb">לא מתאים? עוזב. בלי שאלות, בלי חיוב, בלי קטנות.</p></div>
+<div class="tl-i"><h3 class="ac">אחרי חודש — ₪499/חודש או ₪4,490/שנה</h3><p class="sb">אם אתה מרוצה, ממשיכים. חיסכון של ₪191,710/שנה.</p></div>
+</div>
+<div class="cd" style="margin-top:12px">
+<h3 style="margin-bottom:8px">מה אנחנו צריכים ממך</h3>
+<ul class="ck">
+<li>30 דקות להתקנה ראשונית</li>
+<li>להעביר שיחות למספר ZIKKIT (או Call Forwarding)</li>
+<li>להשתמש במערכת ולנהל דרכה</li>
+<li>פידבק כנה — מה עובד, מה לא</li>
+<li>אם מרוצה — להמליץ לחברים</li>
+</ul>
+</div>
+</div>
+<div class="S">
+<h2>Timeline — מה קורה מתי</h2>
+<div class="tl">
+<div class="tl-i"><h3 class="ac">יום 1 — התקנה</h3><p class="sb">30 דקות. מגדיר את העסק, שירותים, מחירון, בוט. מלמד את הממשק.</p></div>
+<div class="tl-i"><h3 class="bl">יום 2-3 — הבוט עולה</h3><p class="sb">Call Forwarding מהפלאפון למספר ZIKKIT. הבוט מתחיל לענות. לידים נכנסים.</p></div>
+<div class="tl-i"><h3 class="pr">שבוע 1 — שימוש מלא</h3><p class="sb">מנהל עבודות, הצעות מחיר, טכנאים דרך המערכת. רואה דוחות.</p></div>
+<div class="tl-i"><h3 class="or">שבוע 2-3 — שיפורים</h3><p class="sb">מתאים את הבוט, מוסיף flows, מאמת שהכל עובד חלק.</p></div>
+<div class="tl-i"><h3 class="ac">סוף חודש — החלטה</h3><p class="sb">רואה את החיסכון במספרים. מחליט אם ממשיכים. בלי לחץ.</p></div>
+</div>
+</div>
+<div class="S gc">
+<div style="text-align:center">
+<h1><span class="ac">ZIKKIT</span></h1>
+<p class="sb" style="margin:16px auto;max-width:460px">מחליף מזכירה. מנהל עסק. חוסך ₪190,000 בשנה.</p>
+<div class="cd" style="max-width:380px;margin:24px auto;text-align:center;padding:24px;border-color:rgba(0,229,176,0.2)">
+<h3 class="ac" style="font-size:20px;margin-bottom:8px">רוצה לנסות?</h3>
+<p style="font-size:15px;color:var(--sb)">ohanaliel@gmail.com</p>
+<p class="ac" style="font-size:13px;margin-top:8px">חודש חינם. 10 מקומות בלבד.</p>
+</div>
+</div>
+</div>
+<div class="nav" id="nav"></div>
+<script>
+const sl=document.querySelectorAll('.S');let c=0;const t=sl.length;
+function bn(){const n=document.getElementById('nav');n.innerHTML='';for(let i=0;i<t;i++){const d=document.createElement('div');d.className='nd'+(i===c?' on':'');d.onclick=()=>go(i);n.appendChild(d);}}
+function go(n){if(n<0||n>=t||n===c)return;sl[c].className='S '+(sl[c].getAttribute('data-g')||'')+' '+(n>c?'off':'');sl[n].className='S '+(sl[n].getAttribute('data-g')||'')+' on';c=n;document.getElementById('sn').textContent=(c+1)+' / '+t;bn();}
+sl.forEach(s=>{const g=Array.from(s.classList).filter(x=>x.startsWith('g')).join(' ');s.setAttribute('data-g',g);});
+bn();
+document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowDown'||e.key===' ')go(c+1);if(e.key==='ArrowRight'||e.key==='ArrowUp')go(c-1);});
+let tx=0;document.addEventListener('touchstart',e=>tx=e.touches[0].clientX);
+document.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(d>50)go(c-1);if(d<-50)go(c+1);});
+document.addEventListener('click',e=>{if(e.target.closest('.nav'))return;if(e.clientX>window.innerWidth*0.65)go(c+1);if(e.clientX<window.innerWidth*0.35)go(c-1);});
+</script>
+</body>
+</html>
