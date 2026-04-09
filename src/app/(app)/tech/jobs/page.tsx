@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { Box, Button, TextField, Typography, InputAdornment, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Button, TextField, Typography, InputAdornment, Chip, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { DataTable } from '@/components/ui/DataTable';
@@ -32,6 +32,7 @@ export default function TechJobsPage() {
   const [closeRevenue, setCloseRevenue] = useState(0);
   const [closeMaterials, setCloseMaterials] = useState(0);
   const [closeNotes, setCloseNotes] = useState('');
+  const [closePayment, setClosePayment] = useState('cash');
   const currency = cfg.currency || (cfg.region === 'IL' ? 'ILS' : 'USD');
   const techName = user?.name || '';
 
@@ -54,7 +55,7 @@ export default function TechJobsPage() {
     const jobs = [...(db.jobs || [])];
     const idx = jobs.findIndex((j: Job) => j.id === selectedJob.id);
     if (idx >= 0) {
-      jobs[idx] = { ...jobs[idx], status: 'completed' as JobStatus, revenue: closeRevenue, materials: closeMaterials, notes: (jobs[idx].notes || '') + (closeNotes ? '\n--- סגירת טכנאי ---\n' + closeNotes : '') };
+      jobs[idx] = { ...jobs[idx], status: 'completed' as JobStatus, revenue: closeRevenue, materials: closeMaterials, paymentMethod: closePayment, notes: (jobs[idx].notes || '') + (closeNotes ? '\n--- סגירת טכנאי ---\n' + closeNotes : '') };
       await saveData({ ...db, jobs });
       toast('✅ עבודה נסגרה');
     }
@@ -119,7 +120,7 @@ export default function TechJobsPage() {
                     </Button>
                   ))}
                   {j.status !== 'completed' && j.status !== 'cancelled' && (
-                    <Button size="small" onClick={() => { setSelectedJob(j); setCloseRevenue(j.revenue || 0); setCloseMaterials(j.materials || 0); setCloseNotes(''); setShowClose(true); }}
+                    <Button size="small" onClick={() => { setSelectedJob(j); setCloseRevenue(j.revenue || 0); setCloseMaterials(j.materials || 0); setCloseNotes(''); setClosePayment('cash'); setShowClose(true); }}
                       sx={{ borderRadius: '20px', fontSize: 11, bgcolor: 'rgba(5,150,105,0.1)', color: '#059669', fontWeight: 700, border: '1px solid rgba(5,150,105,0.2)' }}>
                       ✅ סגור עבודה
                     </Button>
@@ -128,10 +129,21 @@ export default function TechJobsPage() {
 
                 {/* Revenue if completed */}
                 {j.status === 'completed' && j.revenue ? (
-                  <Box sx={{ mt: '8px', p: '8px 12px', bgcolor: 'rgba(5,150,105,0.06)', borderRadius: '8px', display: 'flex', gap: '16px', fontSize: 12 }}>
-                    <span>💰 הכנסה: <strong>{formatCurrency(j.revenue, currency)}</strong></span>
-                    {j.materials ? <span>🔧 חומרים: <strong>{formatCurrency(j.materials, currency)}</strong></span> : null}
-                    <span>📊 רווח: <strong style={{color:'#059669'}}>{formatCurrency((j.revenue || 0) - (j.materials || 0), currency)}</strong></span>
+                  <Box sx={{ mt: '8px' }}>
+                    <Box sx={{ p: '8px 12px', bgcolor: 'rgba(5,150,105,0.06)', borderRadius: '8px', display: 'flex', gap: '16px', fontSize: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span>💰 הכנסה: <strong>{formatCurrency(j.revenue, currency)}</strong></span>
+                      {j.materials ? <span>🔧 חומרים: <strong>{formatCurrency(j.materials, currency)}</strong></span> : null}
+                      <span>📊 רווח: <strong style={{color:'#059669'}}>{formatCurrency((j.revenue || 0) - (j.materials || 0), currency)}</strong></span>
+                      {(j as any).paymentMethod && <Badge label={({'cash':'מזומן','credit_card':'אשראי','check':'צ׳ק','bank_transfer':'העברה','bit':'ביט','invoice':'חשבונית','other':'אחר'} as any)[(j as any).paymentMethod] || (j as any).paymentMethod} variant="accent" />}
+                    </Box>
+                    {j.phone && (
+                      <Box sx={{ display: 'flex', gap: '6px', mt: '6px' }}>
+                        <Button size="small" href={'https://wa.me/' + (j.phone.startsWith('0') ? '972' + j.phone.slice(1) : j.phone).replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent('היי ' + j.client + ', תודה על העבודה! סכום: ' + formatCurrency(j.revenue, currency) + '. ' + (cfg.biz_name || 'Zikkit'))} target="_blank"
+                          sx={{ borderRadius: '20px', fontSize: 10, bgcolor: 'rgba(37,211,102,0.08)', color: '#25D366', fontWeight: 600 }}>📄 שלח קבלה בוואטסאפ</Button>
+                        <Button size="small" href={'sms:' + j.phone + '?body=' + encodeURIComponent('היי ' + j.client + ', תודה! סכום: ' + formatCurrency(j.revenue, currency))}
+                          sx={{ borderRadius: '20px', fontSize: 10, bgcolor: 'rgba(79,70,229,0.08)', color: '#4F46E5', fontWeight: 600 }}>💬 שלח קבלה ב-SMS</Button>
+                      </Box>
+                    )}
                   </Box>
                 ) : null}
               </Box>
@@ -171,6 +183,18 @@ export default function TechJobsPage() {
               </Box>
             </Box>
           )}
+          <Box>
+            <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>אמצעי תשלום</Typography>
+            <Select fullWidth size="small" value={closePayment} onChange={(e: any) => setClosePayment(e.target.value)}>
+              <MenuItem value="cash">💵 מזומן</MenuItem>
+              <MenuItem value="credit_card">💳 כרטיס אשראי</MenuItem>
+              <MenuItem value="check">📝 צ׳ק</MenuItem>
+              <MenuItem value="bank_transfer">🏦 העברה בנקאית</MenuItem>
+              <MenuItem value="bit">📱 ביט / פייבוקס</MenuItem>
+              <MenuItem value="invoice">📄 חשבונית (לתשלום מאוחר)</MenuItem>
+              <MenuItem value="other">אחר</MenuItem>
+            </Select>
+          </Box>
           <Box>
             <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>הערות סגירה</Typography>
             <TextField fullWidth size="small" multiline rows={2} value={closeNotes} onChange={e => setCloseNotes(e.target.value)} placeholder="עבודה הושלמה..." />

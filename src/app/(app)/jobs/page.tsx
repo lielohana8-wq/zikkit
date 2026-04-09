@@ -111,7 +111,7 @@ export default function JobsPage() {
     }
     await saveData({ ...db, jobs: jobsList });
     setShowModal(false);
-    toast(editJob.id ? '✅ Job updated!' : '✅ Job created!');
+    toast(editJob.id ? '✅ עבודה עודכנה' : '✅ עבודה נוצרה');
   };
 
   const handleDelete = async (job: Job) => {
