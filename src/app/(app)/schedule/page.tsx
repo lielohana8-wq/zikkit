@@ -57,6 +57,7 @@ function isToday(d: string) { return d === fmtD(new Date()); }
 function parseD(s: string) { return new Date(s + 'T00:00:00'); }
 function jobDate(j: Job) { return j.scheduledDate || j.date || j.created?.split('T')[0] || ''; }
 function jobTime(j: Job) { return j.scheduledTime || j.time || '09:00'; }
+function jobDur(j: Job) { return j.duration || 60; }
 function addMin(t: string, m: number) {
   const [h, mi] = t.split(':').map(Number);
   const total = h * 60 + mi + m;
@@ -90,7 +91,7 @@ function detectConflicts(jobs: Job[], tech: string, date: string) {
     .sort((a, b) => jobTime(a).localeCompare(jobTime(b)));
   const res: { a: Job; b: Job }[] = [];
   for (let i = 0; i < tj.length - 1; i++) {
-    if (addMin(jobTime(tj[i]), 60) > jobTime(tj[i + 1])) res.push({ a: tj[i], b: tj[i + 1] });
+    if (addMin(jobTime(tj[i]), jobDur(tj[i])) > jobTime(tj[i + 1])) res.push({ a: tj[i], b: tj[i + 1] });
   }
   return res;
 }
@@ -128,7 +129,7 @@ function JobCard({ job, color, compact, onClick, onDragStart }: {
         <Typography sx={{ fontSize: 11, fontWeight: 700, color: color, fontFamily: "'Rubik', sans-serif", letterSpacing: '-0.2px' }}>
           {jobTime(job)}
         </Typography>
-        {!compact && <Typography sx={{ fontSize: 9, color: c.text3, fontWeight: 500 }}>— {addMin(jobTime(job), 60)}</Typography>}
+        {!compact && <Typography sx={{ fontSize: 9, color: c.text3, fontWeight: 500 }}>— {addMin(jobTime(job), jobDur(job))}</Typography>}
       </Box>
       <Typography noWrap sx={{ fontSize: compact ? 11 : 12.5, fontWeight: 600, color: c.text, lineHeight: 1.3, mt: '1px' }}>
         {job.client}
@@ -172,7 +173,7 @@ function TechPill({ tech, index, jobCount, capacity }: { tech: User; index: numb
 }
 
 /* ─── DAY VIEW ───────────────────────────────── */
-function DayView({ date, jobs, allJobs, techs, onEdit, onCreate, onDragStart, onDrop }: any) {
+function DayView({ date, jobs, allJobs, techs, onEdit, onCreate, onDragStart, onDrop, onResize }: any) {
   const dayJobs = jobs.filter((j: Job) => jobDate(j) === date);
   const getCap = (name: string) => {
     const n = allJobs.filter((j: Job) => j.tech === name && jobDate(j) === date && j.status !== 'cancelled').length;
@@ -205,16 +206,29 @@ function DayView({ date, jobs, allJobs, techs, onEdit, onCreate, onDragStart, on
               onClick={(e: any) => { const rect = e.currentTarget.getBoundingClientRect(); onCreate(date, yToTime(e.clientY - rect.top), tech.name); }}
             >
               {HOURS.map(h => <Box key={h} sx={{ position: 'absolute', top: (h - 6) * HOUR_H, left: 0, right: 0, height: '1px', bgcolor: c.border }} />)}
-              {HOURS.map(h => <Box key={'hh' + h} sx={{ position: 'absolute', top: (h - 6) * HOUR_H + HOUR_H / 2, left: 8, right: 8, height: '1px', bgcolor: 'rgba(255,255,255,0.025)' }} />)}
+              {HOURS.map(h => <Box key={'hh' + h} sx={{ position: 'absolute', top: (h - 6) * HOUR_H + HOUR_H / 2, left: 8, right: 8, height: '1px', bgcolor: 'rgba(0,0,0,0.025)' }} />)}
               {isToday(date) && (
                 <Box sx={{ position: 'absolute', top: timeToY(new Date().getHours() + ':' + new Date().getMinutes()), left: 0, right: 0, height: 2, bgcolor: '#EF4444', zIndex: 3, '&::before': { content: '""', position: 'absolute', right: -4, top: -4, width: 10, height: 10, borderRadius: '50%', bgcolor: '#EF4444' } }} />
               )}
               {techJobs.map((job: Job) => {
                 const top = timeToY(jobTime(job));
-                const height = Math.max(HOUR_H, 44);
+                const dur = jobDur(job); const height = Math.max((dur / 60) * HOUR_H, 36);
                 return (
                   <Box key={job.id} sx={{ position: 'absolute', top, left: 4, right: 4, height, zIndex: 1 }}>
                     <JobCard job={job} color={clr} onClick={() => onEdit(job)} onDragStart={() => onDragStart(job)} />
+                    <Box
+                      sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 8, cursor: 'ns-resize', display: 'flex', justifyContent: 'center', alignItems: 'center', '&:hover': { bgcolor: clr + '30' }, borderRadius: '0 0 8px 8px' }}
+                      onMouseDown={(e: any) => {
+                        e.stopPropagation(); e.preventDefault();
+                        const startY = e.clientY; const startDur = jobDur(job);
+                        const onMove = (ev: MouseEvent) => { const diff = ev.clientY - startY; const newDur = Math.max(15, Math.round((startDur + (diff / HOUR_H) * 60) / 15) * 15); (e.target as HTMLElement).closest('[data-dur-label]')?.setAttribute('data-dur-label', newDur + 'm'); };
+                        const onUp = (ev: MouseEvent) => { const diff = ev.clientY - startY; const newDur = Math.max(15, Math.round((startDur + (diff / HOUR_H) * 60) / 15) * 15); if (newDur !== startDur && onResize) onResize(job.id, newDur); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+                        document.addEventListener('mousemove', onMove);
+                        document.addEventListener('mouseup', onUp);
+                      }}
+                    >
+                      <Box sx={{ width: 20, height: 3, borderRadius: 2, bgcolor: clr + '40' }} />
+                    </Box>
                   </Box>
                 );
               })}
@@ -260,14 +274,16 @@ function WeekView({ dates, jobs, techs, onEdit, onCreate, onDragStart, onDrop }:
               onDrop={(e: any) => { const rect = e.currentTarget.getBoundingClientRect(); onDrop(date, yToTime(e.clientY - rect.top)); }}
               onClick={(e: any) => { const rect = e.currentTarget.getBoundingClientRect(); onCreate(date, yToTime(e.clientY - rect.top)); }}
             >
-              {HOURS.map(h => <Box key={h} sx={{ position: 'absolute', top: (h - 6) * HOUR_H, left: 0, right: 0, height: '1px', bgcolor: 'rgba(255,255,255,0.035)' }} />)}
+              {HOURS.map(h => <Box key={h} sx={{ position: 'absolute', top: (h - 6) * HOUR_H, left: 0, right: 0, height: '1px', bgcolor: 'rgba(0,0,0,0.04)' }} />)}
               {today && <Box sx={{ position: 'absolute', top: timeToY(new Date().getHours() + ':' + new Date().getMinutes()), left: 0, right: 0, height: 2, bgcolor: '#EF4444', zIndex: 3 }} />}
               {dayJobs.map((job: Job) => {
                 const top = timeToY(jobTime(job));
+                const dur = jobDur(job);
+                const height = Math.max((dur / 60) * HOUR_H, 28);
                 const ti = techs.findIndex((t: User) => t.name === job.tech);
                 const clr = ti >= 0 ? tColor(ti) : (STATUS[job.status]?.color || '#5C8AFF');
                 return (
-                  <Box key={job.id} sx={{ position: 'absolute', top, left: 2, right: 2, zIndex: 1 }}>
+                  <Box key={job.id} sx={{ position: 'absolute', top, left: 2, right: 2, height, zIndex: 1 }}>
                     <JobCard job={job} color={clr} compact onClick={() => onEdit(job)} onDragStart={() => onDragStart(job)} />
                   </Box>
                 );
@@ -370,7 +386,7 @@ function TimelineView({ dates, jobs, allJobs, techs, onEdit, onDragStart, onDrop
                   {techJobs.map((job: Job) => {
                     const [hh, mm] = jobTime(job).split(':').map(Number);
                     const left = ((hh * 60 + mm - 360) / 60) * 70;
-                    const width = (60 / 60) * 70;
+                    const width = (jobDur(job) / 60) * 70;
                     return (
                       <Tooltip key={job.id} title={job.client + ' · ' + jobTime(job)} arrow>
                         <Box draggable onDragStart={() => onDragStart(job)} onClick={() => onEdit(job)} sx={{
@@ -449,6 +465,14 @@ function EditModal({ open, job, techs, onClose, onSave, onDelete, isMobile }: an
         <TextField label="תאריך" type="date" value={form.scheduledDate || ''} onChange={e => set('scheduledDate', e.target.value)} fullWidth size="small" InputLabelProps={{ shrink: true }} />
         <TextField label="שעה" type="time" value={form.scheduledTime || ''} onChange={e => set('scheduledTime', e.target.value)} fullWidth size="small" InputLabelProps={{ shrink: true }} />
       </Box>
+      <FormControl size="small" sx={{ minWidth: 110 }}><InputLabel>משך זמן</InputLabel>
+        <Select value={form.duration || 60} label="משך זמן" onChange={(e: any) => set('duration', Number(e.target.value))}>
+          <MenuItem value={30}>30 דק׳</MenuItem><MenuItem value={60}>שעה</MenuItem>
+          <MenuItem value={90}>1.5 שעות</MenuItem><MenuItem value={120}>שעתיים</MenuItem>
+          <MenuItem value={180}>3 שעות</MenuItem><MenuItem value={240}>4 שעות</MenuItem>
+          <MenuItem value={360}>6 שעות</MenuItem><MenuItem value={480}>8 שעות</MenuItem>
+        </Select>
+      </FormControl>
       <FormControl fullWidth size="small"><InputLabel>טכנאי</InputLabel>
         <Select value={form.tech || ''} label="טכנאי" onChange={e => { const n = e.target.value; const t = techs.find((x: User) => x.name === n); set('tech', n); set('techId', t?.id); if (n) set('status', 'assigned'); }}>
           <MenuItem value=""><em>לא שובץ</em></MenuItem>
@@ -530,6 +554,14 @@ function CreateModal({ open, slot, techs, onClose, onSave, isMobile }: any) {
         <TextField label="תאריך" type="date" value={form.scheduledDate || ''} onChange={e => set('scheduledDate', e.target.value)} fullWidth size="small" InputLabelProps={{ shrink: true }} />
         <TextField label="שעה" type="time" value={form.scheduledTime || ''} onChange={e => set('scheduledTime', e.target.value)} fullWidth size="small" InputLabelProps={{ shrink: true }} />
       </Box>
+      <FormControl size="small" sx={{ minWidth: 110 }}><InputLabel>משך זמן</InputLabel>
+        <Select value={form.duration || 60} label="משך זמן" onChange={(e: any) => set('duration', Number(e.target.value))}>
+          <MenuItem value={30}>30 דק׳</MenuItem><MenuItem value={60}>שעה</MenuItem>
+          <MenuItem value={90}>1.5 שעות</MenuItem><MenuItem value={120}>שעתיים</MenuItem>
+          <MenuItem value={180}>3 שעות</MenuItem><MenuItem value={240}>4 שעות</MenuItem>
+          <MenuItem value={360}>6 שעות</MenuItem><MenuItem value={480}>8 שעות</MenuItem>
+        </Select>
+      </FormControl>
       <FormControl fullWidth size="small"><InputLabel>טכנאי</InputLabel>
         <Select value={form.tech || ''} label="טכנאי" onChange={e => { const n = e.target.value; const t = techs.find((x: User) => x.name === n); set('tech', n); set('techId', t?.id); if (n) set('status', 'assigned'); }}>
           <MenuItem value=""><em>לא שובץ</em></MenuItem>
@@ -662,7 +694,7 @@ export default function SchedulePage() {
 
   const createJobDb = useCallback(async (data: Partial<Job>) => {
     const jobs = [...(db.jobs || [])]; const maxId = jobs.reduce((m, j) => Math.max(m, j.id || 0), 0);
-    jobs.push({ id: maxId + 1, num: formatJobNumber(maxId + 1), client: data.client || '', phone: data.phone || '', address: data.address || '', desc: data.desc || '', status: (data.status || 'open') as JobStatus, priority: data.priority || 'normal', tech: data.tech || '', techId: data.techId, scheduledDate: data.scheduledDate || '', scheduledTime: data.scheduledTime || '', created: new Date().toISOString(), notes: data.notes || '', source: 'schedule' } as Job);
+    jobs.push({ id: maxId + 1, num: formatJobNumber(maxId + 1), client: data.client || '', phone: data.phone || '', address: data.address || '', desc: data.desc || '', status: (data.status || 'open') as JobStatus, priority: data.priority || 'normal', tech: data.tech || '', techId: data.techId, scheduledDate: data.scheduledDate || '', scheduledTime: data.scheduledTime || '', duration: data.duration || 60, created: new Date().toISOString(), notes: data.notes || '', source: 'schedule' } as Job);
     await saveData({ ...db, jobs });
   }, [db, saveData]);
 
@@ -675,6 +707,11 @@ export default function SchedulePage() {
     const tech = techName ? techs.find(t => t.name === techName) : undefined;
     await updateJob(dragJob.id, { scheduledDate: date, scheduledTime: time, tech: techName || dragJob.tech, techId: tech ? tech.id as number : dragJob.techId, status: techName ? 'assigned' as JobStatus : dragJob.status });
     toast('עבודה הוזזה בהצלחה'); setDragJob(null);
+  };
+
+  const handleResize = async (jobId: number, newDuration: number) => {
+    await updateJob(jobId, { duration: newDuration });
+    toast(Math.floor(newDuration / 60) + ':' + String(newDuration % 60).padStart(2, '0') + ' שעות');
   };
 
   const handleAutoAssign = async () => {
@@ -832,7 +869,7 @@ export default function SchedulePage() {
         {/* Content */}
         <Box ref={scrollRef} sx={{ flex: 1, overflow: 'auto', p: isMobile ? 1 : 2 }}>
           {isMobile && viewMode === 'day' && <MobileListView date={fmtD(currentDate)} jobs={filteredJobs} techs={techs.filter(t => selectedTechs.includes(t.name))} onEdit={j => { setEditJob(j); setEditOpen(true); }} />}
-          {!isMobile && viewMode === 'day' && <DayView date={fmtD(currentDate)} jobs={filteredJobs} allJobs={allJobs} techs={techs.filter(t => selectedTechs.includes(t.name))} onEdit={(j: Job) => { setEditJob(j); setEditOpen(true); }} onCreate={(d: string, t: string, tn?: string) => { setCreateSlot({ date: d, time: t, tech: tn }); setCreateOpen(true); }} onDragStart={setDragJob} onDrop={handleDrop} />}
+          {!isMobile && viewMode === 'day' && <DayView date={fmtD(currentDate)} jobs={filteredJobs} allJobs={allJobs} techs={techs.filter(t => selectedTechs.includes(t.name))} onEdit={(j: Job) => { setEditJob(j); setEditOpen(true); }} onCreate={(d: string, t: string, tn?: string) => { setCreateSlot({ date: d, time: t, tech: tn }); setCreateOpen(true); }} onDragStart={setDragJob} onDrop={handleDrop} onResize={handleResize} />}
           {viewMode === 'week' && <WeekView dates={dateRange} jobs={filteredJobs} techs={techs} onEdit={(j: Job) => { setEditJob(j); setEditOpen(true); }} onCreate={(d: string, t: string) => { setCreateSlot({ date: d, time: t }); setCreateOpen(true); }} onDragStart={setDragJob} onDrop={handleDrop} />}
           {viewMode === 'month' && <MonthView dates={dateRange} curMonth={currentDate.getMonth()} jobs={filteredJobs} techs={techs} onEdit={(j: Job) => { setEditJob(j); setEditOpen(true); }} onDayClick={(d: string) => { setCurrentDate(parseD(d)); setViewMode('day'); }} />}
           {viewMode === 'timeline' && !isMobile && <TimelineView dates={dateRange} jobs={filteredJobs} allJobs={allJobs} techs={techs.filter(t => selectedTechs.includes(t.name))} onEdit={(j: Job) => { setEditJob(j); setEditOpen(true); }} onDragStart={setDragJob} onDrop={handleDrop} />}

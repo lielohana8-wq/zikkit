@@ -38,6 +38,7 @@ export interface Job {
   partsEta?: string;
   scheduledDate?: string;
   scheduledTime?: string;
+  duration?: number; // minutes, default 60
   gpsCheckins?: GPSCheckin[];
   portalToken?: string;
   paymentMethod?: string;

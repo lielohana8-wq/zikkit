@@ -612,7 +612,7 @@ export default function AIBotPage() {
                 keyExtractor={(e) => e.time + e.msg}
                 columns={[
                   { key: 'time', label: 'Time', render: (e) => <Typography sx={{ fontSize: 11, fontFamily: 'monospace', color: '#78716C' }}>{e.time}</Typography>, width: 140 },
-                  { key: 'type', label: 'סוג', render: (e) => <Badge label={e.type || 'call'} variant={e.type === 'missed' ? 'hot' : e.type === 'answered' ? 'green' : 'blue'} />, width: 100 },
+                  { key: 'type', label: 'סוג', render: (e) => <Badge label={e.type || 'call'} variant={e.type === 'missed' ? 'hot' : (e.type as string) === 'answered' ? 'green' : 'blue'} />, width: 100 },
                   { key: 'msg', label: 'Message', render: (e) => <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>{e.msg}</Typography> },
                 ]}
                 data={[...botLog].reverse()}
