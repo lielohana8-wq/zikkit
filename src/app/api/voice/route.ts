@@ -198,19 +198,18 @@ export async function POST(req: NextRequest) {
       } catch {}
     } catch {}
 
-    // Log to Firestore
+    // === FULL AUTOMATION: Log + Create Job + Assign Tech + Send Portal ===
     try {
       const firebase = await import('@/lib/firebase');
-      const db = firebase.getFirestoreDb();
+      const fdb = firebase.getFirestoreDb();
       const cleanPhone = calledNumber.replace(/[^0-9]/g, '');
-      const lookupSnap = await firebase.getDoc(firebase.doc(db, 'phone_lookup', cleanPhone));
+      const lookupSnap = await firebase.getDoc(firebase.doc(fdb, 'phone_lookup', cleanPhone));
       if (lookupSnap.exists()) {
         const bizId = lookupSnap.data().bizId;
-        const bizSnap = await firebase.getDoc(firebase.doc(db, 'businesses', bizId));
+        const bizSnap = await firebase.getDoc(firebase.doc(fdb, 'businesses', bizId));
         if (bizSnap.exists()) {
           const bizData = bizSnap.data();
           const botLog = bizData.db?.botLog || [];
-          // Update or add log entry
           const existingIdx = botLog.findIndex((l: any) => l.callSid === callSid);
           const logEntry = {
             id: Date.now(), type: 'call', from: callerPhone, callSid,
@@ -220,28 +219,116 @@ export async function POST(req: NextRequest) {
           if (existingIdx >= 0) botLog[existingIdx] = logEntry;
           else botLog.push(logEntry);
 
-          // Create/update lead if we have data
           const leads = bizData.db?.leads || [];
-          if (conv.collectedData.name || conv.collectedData.phone) {
-            const leadPhone = conv.collectedData.phone || callerPhone;
-            const existingLead = leads.findIndex((l: any) => l.phone === leadPhone);
+          const jobs = bizData.db?.jobs || [];
+          const users = bizData.db?.users || [];
+          const d = conv.collectedData;
+          const customerPhone = d.phone || callerPhone;
+
+          // Create/update lead
+          if (d.name || customerPhone) {
+            const existingLead = leads.findIndex((l: any) => l.phone === customerPhone);
             const lead = {
-              id: Date.now(), name: conv.collectedData.name || 'שיחה — ' + callerPhone,
-              phone: leadPhone, address: conv.collectedData.address || '',
-              source: 'ai_bot', status: 'new', notes: conv.collectedData.issue || '',
-              preferredTime: conv.collectedData.preferredTime || '',
-              created: new Date().toISOString(),
+              id: Date.now(), name: d.name || 'שיחה — ' + callerPhone,
+              phone: customerPhone, address: d.address || '',
+              source: 'ai_bot', status: 'new', notes: d.issue || '',
+              preferredTime: d.preferredTime || '', created: new Date().toISOString(),
             };
             if (existingLead >= 0) leads[existingLead] = { ...leads[existingLead], ...lead, id: leads[existingLead].id };
             else leads.push(lead);
           }
 
-          await firebase.setDoc(firebase.doc(db, 'businesses', bizId), {
-            db: { ...bizData.db, botLog, leads }
+          // AUTO CREATE JOB when we have enough data
+          const hasEnoughData = d.name && (d.address || d.issue);
+          const alreadyCreatedJob = jobs.some((j: any) => j.botCallSid === callSid);
+
+          if (hasEnoughData && !alreadyCreatedJob) {
+            // Find available technician
+            const techs = users.filter((u: any) => (u.role === 'technician' || u.role === 'tech') && u.isActive !== false);
+            // Pick tech with fewest open jobs
+            let assignedTech = '';
+            if (techs.length > 0) {
+              const techJobCounts = techs.map((t: any) => ({
+                name: t.name,
+                count: jobs.filter((j: any) => j.tech === t.name && !['completed','cancelled'].includes(j.status)).length,
+              }));
+              techJobCounts.sort((a: any, b: any) => a.count - b.count);
+              assignedTech = techJobCounts[0].name;
+            }
+
+            // Determine scheduled time
+            const now = new Date();
+            let scheduledDate = now.toISOString().slice(0, 10);
+            let scheduledTime = '';
+            const pref = (d.preferredTime || '').toLowerCase();
+            if (pref.includes('מחר') || pref.includes('tomorrow')) {
+              const tom = new Date(now.getTime() + 86400000);
+              scheduledDate = tom.toISOString().slice(0, 10);
+            }
+            if (pref.includes('בוקר') || pref.includes('morning')) scheduledTime = '09:00';
+            else if (pref.includes('צהריים') || pref.includes('noon')) scheduledTime = '12:00';
+            else if (pref.includes('אחהצ') || pref.includes('afternoon')) scheduledTime = '14:00';
+            else if (pref.includes('ערב') || pref.includes('evening')) scheduledTime = '18:00';
+            else scheduledTime = String(Math.min(now.getHours() + 2, 18)).padStart(2, '0') + ':00';
+
+            const jobId = Date.now();
+            const jobNum = '#' + String(jobs.length + 1).padStart(4, '0');
+            const newJob = {
+              id: jobId, num: jobNum,
+              client: d.name, phone: customerPhone, address: d.address || '', desc: d.issue || '',
+              status: assignedTech ? 'assigned' : 'open',
+              tech: assignedTech, scheduledDate, scheduledTime,
+              date: scheduledDate, time: scheduledTime,
+              source: 'ai_bot', botCallSid: callSid,
+              created: new Date().toISOString(),
+              priority: 'normal',
+            };
+            jobs.push(newJob);
+
+            // CREATE PORTAL
+            const portalToken = 'portal_' + jobId;
+            try {
+              await firebase.setDoc(firebase.doc(fdb, 'public_portals', portalToken), {
+                type: 'job', bizName: conv.bizName, bizPhone: conv.bizPhone || '',
+                client: d.name, phone: customerPhone, address: d.address || '',
+                desc: d.issue || '', status: newJob.status,
+                scheduledDate, scheduledTime, techName: assignedTech,
+                num: jobNum, currency: bizData.cfg?.currency || 'ILS',
+                created: new Date().toISOString(),
+              });
+              // Save portal token on job
+              const jobIdx = jobs.findIndex((j: any) => j.id === jobId);
+              if (jobIdx >= 0) jobs[jobIdx].portalToken = portalToken;
+            } catch (pe) { console.error('[Voice] Portal:', pe); }
+
+            // SEND SMS with portal link
+            const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
+            const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+            const TWILIO_FROM = process.env.TWILIO_PHONE_NUMBER;
+            if (TWILIO_SID && TWILIO_TOKEN && TWILIO_FROM && customerPhone) {
+              const portalUrl = 'https://zikkit-jvc7.vercel.app/portal/' + portalToken;
+              const smsBody = conv.lang === 'he'
+                ? 'היי ' + d.name + ', קיבלנו את הפנייה שלך. עקוב אחרי הסטטוס כאן: ' + portalUrl + ' — ' + conv.bizName
+                : 'Hi ' + d.name + ', we received your request. Track status here: ' + portalUrl + ' — ' + conv.bizName;
+              try {
+                await fetch('https://api.twilio.com/2010-04-01/Accounts/' + TWILIO_SID + '/Messages.json', {
+                  method: 'POST',
+                  headers: { 'Authorization': 'Basic ' + Buffer.from(TWILIO_SID + ':' + TWILIO_TOKEN).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+                  body: new URLSearchParams({ To: customerPhone, From: TWILIO_FROM, Body: smsBody }).toString(),
+                });
+                console.log('[Voice] SMS sent to', customerPhone);
+              } catch (se) { console.error('[Voice] SMS failed:', se); }
+            }
+
+            console.log('[Voice] Job created:', jobNum, 'Tech:', assignedTech || 'unassigned');
+          }
+
+          await firebase.setDoc(firebase.doc(fdb, 'businesses', bizId), {
+            db: { ...bizData.db, botLog, leads, jobs }
           }, { merge: true });
         }
       }
-    } catch (e) { console.error('[Voice] Log:', e); }
+    } catch (e) { console.error('[Voice] Automation error:', e); }
 
     // Check if conversation is complete
     // Only end when bot explicitly says goodbye phrase
