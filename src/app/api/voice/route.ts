@@ -1,21 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
-const convos: Record<string, { msgs: any[]; lang: string; biz: string; type: string }> = {};
 
 function xml(twiml: string) {
   return new NextResponse(`<?xml version="1.0" encoding="UTF-8"?><Response>${twiml}</Response>`, { headers: { 'Content-Type': 'text/xml' } });
-}
-
-function say(text: string, lang: string) {
-  const l = lang === 'he' ? 'he-IL' : 'en-US';
-  const v = lang === 'he' ? 'Google.he-IL-Wavenet-A' : 'Google.en-US-Wavenet-D';
-  return `<Say language="${l}" voice="${v}">${text.replace(/[<>&]/g, '')}</Say>`;
-}
-
-function gather(lang: string) {
-  const l = lang === 'he' ? 'he-IL' : 'en-US';
-  return `<Gather input="speech" language="${l}" speechTimeout="5" action="/api/voice" method="POST"><Say language="${l}"> </Say></Gather>`;
 }
 
 export async function POST(req: NextRequest) {
@@ -23,184 +11,162 @@ export async function POST(req: NextRequest) {
     const body = await req.text();
     const p = new URLSearchParams(body);
     const speech = p.get('SpeechResult') || '';
-    const callSid = p.get('CallSid') || 'unknown';
+    const callSid = p.get('CallSid') || 'x';
     const to = p.get('To') || '';
+    const from = p.get('From') || '';
 
-    // Detect language from called number
-    const lang = to.startsWith('+972') ? 'he' : (to.startsWith('+1') ? 'en' : 'he');
+    const lang = to.startsWith('+972') ? 'he' : 'en';
+    const ttsLang = lang === 'he' ? 'he-IL' : 'en-US';
 
-    // Init conversation
-    if (!convos[callSid]) {
-      // Try to load business name (non-blocking)
-      let biz = '', type = '';
-      try {
-        const fb = await import('@/lib/firebase');
-        const db = fb.getFirestoreDb();
+    // Load conversation from Firestore
+    const fb = await import('@/lib/firebase');
+    const db = fb.getFirestoreDb();
+    let biz = '', bizType = '', msgs: any[] = [];
+
+    // Get business info + conversation history
+    try {
+      const convSnap = await fb.getDoc(fb.doc(db, 'bot_conversations', callSid));
+      if (convSnap.exists()) {
+        const d = convSnap.data();
+        msgs = d.messages || [];
+        biz = d.bizName || '';
+        bizType = d.bizType || '';
+      } else {
+        // First call - lookup business
         const clean = to.replace(/[^0-9]/g, '');
-        const snap = await fb.getDoc(fb.doc(db, 'phone_lookup', clean));
-        if (snap.exists()) {
-          const bizSnap = await fb.getDoc(fb.doc(db, 'businesses', snap.data().bizId));
-          if (bizSnap.exists()) { biz = bizSnap.data().cfg?.biz_name || ''; type = bizSnap.data().cfg?.biz_type || ''; }
+        const lookupSnap = await fb.getDoc(fb.doc(db, 'phone_lookup', clean));
+        if (lookupSnap.exists()) {
+          const bizSnap = await fb.getDoc(fb.doc(db, 'businesses', lookupSnap.data().bizId));
+          if (bizSnap.exists()) {
+            biz = bizSnap.data().cfg?.biz_name || '';
+            bizType = bizSnap.data().cfg?.biz_type || '';
+          }
         }
-      } catch {}
-      convos[callSid] = { msgs: [], lang, biz, type };
-      setTimeout(() => delete convos[callSid], 300000);
-    }
+      }
+    } catch (e) { console.error('[Voice] DB:', e); }
 
-    const conv = convos[callSid];
-
-    // First call - greeting
+    // First call - no speech yet
     if (!speech) {
-      const g = conv.lang === 'he'
-        ? (conv.biz ? `היי! כאן ${conv.biz}. מה קרה?` : 'היי! איך אפשר לעזור?')
-        : (conv.biz ? `Hi! This is ${conv.biz}. What happened?` : 'Hi! How can I help?');
-      return xml(say(g, conv.lang) + gather(conv.lang));
+      const greeting = lang === 'he'
+        ? `היי! ${biz ? 'כאן ' + biz + '.' : ''} מה קרה? ספרו לי.`
+        : `Hi! ${biz ? 'This is ' + biz + '.' : ''} What happened? Tell me.`;
+
+      // Save initial state
+      try {
+        await fb.setDoc(fb.doc(db, 'bot_conversations', callSid), {
+          messages: [{ role: 'assistant', content: greeting }],
+          bizName: biz, bizType, lang, from, to, started: new Date().toISOString(),
+        });
+      } catch {}
+
+      return xml(
+        `<Say language="${ttsLang}">${greeting}</Say>` +
+        `<Gather input="speech" language="${ttsLang}" speechTimeout="6" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>` +
+        `<Say language="${ttsLang}">${lang === 'he' ? 'אתה שם? ספר לי מה קורה.' : 'Are you there? Tell me what happened.'}</Say>` +
+        `<Gather input="speech" language="${ttsLang}" speechTimeout="6" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>`
+      );
     }
 
     // Add user message
-    conv.msgs.push({ role: 'user', content: speech });
+    msgs.push({ role: 'user', content: speech });
 
-    // Call AI - simple and fast
+    // Build system prompt
+    const sysHe = `אתה דנה, מזכירה של ${biz || 'העסק'}. עסק ${bizType || 'שירות'}. שיחת טלפון חיה.
+
+אופי: חמה, ידידותית, טבעית, אנושית לגמרי. דברי כמו ישראלית אמיתית.
+אורך תשובה: משפט אחד בלבד! מקסימום שניים!
+
+זרימה — שאלי אחת אחת, לא הכל ביחד:
+שלב 1: הלקוח סיפר בעיה → הגיבי בהזדהות ושאלי שאלה אחת על הבעיה
+שלב 2: הבנת את הבעיה → שאלי "איך קוראים לך?"
+שלב 3: קיבלת שם → שאלי "מה הכתובת [שם]?"
+שלב 4: קיבלת כתובת → שאלי "מתי נוח לך? יש לנו טכנאי פנוי"
+שלב 5: קיבלת זמן → "יופי [שם]! הטכנאי יגיע [זמן]. יתקשר לפני. ביי!"
+
+אם שואל מחיר: "הטכנאי בודק במקום ונותן הצעה בחינם"
+אם דחוף: "מטפלים! מה הכתובת?"
+אם כועס: "מבינה אותך לגמרי. בוא נפתור עכשיו. מה הכתובת?"
+
+אסור: "תודה על פנייתך" / "נחזור אליך" / "מספר פנייה" / "אני מערכת"`;
+
+    const sysEn = `You are Dana, receptionist at ${biz || 'the company'}. ${bizType || 'Service'} business. Live phone call.
+
+Personality: Warm, friendly, natural, totally human. Talk like a real American receptionist.
+Response length: ONE sentence only! Two max!
+
+Flow — ask one thing at a time:
+Step 1: Customer told you the problem → React with empathy, ask ONE question about the issue
+Step 2: You understand the problem → Ask "What's your name?"
+Step 3: Got name → Ask "What's your address [name]?"
+Step 4: Got address → Ask "When works for you? We have a tech available"
+Step 5: Got time → "Perfect [name]! Tech will be there [time]. He'll call before. Bye!"
+
+If asks price: "The tech checks on site and quotes for free"
+If urgent: "On it! What's the address?"
+If angry: "I totally get it. Let's fix this now. What's the address?"
+
+Never say: "Thank you for calling" / "We'll get back to you" / "Reference number" / "I am a system"`;
+
+    // Call AI
     let reply = '';
     try {
-      const sysPrompt = conv.lang === 'he'
-        ? `אתה מזכירה של ${conv.biz || 'העסק'}. סוג עסק: ${conv.type || 'שירות'}. אתה בשיחת טלפון חיה עם לקוח.
-
-מי אתה: את/ה העובד/ת הכי טוב/ה, הכי חם/ה, הכי אנושי/ת שיש. אתה מכיר את העסק בעל פה. אתה אוהב לעזור לאנשים. קוראים לך דנה.
-
-איך לדבר:
-- כמו חברה בטלפון. "היי!", "אוי לא", "וואלה", "יאללה", "סבבה", "אין בעיה"
-- משפט אחד. מקסימום שניים. קצר וחם.
-- אף פעם אל תגידי משהו שמזכירה אמיתית לא הייתה אומרת
-- אל תגידי: "אשמח לסייע", "תודה על פנייתך", "נציג יחזור אליך", "אנו מעריכים"
-- כן תגידי: "אוי, מה קרה?", "כמה זמן זה ככה?", "את/ה שם/שם עכשיו?", "סבבה מטפלים"
-
-מה לעשות:
-1. לקוח מספר בעיה → תגיבי בהזדהות + שאלה חכמה אחת
-   "אוי לא! מאיפה זה נוזל, מהתקרה או מהקיר?"
-   "וואלה, כמה זמן זה ככה?"
-   "אאוץ', יש נזק לרצפה?"
-
-2. אחרי שהבנת → "מה השם שלך חמודי?" / "איך קוראים לך?"
-
-3. אחרי שם → "ו[שם], מה הכתובת?" / "איפה אתה נמצא?"
-
-4. אחרי כתובת → "מתי נוח לך? יש לנו טכנאי פנוי היום" / "אפשר היום אחהצ, מתאים?"
-
-5. יש שם + כתובת + זמן → "יופי [שם]! רשמתי אותך ל[זמן]. הטכנאי יתקשר לפני שהוא מגיע. יאללה ביי!"
-
-מצבים מיוחדים:
-- "כמה זה עולה?" → "תראה, זה תלוי בעבודה. הטכנאי מגיע, בודק, ונותן לך הצעה במקום — בלי התחייבות. מתי נוח לך?"
-- "אתם זמינים?" → "כן כן! יש לנו מישהו פנוי. מתי נוח?"
-- "זה דחוף!" → "אני מבינה! בואי נסדר טכנאי כמה שיותר מהר. מה הכתובת?"
-- "אני לא בטוח" → "תשמע, הטכנאי מגיע, בודק, ואם לא מתאים — לא משלמים כלום. אין מה להפסיד"
-- לקוח כועס → "אני מבינה שזה מתסכל. בוא נפתור את זה עכשיו. מה הכתובת ואני שולחת מישהו?"
-- לא מבינה מה אמר → "סליחה אהבתי, אפשר להסביר לי עוד פעם מה קורה?"
-
-לעולם לא:
-- "תודה נחזור אליך" (רק בסוף!)
-- "מספר הפנייה שלך הוא..."
-- "אני מערכת/בוט/AI"
-- "אנחנו מעריכים את פנייתך"
-- "נציג שירות יחזור אליך"
-`
-        : `You are Dana, the receptionist at ${conv.biz || 'the company'}. Business type: ${conv.type || 'service'}. Live phone call with a customer.
-
-Who you are: The warmest, friendliest, most helpful receptionist ever. You know the business inside out. You love helping people.
-
-How to talk:
-- Like a friend on the phone. "Oh no!", "Got it!", "No worries!", "Awesome!"
-- One sentence. Two max. Short and warm.
-- Never say anything a real receptionist wouldn't say
-- Don't say: "I'd be happy to assist", "Thank you for calling", "A representative will contact you"
-- Do say: "Oh no, what happened?", "How long has that been going on?", "Are you there now?"
-
-What to do:
-1. Customer describes issue → React with empathy + one smart question
-   "Oh no! Is it leaking from the ceiling or the wall?"
-   "Yikes, how long has it been like that?"
-   "Ouch, any damage to the floor?"
-
-2. After understanding → "What's your name?" / "Who am I speaking with?"
-
-3. After name → "And [name], what's the address?"
-
-4. After address → "When works for you? We have a tech available today" / "How about this afternoon?"
-
-5. Have name + address + time → "Perfect [name]! I've got you down for [time]. The tech will call before he arrives. Have a great day!"
-
-Special situations:
-- "How much?" → "It really depends on the job. The tech comes, checks it out, and gives you a quote right there — totally free, no commitment. When works for you?"
-- "Available today?" → "Yes! We've got someone free. When's good?"
-- "It's urgent!" → "I totally get it! Let's get someone there ASAP. What's the address?"
-- "I'm not sure" → "Look, the tech comes, takes a look, and if it doesn't work out — you don't pay a thing. Nothing to lose!"
-- Angry customer → "I totally understand your frustration. Let's fix this right now. What's the address so I can send someone?"
-- Didn't understand → "Sorry hun, can you explain what's going on one more time?"
-
-Never ever:
-- "We'll get back to you" (only at the very end!)
-- "Your reference number is..."
-- "I am a system/bot/AI"
-- "We appreciate your inquiry"
-- "A service representative will contact you"
-`;
-
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 120, system: sysPrompt, messages: conv.msgs }),
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 100,
+          system: lang === 'he' ? sysHe : sysEn,
+          messages: msgs,
+        }),
       });
       const data = await res.json();
       reply = data.content?.[0]?.text || '';
-    } catch (e) {
-      console.error('[Voice] AI error:', e);
-    }
+      if (!reply && data.error) console.error('[Voice] API error:', data.error);
+    } catch (e) { console.error('[Voice] AI fetch:', e); }
 
-    // If AI failed, ask a question instead of "didn't hear"
     if (!reply) {
-      reply = conv.lang === 'he'
-        ? (conv.msgs.length <= 2 ? 'ספר לי, מה הבעיה?' : 'מה השם שלך?')
-        : (conv.msgs.length <= 2 ? 'Tell me, what seems to be the issue?' : "What's your name?");
+      reply = lang === 'he' ? 'ספר לי עוד, מה בדיוק קורה?' : 'Tell me more, what exactly is going on?';
     }
 
-    conv.msgs.push({ role: 'assistant', content: reply });
+    msgs.push({ role: 'assistant', content: reply });
 
-    // End only when bot says goodbye
-    const isDone = reply.includes('ביי') || reply.includes('bye') || reply.includes('Bye') ||
-      (reply.includes('פתחתי') && reply.includes('עבודה')) ||
-      (reply.includes('booked') || reply.includes("I've opened")) ||
-      conv.msgs.length > 20;
+    // Save conversation to Firestore
+    try {
+      await fb.setDoc(fb.doc(db, 'bot_conversations', callSid), { messages: msgs }, { merge: true });
+    } catch {}
 
-    if (isDone) {
-      // Log to Firestore in background (don't wait)
-      logCall(convos[callSid], callSid, p.get('From') || '', to).catch(() => {});
-      return xml(say(reply, conv.lang) + say(conv.lang === 'he' ? 'להתראות!' : 'Goodbye!', conv.lang) + '<Hangup/>');
+    // Check if done
+    const done = reply.includes('ביי') || reply.includes('bye') || reply.includes('Bye') ||
+      reply.includes('להתראות') || reply.includes('Goodbye') || msgs.length > 20;
+
+    if (done) {
+      // Log lead
+      try {
+        const clean = to.replace(/[^0-9]/g, '');
+        const lookupSnap = await fb.getDoc(fb.doc(db, 'phone_lookup', clean));
+        if (lookupSnap.exists()) {
+          const bizId = lookupSnap.data().bizId;
+          const bizSnap = await fb.getDoc(fb.doc(db, 'businesses', bizId));
+          if (bizSnap.exists()) {
+            const bizData = bizSnap.data();
+            const leads = bizData.db?.leads || [];
+            if (!leads.find((l: any) => l.phone === from)) {
+              leads.push({ id: Date.now(), name: 'שיחה — ' + from, phone: from, source: 'ai_bot', status: 'new', created: new Date().toISOString() });
+              await fb.setDoc(fb.doc(db, 'businesses', bizId), { db: { ...bizData.db, leads } }, { merge: true });
+            }
+          }
+        }
+      } catch {}
+      return xml(`<Say language="${ttsLang}">${reply.replace(/[<>&]/g, '')}</Say><Hangup/>`);
     }
 
-    return xml(say(reply, conv.lang) + gather(conv.lang));
+    return xml(
+      `<Say language="${ttsLang}">${reply.replace(/[<>&]/g, '')}</Say>` +
+      `<Gather input="speech" language="${ttsLang}" speechTimeout="6" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>`
+    );
   } catch (e) {
-    console.error('[Voice]', e);
-    return xml('<Say language="he-IL">שנייה, יש תקלה קטנה. תנסה שוב.</Say><Hangup/>');
+    console.error('[Voice] Fatal:', e);
+    return xml('<Say language="he-IL">רגע, יש תקלה קטנה. תתקשרו שוב עוד דקה.</Say><Hangup/>');
   }
-}
-
-async function logCall(conv: any, callSid: string, from: string, to: string) {
-  try {
-    const fb = await import('@/lib/firebase');
-    const db = fb.getFirestoreDb();
-    const clean = to.replace(/[^0-9]/g, '');
-    const snap = await fb.getDoc(fb.doc(db, 'phone_lookup', clean));
-    if (!snap.exists()) return;
-    const bizId = snap.data().bizId;
-    const bizSnap = await fb.getDoc(fb.doc(db, 'businesses', bizId));
-    if (!bizSnap.exists()) return;
-    const bizData = bizSnap.data();
-    const botLog = bizData.db?.botLog || [];
-    botLog.push({ id: Date.now(), callSid, from, messages: conv.msgs, timestamp: new Date().toISOString(), lang: conv.lang });
-    const leads = bizData.db?.leads || [];
-    if (!leads.find((l: any) => l.phone === from)) {
-      leads.push({ id: Date.now(), name: 'שיחה — ' + from, phone: from, source: 'ai_bot', status: 'new', created: new Date().toISOString() });
-    }
-    await fb.setDoc(fb.doc(db, 'businesses', bizId), { db: { ...bizData.db, botLog, leads } }, { merge: true });
-  } catch (e) { console.error('[Voice] Log error:', e); }
 }
