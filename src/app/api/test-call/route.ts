@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get the Retell phone number
-    let fromNumber = '';
+    let fromNumber = process.env.RETELL_PHONE_NUMBER || '';
     try {
       const phonesRes = await fetch('https://api.retellai.com/v2/list-phone-numbers', {
         method: 'GET',
