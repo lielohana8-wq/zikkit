@@ -35,6 +35,7 @@ function getSystemPrompt(lang: string, bizName: string, bizType: string): string
 - גינון: שאל על גודל הגינה, סוג העבודה (גיזום/דישון/התקנה)
 - מעליות: שאל על סוג התקלה, קומה, האם תקועים בפנים
 - מוצרי חשמל: שאל על סוג המוצר, הדגם, התקלה, גיל המוצר
+- ארובות: שאל על סוג הארובה (קמין/גז/עץ), מתי ניקו בפעם האחרונה, האם יש עשן חוזר, גובה הבניין, גישה לגג
 
 כללים חשובים:
 - דבר בעברית טבעית, קצר וחם. לא רובוטי.
@@ -68,6 +69,7 @@ Business-specific questions to ask:
 - Landscaping: ask about yard size, work type (trimming/planting/installation)
 - Elevators: ask about issue type, floor, anyone trapped
 - Appliances: ask about appliance type, model, issue, age
+- Chimneys: ask about chimney type (fireplace/gas/wood), last cleaning date, any smoke backflow, building height, roof access
 
 Important rules:
 - Speak naturally and briefly. Not robotic.
