@@ -2,33 +2,72 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 
-const STATUS_STEPS = [
-  { key: 'open', label: 'פנייה התקבלה', icon: '📋' },
-  { key: 'assigned', label: 'טכנאי שובץ', icon: '👷' },
-  { key: 'scheduled', label: 'נקבעה פגישה', icon: '📅' },
-  { key: 'in_progress', label: 'טכנאי בדרך / בטיפול', icon: '🔧' },
-  { key: 'completed', label: 'עבודה הושלמה', icon: '✅' },
-];
-
-const STATUS_MSG: Record<string, { title: string; sub: string; color: string }> = {
-  open: { title: 'הפנייה שלך התקבלה', sub: 'נחזור אליך בהקדם עם פרטי הטכנאי והמועד.', color: '#4F46E5' },
-  assigned: { title: 'שובץ טכנאי לעבודה', sub: 'ניצור איתך קשר לתיאום מועד.', color: '#2563EB' },
-  scheduled: { title: 'הפגישה נקבעה!', sub: 'הטכנאי יגיע אליך במועד שנקבע.', color: '#7C3AED' },
-  in_progress: { title: 'הטכנאי בדרך אליך!', sub: 'הטכנאי יצא לכיוונך.', color: '#D97706' },
-  waiting_parts: { title: 'ממתינים לחלקים', sub: 'נדרשים חלקים נוספים. נעדכן ברגע שיגיעו.', color: '#7C3AED' },
-  parts_arrived: { title: 'החלקים הגיעו!', sub: 'נתאם איתך מועד להמשך.', color: '#059669' },
-  no_answer: { title: 'ניסינו ליצור קשר', sub: 'לא הצלחנו להגיע אליך. אנא חזרו אלינו.', color: '#E11D48' },
-  callback: { title: 'נחזור אליך בקרוב', sub: 'הצוות שלנו יצור איתך קשר.', color: '#D97706' },
-  completed: { title: 'העבודה הושלמה!', sub: 'תודה שבחרת בנו.', color: '#059669' },
-  cancelled: { title: 'העבודה בוטלה', sub: '', color: '#78716C' },
+const T = {
+  he: {
+    loading: 'טוען...', notFound: '🔗 קישור לא תקין', error: 'שגיאה בטעינה',
+    progress: 'מעקב התקדמות', jobDetails: 'פרטי העבודה', photos: '📷 תמונות',
+    items: '💰 פירוט', total: 'סה״כ', payment: '💳 תשלום', amount: 'סכום',
+    payMethod: 'אמצעי תשלום', call: '📞 התקשר', whatsapp: '💬 וואטסאפ',
+    client: 'לקוח', address: 'כתובת', date: 'מועד', tech: 'טכנאי', desc: 'תיאור',
+    steps: ['פנייה התקבלה','טכנאי שובץ','נקבעה פגישה','טכנאי בדרך / בטיפול','עבודה הושלמה'],
+    status: {
+      open: { t: 'הפנייה שלך התקבלה', s: 'נחזור אליך בהקדם עם פרטי הטכנאי והמועד.' },
+      assigned: { t: 'שובץ טכנאי לעבודה', s: 'ניצור איתך קשר לתיאום מועד.' },
+      scheduled: { t: 'הפגישה נקבעה!', s: 'הטכנאי יגיע אליך במועד שנקבע.' },
+      in_progress: { t: 'הטכנאי בדרך אליך!', s: 'הטכנאי יצא לכיוונך.' },
+      waiting_parts: { t: 'ממתינים לחלקים', s: 'נדרשים חלקים נוספים. נעדכן ברגע שיגיעו.' },
+      parts_arrived: { t: 'החלקים הגיעו!', s: 'נתאם איתך מועד להמשך.' },
+      no_answer: { t: 'ניסינו ליצור קשר', s: 'לא הצלחנו להגיע אליך. אנא חזרו אלינו.' },
+      callback: { t: 'נחזור אליך בקרוב', s: 'הצוות שלנו יצור איתך קשר.' },
+      completed: { t: 'העבודה הושלמה!', s: 'תודה שבחרת בנו.' },
+      cancelled: { t: 'העבודה בוטלה', s: '' },
+    },
+    pay: { cash: 'מזומן', credit_card: 'אשראי', check: "צ'ק", bank_transfer: 'העברה', bit: 'ביט', invoice: 'חשבונית' },
+  },
+  en: {
+    loading: 'Loading...', notFound: '🔗 Invalid link', error: 'Error loading',
+    progress: 'Progress', jobDetails: 'Job Details', photos: '📷 Photos',
+    items: '💰 Details', total: 'Total', payment: '💳 Payment', amount: 'Amount',
+    payMethod: 'Payment method', call: '📞 Call', whatsapp: '💬 WhatsApp',
+    client: 'Client', address: 'Address', date: 'Date', tech: 'Technician', desc: 'Description',
+    steps: ['Request received','Technician assigned','Appointment set','Technician on the way','Job completed'],
+    status: {
+      open: { t: 'Your request was received', s: 'We will get back to you shortly with technician details.' },
+      assigned: { t: 'Technician assigned', s: 'We will contact you to schedule an appointment.' },
+      scheduled: { t: 'Appointment confirmed!', s: 'The technician will arrive at the scheduled time.' },
+      in_progress: { t: 'Technician is on the way!', s: 'The technician is heading to you now.' },
+      waiting_parts: { t: 'Waiting for parts', s: 'Additional parts are needed. We will update you when they arrive.' },
+      parts_arrived: { t: 'Parts arrived!', s: 'We will schedule a follow-up appointment.' },
+      no_answer: { t: 'We tried reaching you', s: 'Please call us back at your convenience.' },
+      callback: { t: 'We will call you back', s: 'Our team will contact you shortly.' },
+      completed: { t: 'Job completed!', s: 'Thank you for choosing us.' },
+      cancelled: { t: 'Job cancelled', s: '' },
+    },
+    pay: { cash: 'Cash', credit_card: 'Credit Card', check: 'Check', bank_transfer: 'Bank Transfer', bit: 'Bit', invoice: 'Invoice' },
+  },
 };
 
-const PAY: Record<string, string> = { cash: 'מזומן', credit_card: 'אשראי', check: "צ'ק", bank_transfer: 'העברה', bit: 'ביט', invoice: 'חשבונית' };
+const STEP_ICONS = ['📋','👷','📅','🔧','✅'];
+const STATUS_COLORS: Record<string, string> = {
+  open: '#4F46E5', assigned: '#2563EB', scheduled: '#7C3AED', in_progress: '#D97706',
+  waiting_parts: '#7C3AED', parts_arrived: '#059669', no_answer: '#E11D48',
+  callback: '#D97706', completed: '#059669', cancelled: '#78716C',
+};
+
+function detectLang(): 'he' | 'en' {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+  const nav = navigator.language || '';
+  if (tz === 'Asia/Jerusalem' || nav.startsWith('he') || nav.startsWith('iw')) return 'he';
+  return 'en';
+}
 
 export default function PortalPage({ params }: { params: { token: string } }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [lang, setLang] = useState<'he' | 'en'>('he');
+
+  useEffect(() => { setLang(detectLang()); }, []);
 
   useEffect(() => {
     let unsub: any = null;
@@ -37,59 +76,56 @@ export default function PortalPage({ params }: { params: { token: string } }) {
         const firebase = await import('@/lib/firebase');
         const db = firebase.getFirestoreDb();
         const docRef = firebase.doc(db, 'public_portals', params.token);
-        
-        // Try real-time listener first
         try {
           unsub = firebase.onSnapshot(docRef, (snap: any) => {
-            if (snap.exists()) { setData(snap.data()); setError(''); }
-            else setError('not_found');
+            if (snap.exists()) { setData(snap.data()); setError(''); } else setError('not_found');
             setLoading(false);
           }, async () => {
-            // Fallback to getDoc if onSnapshot fails
-            try {
-              const snap = await firebase.getDoc(docRef);
-              if (snap.exists()) { setData(snap.data()); setError(''); }
-              else setError('not_found');
-            } catch (e2) { setError('error'); }
+            try { const snap = await firebase.getDoc(docRef); if (snap.exists()) { setData(snap.data()); } else setError('not_found'); } catch { setError('error'); }
             setLoading(false);
           });
         } catch {
-          // Fallback
           const snap = await firebase.getDoc(docRef);
-          if (snap.exists()) { setData(snap.data()); setError(''); }
-          else setError('not_found');
+          if (snap.exists()) { setData(snap.data()); } else setError('not_found');
           setLoading(false);
         }
-      } catch (e) {
-        console.error('[Portal]', e);
-        setError('error');
-        setLoading(false);
-      }
+      } catch { setError('error'); setLoading(false); }
     }
     load();
     return () => { if (unsub) unsub(); };
   }, [params.token]);
 
-  if (loading) return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F5F0EB' }}><Typography>טוען...</Typography></Box>;
-  if (error === 'not_found') return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F5F0EB' }}><Typography>🔗 קישור לא תקין</Typography></Box>;
-  if (error || !data) return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F5F0EB' }}><Typography>שגיאה בטעינה</Typography></Box>;
+  const t = T[lang];
+  const dir = lang === 'he' ? 'rtl' : 'ltr';
 
-  // Smart status: derive from data if raw status is behind
+  if (loading) return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F5F0EB' }}><Typography>{t.loading}</Typography></Box>;
+  if (error === 'not_found') return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F5F0EB' }}><Typography>{t.notFound}</Typography></Box>;
+  if (error || !data) return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F5F0EB' }}><Typography>{t.error}</Typography></Box>;
+
   let status = data.status || 'open';
   if (status === 'open' || status === 'assigned' || status === 'scheduled') {
     if (data.techName && data.scheduledDate) status = 'scheduled';
     else if (data.techName) status = 'assigned';
   }
-  const info = STATUS_MSG[status] || STATUS_MSG.open;
-  const activeStep = Math.max(0, STATUS_STEPS.findIndex(s => s.key === status));
+  const color = STATUS_COLORS[status] || '#4F46E5';
+  const statusInfo = (t.status as any)[status] || t.status.open;
+  const activeStep = Math.max(0, ['open','assigned','scheduled','in_progress','completed'].indexOf(status));
   const photos = data.photos || [];
   const items = data.items || [];
   const sym = data.currency === 'ILS' ? '₪' : '$';
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#F5F0EB', direction: 'rtl' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#F5F0EB', direction: dir }}>
+      {/* Lang toggle */}
+      <Box sx={{ position: 'fixed', top: 12, [lang === 'he' ? 'left' : 'right']: 12, zIndex: 10 }}>
+        <Button onClick={() => setLang(lang === 'he' ? 'en' : 'he')} size="small"
+          sx={{ minWidth: 'auto', bgcolor: 'rgba(255,255,255,0.3)', backdropFilter: 'blur(8px)', borderRadius: '16px', px: 1.5, fontSize: 11, color: '#fff', fontWeight: 600 }}>
+          {lang === 'he' ? 'EN' : 'עב'}
+        </Button>
+      </Box>
+
       {/* Header */}
-      <Box sx={{ background: `linear-gradient(135deg, ${info.color}, ${info.color}CC)`, p: '32px 24px 24px', textAlign: 'center' }}>
+      <Box sx={{ background: `linear-gradient(135deg, ${color}, ${color}CC)`, p: '32px 24px 24px', textAlign: 'center' }}>
         <Box sx={{ width: 56, height: 56, borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 1.5 }}>
           <Typography sx={{ fontSize: 28, fontWeight: 900, color: '#fff' }}>{(data.bizName || 'Z').charAt(0)}</Typography>
         </Box>
@@ -98,29 +134,29 @@ export default function PortalPage({ params }: { params: { token: string } }) {
       </Box>
 
       <Box sx={{ maxWidth: 500, mx: 'auto', p: '0 16px 32px', mt: '-16px' }}>
-        {/* Status */}
+        {/* Status card */}
         <Box sx={{ bgcolor: '#fff', borderRadius: '16px', p: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', mb: 2, textAlign: 'center' }}>
-          <Typography sx={{ fontSize: 40, mb: 1 }}>{STATUS_STEPS.find(s => s.key === status)?.icon || '📋'}</Typography>
-          <Typography sx={{ fontSize: 20, fontWeight: 800, color: info.color, mb: '6px' }}>{info.title}</Typography>
-          <Typography sx={{ fontSize: 14, color: '#78716C', lineHeight: 1.6 }}>{info.sub}</Typography>
+          <Typography sx={{ fontSize: 40, mb: 1 }}>{STEP_ICONS[activeStep] || '📋'}</Typography>
+          <Typography sx={{ fontSize: 20, fontWeight: 800, color, mb: '6px' }}>{statusInfo.t}</Typography>
+          <Typography sx={{ fontSize: 14, color: '#78716C', lineHeight: 1.6 }}>{statusInfo.s}</Typography>
         </Box>
 
         {/* Timeline */}
         <Box sx={{ bgcolor: '#fff', borderRadius: '16px', p: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', mb: 2 }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#A8A29E', mb: '14px' }}>מעקב התקדמות</Typography>
-          {STATUS_STEPS.map((step, i) => {
-            const done = i <= (activeStep >= 0 ? activeStep : 0);
-            const current = i === (activeStep >= 0 ? activeStep : 0);
+          <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#A8A29E', mb: '14px' }}>{t.progress}</Typography>
+          {t.steps.map((label, i) => {
+            const done = i <= activeStep;
+            const current = i === activeStep;
             return (
-              <Box key={step.key} sx={{ display: 'flex', gap: '12px' }}>
+              <Box key={i} sx={{ display: 'flex', gap: '12px' }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 28 }}>
-                  <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: done ? info.color : '#F5F0EB', display: 'flex', alignItems: 'center', justifyContent: 'center', border: current ? '2px solid ' + info.color : 'none' }}>
-                    {done ? <Typography sx={{ color: '#fff', fontSize: 12, fontWeight: 800 }}>✓</Typography> : <Typography sx={{ fontSize: 12 }}>{step.icon}</Typography>}
+                  <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: done ? color : '#F5F0EB', display: 'flex', alignItems: 'center', justifyContent: 'center', border: current ? '2px solid ' + color : 'none' }}>
+                    {done ? <Typography sx={{ color: '#fff', fontSize: 12, fontWeight: 800 }}>✓</Typography> : <Typography sx={{ fontSize: 12 }}>{STEP_ICONS[i]}</Typography>}
                   </Box>
-                  {i < STATUS_STEPS.length - 1 && <Box sx={{ width: 2, height: 24, bgcolor: done ? info.color + '40' : '#E7E2DD', my: '2px' }} />}
+                  {i < t.steps.length - 1 && <Box sx={{ width: 2, height: 24, bgcolor: done ? color + '40' : '#E7E2DD', my: '2px' }} />}
                 </Box>
-                <Box sx={{ pt: '3px', pb: i < STATUS_STEPS.length - 1 ? '12px' : '0' }}>
-                  <Typography sx={{ fontSize: 13, fontWeight: current ? 700 : 500, color: current ? info.color : done ? '#1C1917' : '#A8A29E' }}>{step.label}</Typography>
+                <Box sx={{ pt: '3px', pb: i < t.steps.length - 1 ? '12px' : '0' }}>
+                  <Typography sx={{ fontSize: 13, fontWeight: current ? 700 : 500, color: current ? color : done ? '#1C1917' : '#A8A29E' }}>{label}</Typography>
                 </Box>
               </Box>
             );
@@ -129,18 +165,25 @@ export default function PortalPage({ params }: { params: { token: string } }) {
 
         {/* Job details */}
         <Box sx={{ bgcolor: '#fff', borderRadius: '16px', p: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', mb: 2 }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#A8A29E', mb: '10px' }}>פרטי העבודה</Typography>
-          {data.client && <Box sx={{ display: 'flex', gap: '8px', py: '8px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}><Typography>👤</Typography><Box><Typography sx={{ fontSize: 10, color: '#A8A29E' }}>לקוח</Typography><Typography sx={{ fontSize: 14, fontWeight: 600 }}>{data.client}</Typography></Box></Box>}
-          {data.address && <Box sx={{ display: 'flex', gap: '8px', py: '8px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}><Typography>📍</Typography><Box><Typography sx={{ fontSize: 10, color: '#A8A29E' }}>כתובת</Typography><Typography sx={{ fontSize: 14 }}>{data.address}</Typography></Box></Box>}
-          {data.scheduledDate && <Box sx={{ display: 'flex', gap: '8px', py: '8px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}><Typography>📅</Typography><Box><Typography sx={{ fontSize: 10, color: '#A8A29E' }}>מועד</Typography><Typography sx={{ fontSize: 14 }}>{data.scheduledDate} {data.scheduledTime || ''}</Typography></Box></Box>}
-          {data.techName && <Box sx={{ display: 'flex', gap: '8px', py: '8px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}><Typography>👷</Typography><Box><Typography sx={{ fontSize: 10, color: '#A8A29E' }}>טכנאי</Typography><Typography sx={{ fontSize: 14, fontWeight: 600 }}>{data.techName}</Typography></Box></Box>}
-          {data.desc && <Box sx={{ display: 'flex', gap: '8px', py: '8px' }}><Typography>📝</Typography><Box><Typography sx={{ fontSize: 10, color: '#A8A29E' }}>תיאור</Typography><Typography sx={{ fontSize: 14, color: '#57534E' }}>{data.desc}</Typography></Box></Box>}
+          <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#A8A29E', mb: '10px' }}>{t.jobDetails}</Typography>
+          {[
+            data.client && { icon: '👤', label: t.client, value: data.client },
+            data.address && { icon: '📍', label: t.address, value: data.address },
+            data.scheduledDate && { icon: '📅', label: t.date, value: data.scheduledDate + ' ' + (data.scheduledTime || '') },
+            data.techName && { icon: '👷', label: t.tech, value: data.techName },
+            data.desc && { icon: '📝', label: t.desc, value: data.desc },
+          ].filter(Boolean).map((item: any, i) => (
+            <Box key={i} sx={{ display: 'flex', gap: '8px', py: '8px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+              <Typography>{item.icon}</Typography>
+              <Box><Typography sx={{ fontSize: 10, color: '#A8A29E' }}>{item.label}</Typography><Typography sx={{ fontSize: 14, fontWeight: item.icon === '👤' || item.icon === '👷' ? 600 : 400 }}>{item.value}</Typography></Box>
+            </Box>
+          ))}
         </Box>
 
         {/* Photos */}
         {photos.length > 0 && (
           <Box sx={{ bgcolor: '#fff', borderRadius: '16px', p: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', mb: 2 }}>
-            <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#A8A29E', mb: '10px' }}>📷 תמונות</Typography>
+            <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#A8A29E', mb: '10px' }}>{t.photos}</Typography>
             <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {photos.map((p: string, i: number) => (
                 <Box key={i} sx={{ width: 80, height: 80, borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
@@ -154,7 +197,7 @@ export default function PortalPage({ params }: { params: { token: string } }) {
         {/* Items */}
         {items.length > 0 && (
           <Box sx={{ bgcolor: '#fff', borderRadius: '16px', p: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', mb: 2 }}>
-            <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#A8A29E', mb: '10px' }}>💰 פירוט</Typography>
+            <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#A8A29E', mb: '10px' }}>{t.items}</Typography>
             {items.map((item: any, i: number) => (
               <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: '10px', py: '10px', borderBottom: i < items.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
                 {item.image && <img src={item.image} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />}
@@ -163,20 +206,20 @@ export default function PortalPage({ params }: { params: { token: string } }) {
               </Box>
             ))}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: '12px', borderTop: '2px solid rgba(0,0,0,0.06)', mt: '4px' }}>
-              <Typography sx={{ fontSize: 18, fontWeight: 800 }}>סה״כ</Typography>
+              <Typography sx={{ fontSize: 18, fontWeight: 800 }}>{t.total}</Typography>
               <Typography sx={{ fontSize: 18, fontWeight: 800, color: '#4F46E5' }}>{items.reduce((s: number, i: any) => s + (i.price || 0) * (i.qty || 1), 0).toLocaleString()} {sym}</Typography>
             </Box>
           </Box>
         )}
 
-        {/* Payment if completed */}
+        {/* Payment */}
         {status === 'completed' && data.revenue && (
           <Box sx={{ bgcolor: '#fff', borderRadius: '16px', p: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', mb: 2 }}>
             <Box sx={{ bgcolor: '#05966908', borderRadius: '10px', p: '14px' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                <span>סכום</span><strong>{(data.revenue || 0).toLocaleString()} {sym}</strong>
+                <span>{t.amount}</span><strong>{(data.revenue || 0).toLocaleString()} {sym}</strong>
               </Box>
-              {data.paymentMethod && <Typography sx={{ fontSize: 12, color: '#78716C', mt: '6px' }}>💳 {PAY[data.paymentMethod] || data.paymentMethod}</Typography>}
+              {data.paymentMethod && <Typography sx={{ fontSize: 12, color: '#78716C', mt: '6px' }}>💳 {(t.pay as any)[data.paymentMethod] || data.paymentMethod}</Typography>}
             </Box>
           </Box>
         )}
@@ -184,9 +227,9 @@ export default function PortalPage({ params }: { params: { token: string } }) {
         {/* Contact */}
         {data.bizPhone && (
           <Box sx={{ display: 'flex', gap: '8px' }}>
-            <Button fullWidth href={'tel:' + data.bizPhone} variant="contained" sx={{ borderRadius: '12px', py: 1.5, fontSize: 14, fontWeight: 700 }}>📞 התקשר</Button>
+            <Button fullWidth href={'tel:' + data.bizPhone} variant="contained" sx={{ borderRadius: '12px', py: 1.5, fontSize: 14, fontWeight: 700 }}>{t.call}</Button>
             <Button fullWidth href={'https://wa.me/' + (data.bizPhone.replace(/[^0-9]/g, '').startsWith('0') ? '972' + data.bizPhone.replace(/[^0-9]/g, '').slice(1) : data.bizPhone.replace(/[^0-9]/g, ''))} target="_blank"
-              sx={{ borderRadius: '12px', py: 1.5, fontSize: 14, fontWeight: 700, bgcolor: '#25D366', color: '#fff', '&:hover': { bgcolor: '#1da851' } }}>💬 וואטסאפ</Button>
+              sx={{ borderRadius: '12px', py: 1.5, fontSize: 14, fontWeight: 700, bgcolor: '#25D366', color: '#fff', '&:hover': { bgcolor: '#1da851' } }}>{t.whatsapp}</Button>
           </Box>
         )}
 
