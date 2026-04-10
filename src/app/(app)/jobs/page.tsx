@@ -575,7 +575,7 @@ export default function JobsPage() {
                 revenue: menuJob.revenue || 0, paymentMethod: menuJob.paymentMethod || '',
                 photos: menuJob.photos || [], items: menuJob.lineItems || [],
                 num: menuJob.num || formatJobNumber(menuJob.id), currency: cfg.currency || 'ILS',
-                created: new Date().toISOString(), bizId: bizId || '',
+                created: new Date().toISOString(),
               });
               if (!menuJob.portalToken) {
                 const jl = [...(db.jobs || [])]; const ix = jl.findIndex(j => j.id === menuJob.id);
@@ -608,7 +608,7 @@ export default function JobsPage() {
                 desc: menuJob.desc || '', status: menuJob.status, scheduledDate: menuJob.scheduledDate || '',
                 scheduledTime: menuJob.scheduledTime || menuJob.time || '', techName: menuJob.tech || '',
                 num: menuJob.num || formatJobNumber(menuJob.id), currency: cfg.currency || 'ILS',
-                created: new Date().toISOString(), bizId: bizId || '',
+                created: new Date().toISOString(),
               });
               if (!menuJob.portalToken) {
                 const jl = [...(db.jobs || [])]; const ix = jl.findIndex(j => j.id === menuJob.id);
@@ -637,7 +637,7 @@ export default function JobsPage() {
                 desc: menuJob.desc || '', status: menuJob.status, scheduledDate: menuJob.scheduledDate || '',
                 scheduledTime: menuJob.scheduledTime || menuJob.time || '', techName: menuJob.tech || '',
                 num: menuJob.num || formatJobNumber(menuJob.id), currency: cfg.currency || 'ILS',
-                created: new Date().toISOString(), bizId: bizId || '',
+                created: new Date().toISOString(),
               });
               if (!menuJob.portalToken) {
                 const jl = [...(db.jobs || [])]; const ix = jl.findIndex(j => j.id === menuJob.id);
