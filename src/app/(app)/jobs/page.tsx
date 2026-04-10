@@ -32,7 +32,7 @@ export default function JobsPage() {
   const L = useL();
   const { lang } = useLanguage();
   const { toast } = useToast();
-  const { sendJobPortal, resendPortalLink, sendJobPortalSms } = usePortal();
+  const { sendJobPortal, resendPortalLink, sendJobPortalSms, createJobPortal } = usePortal();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [techFilter, setTechFilter] = useState<string>('all');
@@ -552,7 +552,7 @@ export default function JobsPage() {
               || (db.quotes || []).find((q) => q.phone === freshJob.phone)?.email
               || '';
             if (!email) {
-              toast(L('No email found. Add email to the job first.','לא נמצא מייל. הוסף מייל לעבודה.'), '#ff4d6d');
+              toast(toast('לא נמצא מייל. הוסף מייל לעבודה.'), '#ff4d6d');
               handleCloseMenu();
               return;
             }
@@ -571,7 +571,7 @@ export default function JobsPage() {
             const email = menuJob.email
               || (db.leads || []).find((l) => l.phone === menuJob.phone)?.email || '';
             if (!email) {
-              toast(L('No email found.','לא נמצא מייל.'), '#ff4d6d');
+              toast(toast('לא נמצא מייל.'), '#ff4d6d');
               handleCloseMenu();
               return;
             }
@@ -590,7 +590,7 @@ export default function JobsPage() {
             const email = menuJob.email
               || (db.leads || []).find((l) => l.phone === menuJob.phone)?.email || '';
             if (!email) {
-              toast(L('No email found.','לא נמצא מייל.'), '#ff4d6d');
+              toast(toast('לא נמצא מייל.'), '#ff4d6d');
               handleCloseMenu();
               return;
             }
@@ -632,6 +632,22 @@ export default function JobsPage() {
             {menuJob.status === 'completed' ? L('💬 קבלה בוואטסאפ','💬 קבלה בוואטסאפ') : L('💬 פורטל בוואטסאפ','💬 פורטל בוואטסאפ')}
           </MenuItem>
         )}
+
+        {/* Copy portal link */}
+        {menuJob && menuJob.status !== 'cancelled' && (
+          <MenuItem onClick={async () => {
+            if (!menuJob) return;
+            toast('⏳ יוצר קישור...');
+            const url = await createJobPortal(menuJob);
+            if (url) { navigator.clipboard?.writeText(url).then(() => toast('📋 קישור הועתק')); }
+            handleCloseMenu();
+          }}
+            sx={{ fontSize: 12, gap: '8px', color: '#78716C', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
+            🔗 העתק קישור פורטל
+          </MenuItem>
+        )}
+
+        <Box sx={{ height: '1px', bgcolor: 'rgba(0,0,0,0.06)', my: '4px' }} />
 
         <MenuItem onClick={() => { if (menuJob) handleDelete(menuJob); }}
           sx={{ fontSize: 12, gap: '8px', color: '#ff4d6d', '&:hover': { bgcolor: 'rgba(255,77,109,0.1)' } }}>

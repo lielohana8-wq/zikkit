@@ -297,6 +297,12 @@ export default function TechJobsPage() {
                       sx={{ borderRadius: '20px', fontSize: 12, bgcolor: '#4F46E510', color: '#4F46E5', fontWeight: 600, border: '1px solid #4F46E520', flex: 1 }}>
                       💰 צור הצעת מחיר
                     </Button>
+                    {selected.phone && selected.portalToken && (
+                      <Button size="small" onClick={() => { const url = window.location.origin + '/portal/' + selected.portalToken; window.open(waLink(selected.phone || '', 'היי ' + selected.client + ', הנה פרטי העבודה: ' + url + ' — ' + bizName), '_blank'); }}
+                        sx={{ borderRadius: '20px', fontSize: 12, bgcolor: '#25D36610', color: '#25D366', fontWeight: 600, border: '1px solid #25D36620', flex: 1 }}>
+                        📤 שלח פורטל ללקוח
+                      </Button>
+                    )}
                     {items.length > 0 && (
                       <Button size="small" onClick={async () => {
                         if (!selected) return;
