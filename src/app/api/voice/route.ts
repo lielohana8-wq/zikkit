@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     // Load conversation from Firestore
     const fb = await import('@/lib/firebase');
     const db = fb.getFirestoreDb();
-    let biz = '', bizType = '', msgs: any[] = [];
+    let biz = '', bizType = '', botGreeting = '', msgs: any[] = [];
 
     // Get business info + conversation history
     try {
@@ -48,7 +48,10 @@ export async function POST(req: NextRequest) {
 
     // First call - no speech yet
     if (!speech) {
-      const greeting = biz ? `Hi! This is ${biz}. How can I help you?` : `Hi! How can I help you?`;
+      const greeting = botGreeting
+        || (lang === 'he'
+          ? (biz ? `היי! כאן ${biz}. מה קרה?` : 'היי! איך אפשר לעזור?')
+          : (biz ? `Hi! This is ${biz}. How can I help you?` : 'Hi! How can I help you?'));
 
       // Save initial state (non-blocking)
       try {
