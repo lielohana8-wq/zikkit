@@ -9,6 +9,7 @@ import { NotificationProvider } from '@/features/notifications/NotificationProvi
 import { Paywall, TrialBanner } from '@/features/billing/Paywall';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { GpsTracker } from '@/components/ui/GpsTracker';
+import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/hooks/useLanguage';
 import dynamic from 'next/dynamic';
 const SetupWizard = dynamic(() => import('@/components/onboarding/SetupWizard'), { ssr: false });
@@ -16,6 +17,7 @@ const SetupWizard = dynamic(() => import('@/components/onboarding/SetupWizard'),
 function AppContent({ children }: { children: React.ReactNode }) {
   const { cfg, saveCfg, db } = useData();
   const { lang, setLang } = useLanguage();
+  const pathname = usePathname();
   const [showWizard, setShowWizard] = useState(false);
   const checkedRef = useRef(false);
 
@@ -38,11 +40,8 @@ function AppContent({ children }: { children: React.ReactNode }) {
     if (cfg.setup_done === true) return;
     if (sessionStorage.getItem('zk_wizard_done')) return;
 
-    // Has ANY data? Not new — don't show.
-    if (cfg.biz_name) return;
+    // Has real business data? Not new.
     if ((db.jobs || []).length > 0) return;
-    if ((db.leads || []).length > 0) return;
-    if ((db.users || []).length > 1) return;
 
     // Truly new account — show wizard
     setShowWizard(true);
@@ -63,7 +62,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
       <TrialBanner />
       <AppShell>
         <Paywall>
-          <Box sx={{ pb: { xs: '80px', md: 0 } }}>{children}</Box>
+          <Box sx={{ pb: { xs: '80px', md: 0 }, px: pathname?.includes('/schedule') ? 0 : '30px', py: pathname?.includes('/schedule') ? 0 : '30px' }}>{children}</Box>
         </Paywall>
       </AppShell>
       <MobileNav />
