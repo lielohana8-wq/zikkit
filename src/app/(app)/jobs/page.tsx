@@ -557,111 +557,102 @@ export default function JobsPage() {
 
         <Box sx={{ height: '1px', bgcolor: 'rgba(0,0,0,0.06)', my: '4px' }} />
 
-        {/* Send Portal — for completed jobs */}
-        {menuJob && menuJob.status === 'completed' && (
-          <MenuItem onClick={async () => {
-            if (!menuJob) return;
-            // Get FRESH job data from db (menuJob may be stale)
-            const freshJob = (db.jobs || []).find((j) => j.id === menuJob.id) || menuJob;
-            const email = freshJob.email
-              || (db.leads || []).find((l) => l.phone === freshJob.phone)?.email
-              || (db.quotes || []).find((q) => q.phone === freshJob.phone)?.email
-              || '';
-            if (!email) {
-              toast(toast('לא נמצא מייל. הוסף מייל לעבודה.'), '#ff4d6d');
-              handleCloseMenu();
-              return;
-            }
-            await sendJobPortal(freshJob, email);
-            handleCloseMenu();
-          }}
-            sx={{ fontSize: 12, gap: '8px', color: '#a78bfa', fontWeight: 700, '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' } }}>
-            {'📧 שלח קבלה במייל'}
-          </MenuItem>
-        )}
-
-        {/* Send Portal link — for any non-cancelled job */}
-        {menuJob && menuJob.status !== 'cancelled' && menuJob.status !== 'completed' && (
-          <MenuItem onClick={async () => {
-            if (!menuJob) return;
-            const email = menuJob.email
-              || (db.leads || []).find((l) => l.phone === menuJob.phone)?.email || '';
-            if (!email) {
-              toast(toast('לא נמצא מייל.'), '#ff4d6d');
-              handleCloseMenu();
-              return;
-            }
-            await sendJobPortal(menuJob, email);
-            handleCloseMenu();
-          }}
-            sx={{ fontSize: 12, gap: '8px', color: '#4f8fff', '&:hover': { bgcolor: 'rgba(79,143,255,0.08)' } }}>
-            {'🔗 שלח פורטל במייל'}
-          </MenuItem>
-        )}
-
-        {/* Resend Portal Link */}
-        {menuJob && menuJob.portalToken && (
-          <MenuItem onClick={async () => {
-            if (!menuJob) return;
-            const email = menuJob.email
-              || (db.leads || []).find((l) => l.phone === menuJob.phone)?.email || '';
-            if (!email) {
-              toast(toast('לא נמצא מייל.'), '#ff4d6d');
-              handleCloseMenu();
-              return;
-            }
-            await resendPortalLink('job', menuJob, email);
-            handleCloseMenu();
-          }}
-            sx={{ fontSize: 12, gap: '8px', color: '#06b6d4', '&:hover': { bgcolor: 'rgba(6,182,212,0.08)' } }}>
-            {'🔄 שלח לינק שוב במייל'}
-          </MenuItem>
-        )}
-
-        {/* Send via SMS */}
-        {menuJob && menuJob.phone && menuJob.status !== 'cancelled' && (
-          <MenuItem onClick={async () => {
-            if (!menuJob) return;
-            await sendJobPortalSms(menuJob, menuJob.phone);
-            handleCloseMenu();
-          }}
-            sx={{ fontSize: 12, gap: '8px', color: '#22c55e', fontWeight: 700, '&:hover': { bgcolor: 'rgba(34,197,94,0.08)' } }}>
-            {menuJob.status === 'completed' ? L('📱 Send Receipt via SMS','📱 שלח קבלה ב-SMS') : L('📱 Send Portal via SMS','📱 שלח פורטל ב-SMS')}
-          </MenuItem>
-        )}
-
-        {menuJob && menuJob.phone && menuJob.status !== 'cancelled' && (
-          <MenuItem onClick={async () => {
-            if (!menuJob) return;
-            toast('⏳ יוצר קישור...');
-            const url = await createJobPortal(menuJob);
-            const isReceipt = menuJob.status === 'completed';
-            const msg = isReceipt
-              ? `היי ${menuJob.client || ''}, הנה הקבלה שלך מ-${cfg.biz_name || 'העסק'}${url ? ': ' + url : ''}`
-              : `היי ${menuJob.client || ''}, הנה פרטי העבודה שלך מ-${cfg.biz_name || 'העסק'}${url ? ': ' + url : ''}`;
-            const phone = menuJob.phone.replace(/[^0-9]/g, '');
-            const waPhone = phone.startsWith('0') ? '972' + phone.slice(1) : phone;
-            window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-            handleCloseMenu();
-          }}
-            sx={{ fontSize: 12, gap: '8px', color: '#25D366', fontWeight: 700, '&:hover': { bgcolor: 'rgba(37,211,102,0.08)' } }}>
-            {menuJob.status === 'completed' ? L('💬 קבלה בוואטסאפ','💬 קבלה בוואטסאפ') : L('💬 פורטל בוואטסאפ','💬 פורטל בוואטסאפ')}
-          </MenuItem>
-        )}
-
-        {/* Copy portal link */}
+        {/* ═══ Portal Send Options ═══ */}
+        <Box sx={{ height: '1px', bgcolor: 'rgba(0,0,0,0.06)', my: '4px' }} />
+        
         {menuJob && menuJob.status !== 'cancelled' && (
           <MenuItem onClick={async () => {
             if (!menuJob) return;
             toast('⏳ יוצר קישור...');
-            const url = await createJobPortal(menuJob);
-            if (url) { navigator.clipboard?.writeText(url).then(() => toast('📋 קישור הועתק')); }
+            const token = menuJob.portalToken || 'portal_' + Date.now();
+            try {
+              const firestore = getFirestoreDb();
+              await fbSet(fbDoc(firestore, 'public_portals', token), {
+                type: 'job', bizName: cfg.biz_name || '', bizPhone: cfg.biz_phone || '',
+                client: menuJob.client, phone: menuJob.phone || '', address: menuJob.address || '',
+                desc: menuJob.desc || '', status: menuJob.status, scheduledDate: menuJob.scheduledDate || '',
+                scheduledTime: menuJob.scheduledTime || menuJob.time || '', techName: menuJob.tech || '',
+                revenue: menuJob.revenue || 0, paymentMethod: menuJob.paymentMethod || '',
+                photos: menuJob.photos || [], items: menuJob.lineItems || [],
+                num: menuJob.num || formatJobNumber(menuJob.id), currency: cfg.currency || 'ILS',
+                created: new Date().toISOString(), bizId: bizId || '',
+              });
+              if (!menuJob.portalToken) {
+                const jl = [...(db.jobs || [])]; const ix = jl.findIndex(j => j.id === menuJob.id);
+                if (ix >= 0) { (jl[ix] as any).portalToken = token; await saveData({ ...db, jobs: jl }); }
+              }
+              const url = window.location.origin + '/portal/' + token;
+              if (menuJob.phone) {
+                const ph = menuJob.phone.replace(/[^0-9]/g, '');
+                const wa = ph.startsWith('0') ? '972' + ph.slice(1) : ph;
+                window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent('היי ' + menuJob.client + ', הנה פרטי העבודה שלך: ' + url + ' — ' + (cfg.biz_name || '')), '_blank');
+              }
+              toast('📨 פורטל נשלח');
+            } catch (e) { console.error(e); toast('שגיאה'); }
+            handleCloseMenu();
+          }}
+            sx={{ fontSize: 12, gap: '8px', color: '#25D366', fontWeight: 700, '&:hover': { bgcolor: 'rgba(37,211,102,0.08)' } }}>
+            💬 שלח פורטל בוואטסאפ
+          </MenuItem>
+        )}
+
+        {menuJob && menuJob.phone && menuJob.status !== 'cancelled' && (
+          <MenuItem onClick={async () => {
+            if (!menuJob) return;
+            const token = menuJob.portalToken || 'portal_' + Date.now();
+            try {
+              const firestore = getFirestoreDb();
+              await fbSet(fbDoc(firestore, 'public_portals', token), {
+                type: 'job', bizName: cfg.biz_name || '', bizPhone: cfg.biz_phone || '',
+                client: menuJob.client, phone: menuJob.phone || '', address: menuJob.address || '',
+                desc: menuJob.desc || '', status: menuJob.status, scheduledDate: menuJob.scheduledDate || '',
+                scheduledTime: menuJob.scheduledTime || menuJob.time || '', techName: menuJob.tech || '',
+                num: menuJob.num || formatJobNumber(menuJob.id), currency: cfg.currency || 'ILS',
+                created: new Date().toISOString(), bizId: bizId || '',
+              });
+              if (!menuJob.portalToken) {
+                const jl = [...(db.jobs || [])]; const ix = jl.findIndex(j => j.id === menuJob.id);
+                if (ix >= 0) { (jl[ix] as any).portalToken = token; await saveData({ ...db, jobs: jl }); }
+              }
+              const url = window.location.origin + '/portal/' + token;
+              window.open('sms:' + menuJob.phone + '?body=' + encodeURIComponent('פרטי העבודה שלך: ' + url + ' — ' + (cfg.biz_name || '')));
+              toast('📨 נשלח');
+            } catch (e) { toast('שגיאה'); }
+            handleCloseMenu();
+          }}
+            sx={{ fontSize: 12, gap: '8px', color: '#4F46E5', '&:hover': { bgcolor: 'rgba(79,70,229,0.08)' } }}>
+            📱 שלח פורטל ב-SMS
+          </MenuItem>
+        )}
+
+        {menuJob && menuJob.status !== 'cancelled' && (
+          <MenuItem onClick={async () => {
+            if (!menuJob) return;
+            const token = menuJob.portalToken || 'portal_' + Date.now();
+            try {
+              const firestore = getFirestoreDb();
+              await fbSet(fbDoc(firestore, 'public_portals', token), {
+                type: 'job', bizName: cfg.biz_name || '', bizPhone: cfg.biz_phone || '',
+                client: menuJob.client, phone: menuJob.phone || '', address: menuJob.address || '',
+                desc: menuJob.desc || '', status: menuJob.status, scheduledDate: menuJob.scheduledDate || '',
+                scheduledTime: menuJob.scheduledTime || menuJob.time || '', techName: menuJob.tech || '',
+                num: menuJob.num || formatJobNumber(menuJob.id), currency: cfg.currency || 'ILS',
+                created: new Date().toISOString(), bizId: bizId || '',
+              });
+              if (!menuJob.portalToken) {
+                const jl = [...(db.jobs || [])]; const ix = jl.findIndex(j => j.id === menuJob.id);
+                if (ix >= 0) { (jl[ix] as any).portalToken = token; await saveData({ ...db, jobs: jl }); }
+              }
+              const url = window.location.origin + '/portal/' + token;
+              navigator.clipboard?.writeText(url).then(() => toast('📋 קישור הועתק'));
+            } catch (e) { toast('שגיאה'); }
             handleCloseMenu();
           }}
             sx={{ fontSize: 12, gap: '8px', color: '#78716C', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' } }}>
             🔗 העתק קישור פורטל
           </MenuItem>
         )}
+
 
         <Box sx={{ height: '1px', bgcolor: 'rgba(0,0,0,0.06)', my: '4px' }} />
 

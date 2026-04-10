@@ -146,7 +146,7 @@ export default function TechJobsPage() {
       await fbSetDoc(fbDoc(firestore, 'public_portals', token), {
         type: 'job', bizName, bizPhone: cfg.biz_phone || '', client: selected.client, phone: selected.phone || '',
         address: selected.address || '', desc: selected.desc || '', status: selected.status,
-        scheduledDate: selected.scheduledDate || '', scheduledTime: selected.scheduledTime || '',
+        scheduledDate: selected.scheduledDate || '', scheduledTime: selected.scheduledTime || selected.time || '',
         techName, num: selected.num || formatJobNumber(selected.id), revenue: selected.revenue || 0,
         materials: selected.materials || 0, paymentMethod: selected.paymentMethod || '',
         photos: jobPhotos, items, signature: selected.signature, currency, created: new Date().toISOString(),
