@@ -288,7 +288,7 @@ export default function QuotesPage() {
               { key: 'status', label: L('Status','סטטוס'), render: (q) => (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Badge label={lang === 'he' ? (STATUS_HE[q.status] || q.status) : q.status} variant={STATUS_MAP[q.status] || 'grey'} />
-                  {q.signature && <span title={L('Signed by: ','נחתם ע"י: ') + (q.signedName || '')}>✍️</span>}
+                  {q.signature && <span title={L('נחתם: ','נחתם ע"י: ') + (q.signedName || '')}>✍️</span>}
                 </span>
               )},
               { key: 'created', label: L('Date','תאריך'), render: (q) => formatDate(q.created) },
@@ -498,7 +498,7 @@ export default function QuotesPage() {
       </ModalBase>
 
       {/* ── Signature View Modal ── */}
-      <ModalBase open={showSigModal} onClose={() => setShowSigModal(false)} title={L('Digital Signature','חתימה דיגיטלית')} maxWidth={500}>
+      <ModalBase open={showSigModal} onClose={() => setShowSigModal(false)} title={L('חתימה דיגיטלית','חתימה דיגיטלית')} maxWidth={500}>
         {sigQuote && (
           <Box sx={{ textAlign: 'center' }}>
             <Box sx={{ bgcolor: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '12px', p: 3, mb: 2 }}>

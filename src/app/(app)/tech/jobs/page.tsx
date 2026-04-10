@@ -91,11 +91,11 @@ export default function TechJobsPage() {
 
   const openJob = (job: Job) => {
     setSelected(job);
-    setItems((job as any).lineItems || []);
-    setJobPhotos((job as any).photos || []);
+    setItems(job.lineItems || []);
+    setJobPhotos(job.photos || []);
     setJobNote('');
     setShowSignature(false);
-    if ((job as any).timerStart) { setTimerStart((job as any).timerStart); } else { setTimerStart(null); setTimerElapsed(0); }
+    if (job.timerStart) { setTimerStart(job.timerStart); } else { setTimerStart(null); setTimerElapsed(0); }
     setTab('details');
   };
 
@@ -105,7 +105,7 @@ export default function TechJobsPage() {
     const jobs = [...(db.jobs || [])];
     const idx = jobs.findIndex((j: Job) => j.id === selected.id);
     if (idx >= 0) {
-      (jobs[idx] as any).lineItems = newItems;
+      jobs[idx].lineItems = newItems;
       jobs[idx].revenue = newItems.reduce((s, i) => s + i.price * i.qty, 0);
       await saveData({ ...db, jobs });
       setSelected({ ...jobs[idx] });
@@ -145,7 +145,7 @@ export default function TechJobsPage() {
     const jobs = [...(db.jobs || [])];
     const idx = jobs.findIndex((j: Job) => j.id === selected.id);
     if (idx >= 0) {
-      jobs[idx] = { ...jobs[idx], status: 'completed' as JobStatus, revenue, materials: closeMaterials, paymentMethod: closePayment, notes: (jobs[idx].notes || '') + (closeNotes ? '\n--- סגירת טכנאי ---\n' + closeNotes : ''), lineItems: items } as any;
+      jobs[idx] = { ...jobs[idx], status: 'completed' as JobStatus, revenue, materials: closeMaterials, paymentMethod: closePayment, notes: (jobs[idx].notes || '') + (closeNotes ? '\n--- סגירת טכנאי ---\n' + closeNotes : ''), lineItems: items };
       await saveData({ ...db, jobs }); toast('✅ עבודה נסגרה');
       // Create receipt
       const token = 'rcpt_' + Date.now();
@@ -157,7 +157,7 @@ export default function TechJobsPage() {
           desc: selected.desc || '', scheduledDate: selected.scheduledDate || '', scheduledTime: selected.scheduledTime || '',
           techName, num: selected.num || formatJobNumber(selected.id), jobId: selected.id,
           revenue, materials: closeMaterials, paymentMethod: closePayment, items,
-          currency: cfg.currency || (cfg.region === 'IL' ? 'ILS' : 'USD'), created: new Date().toISOString(),
+          currency: cfg.currency || (cfg.region === 'IL' ? 'ILS' : 'USD'), photos: jobPhotos, signature: selected?.signature || null, created: new Date().toISOString(),
         });
         if (selected.phone) {
           const url = window.location.origin + '/receipt/' + token;
@@ -210,9 +210,9 @@ export default function TechJobsPage() {
                 {j.address && <Box sx={{ display: 'flex', alignItems: 'center', gap: '3px' }}><LocationOn sx={{ fontSize: 14 }} />{j.address}</Box>}
                 {(j.scheduledTime || j.time) && <Box sx={{ display: 'flex', alignItems: 'center', gap: '3px' }}><AccessTime sx={{ fontSize: 14 }} />{j.scheduledTime || j.time}</Box>}
               </Box>
-              {(j as any).lineItems?.length > 0 && (
+              {j.lineItems?.length > 0 && (
                 <Typography sx={{ fontSize: 11, color: '#4F46E5', mt: '4px', fontWeight: 600 }}>
-                  💰 {formatCurrency((j as any).lineItems.reduce((s: number, i: any) => s + i.price * i.qty, 0), currency)} · {(j as any).lineItems.length} פריטים
+                  💰 {formatCurrency(j.lineItems.reduce((s: number, i: any) => s + i.price * i.qty, 0), currency)} · {j.lineItems.length} פריטים
                 </Typography>
               )}
             </Box>
@@ -418,13 +418,13 @@ export default function TechJobsPage() {
                     {jobPhotos.map((p, i) => (
                       <Box key={i} sx={{ position: 'relative', width: 72, height: 72, borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
                         <img src={p} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <IconButton size="small" onClick={() => { const np = jobPhotos.filter((_, idx) => idx !== i); setJobPhotos(np); if (selected) { const jobs = [...(db.jobs || [])]; const idx2 = jobs.findIndex((j: Job) => j.id === selected.id); if (idx2 >= 0) { (jobs[idx2] as any).photos = np; saveData({ ...db, jobs }); } } }}
+                        <IconButton size="small" onClick={() => { const np = jobPhotos.filter((_, idx) => idx !== i); setJobPhotos(np); if (selected) { const jobs = [...(db.jobs || [])]; const idx2 = jobs.findIndex((j: Job) => j.id === selected.id); if (idx2 >= 0) { jobs[idx2].photos = np; saveData({ ...db, jobs }); } } }}
                           sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'rgba(0,0,0,0.5)', width: 20, height: 20, p: 0 }}>
                           <Close sx={{ fontSize: 12, color: '#fff' }} />
                         </IconButton>
                       </Box>
                     ))}
-                    <Box onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment'; inp.multiple = true; inp.onchange = (e: any) => { Array.from(e.target.files || []).forEach((file: any) => { const reader = new FileReader(); reader.onload = (ev) => { const img2 = new Image(); img2.onload = () => { const canvas = document.createElement('canvas'); const scale = Math.min(1, 800 / Math.max(img2.width, img2.height)); canvas.width = img2.width * scale; canvas.height = img2.height * scale; canvas.getContext('2d')?.drawImage(img2, 0, 0, canvas.width, canvas.height); const url = canvas.toDataURL('image/jpeg', 0.7); setJobPhotos(prev => { const np = [...prev, url]; if (selected) { const jobs2 = [...(db.jobs || [])]; const idx3 = jobs2.findIndex((j: Job) => j.id === selected.id); if (idx3 >= 0) { (jobs2[idx3] as any).photos = np; saveData({ ...db, jobs: jobs2 }); } } return np; }); }; img2.src = ev.target?.result as string; }; reader.readAsDataURL(file); }); }; inp.click(); }}
+                    <Box onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment'; inp.multiple = true; inp.onchange = (e: any) => { Array.from(e.target.files || []).forEach((file: any) => { const reader = new FileReader(); reader.onload = (ev) => { const img2 = new Image(); img2.onload = () => { const canvas = document.createElement('canvas'); const scale = Math.min(1, 800 / Math.max(img2.width, img2.height)); canvas.width = img2.width * scale; canvas.height = img2.height * scale; canvas.getContext('2d')?.drawImage(img2, 0, 0, canvas.width, canvas.height); const url = canvas.toDataURL('image/jpeg', 0.7); setJobPhotos(prev => { const np = [...prev, url]; if (selected) { const jobs2 = [...(db.jobs || [])]; const idx3 = jobs2.findIndex((j: Job) => j.id === selected.id); if (idx3 >= 0) { jobs2[idx3].photos = np; saveData({ ...db, jobs: jobs2 }); } } return np; }); }; img2.src = ev.target?.result as string; }; reader.readAsDataURL(file); }); }; inp.click(); }}
                       sx={{ width: 72, height: 72, borderRadius: '10px', border: '2px dashed rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { borderColor: '#4F46E5', bgcolor: '#4F46E505' } }}>
                       <Typography sx={{ fontSize: 20 }}>📷</Typography>
                       <Typography sx={{ fontSize: 9, color: '#A8A29E' }}>צלם</Typography>
@@ -442,13 +442,13 @@ export default function TechJobsPage() {
 
                   {/* Signature */}
                   <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#78716C', mb: '6px' }}>✍️ חתימת לקוח</Typography>
-                  {(selected as any)?.signature ? (
+                  {selected?.signature ? (
                     <Box sx={{ bgcolor: '#05966908', borderRadius: '10px', p: '12px', textAlign: 'center' }}>
-                      <img src={(selected as any).signature} alt="" style={{ maxWidth: 200, maxHeight: 80 }} />
+                      <img src={selected.signature} alt="" style={{ maxWidth: 200, maxHeight: 80 }} />
                       <Typography sx={{ fontSize: 11, color: '#059669', mt: '4px' }}>✅ נחתם</Typography>
                     </Box>
                   ) : showSignature ? (
-                    <SignatureCanvas onSave={(sig) => { if (!selected) return; const jobs = [...(db.jobs || [])]; const idx = jobs.findIndex((j: Job) => j.id === selected.id); if (idx >= 0) { (jobs[idx] as any).signature = sig; saveData({ ...db, jobs }); setSelected({ ...jobs[idx] } as any); } setShowSignature(false); toast('חתימה נשמרה'); }} onCancel={() => setShowSignature(false)} />
+                    <SignatureCanvas onSave={(sig) => { if (!selected) return; const jobs = [...(db.jobs || [])]; const idx = jobs.findIndex((j: Job) => j.id === selected.id); if (idx >= 0) { jobs[idx].signature = sig; saveData({ ...db, jobs }); setSelected({ ...jobs[idx] } as any); } setShowSignature(false); toast('חתימה נשמרה'); }} onCancel={() => setShowSignature(false)} />
                   ) : (
                     <Button fullWidth onClick={() => setShowSignature(true)} sx={{ borderRadius: '10px', border: '2px dashed rgba(0,0,0,0.1)', py: 2, color: '#78716C', fontSize: 13 }}>
                       ✍️ לחץ לחתימת לקוח
@@ -489,7 +489,7 @@ export default function TechJobsPage() {
                       <span style={{color:'#78716C'}}>סה״כ</span>
                       <strong style={{color:'#059669'}}>{formatCurrency(selected.revenue || 0, currency)}</strong>
                     </Box>
-                    {(selected as any).paymentMethod && <Typography sx={{ fontSize: 12, color: '#A8A29E', mt: '4px' }}>💳 {PAYMENTS.find(p => p.value === (selected as any).paymentMethod)?.label}</Typography>}
+                    {selected?.paymentMethod && <Typography sx={{ fontSize: 12, color: '#A8A29E', mt: '4px' }}>💳 {PAYMENTS.find(p => p.value === selected?.paymentMethod)?.label}</Typography>}
                   </Box>
                   {selected.phone && (
                     <Button fullWidth variant="contained" href={waLink(selected.phone, 'היי ' + selected.client + ', תודה! הנה הקבלה: ' + window.location.origin + '/receipt/rcpt_' + selected.id)} target="_blank"

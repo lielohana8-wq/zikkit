@@ -42,6 +42,10 @@ export interface Job {
   gpsCheckins?: GPSCheckin[];
   portalToken?: string;
   paymentMethod?: string;
+  photos?: string[];
+  lineItems?: { id: number; name: string; qty: number; price: number; image?: string }[];
+  timerStart?: number;
+  timerElapsed?: number;
 }
 
 export interface FollowUp {
