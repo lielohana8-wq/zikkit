@@ -177,10 +177,14 @@ export default function TechJobsPage() {
       const jobs = [...(db.jobs || [])]; const idx = jobs.findIndex((j: Job) => j.id === selected.id);
       if (idx >= 0) { jobs[idx] = { ...jobs[idx], quoteStatus: 'sent', quoteTotal: itemsTotal, quoteSentAt: new Date().toISOString() }; await saveData({ ...db, jobs }); setSelected({ ...jobs[idx] }); }
       const url = window.location.origin + '/quote/' + token;
-      if (method === 'whatsapp' && selected.phone) { window.open(waLink(selected.phone, 'היי ' + selected.client + ', הנה הצעת מחיר מ-' + bizName + ': ' + url), '_blank'); }
-      else if (method === 'sms' && selected.phone) { window.open('sms:' + selected.phone + '?body=' + encodeURIComponent('הצעת מחיר מ-' + bizName + ': ' + url)); }
-      else if (method === 'copy') { navigator.clipboard?.writeText(url).then(() => toast('📋 קישור הועתק')); }
-      toast('📨 הצעה נשלחה');
+      if (method === 'whatsapp' && selected.phone) {
+        setWaPrompt({ url: waLink(selected.phone, 'היי ' + selected.client + ', הנה הצעת מחיר מ-' + bizName + ': ' + url) });
+      } else if (method === 'sms' && selected.phone) {
+        setWaPrompt({ url: 'sms:' + selected.phone + '?body=' + encodeURIComponent('הצעת מחיר מ-' + bizName + ': ' + url) });
+      } else if (method === 'copy') {
+        navigator.clipboard?.writeText(url).then(() => toast('📋 קישור הועתק'));
+      }
+      toast('📨 הצעה נוצרה');
     } catch (e) { console.error(e); toast('שגיאה'); }
   };
 
