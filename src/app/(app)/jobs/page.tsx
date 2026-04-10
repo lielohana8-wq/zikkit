@@ -18,6 +18,7 @@ import { JOB_STATUS_CONFIG } from '@/lib/constants';
 import { zikkitColors as c } from '@/styles/theme';
 import type { Job, JobStatus } from '@/types';
 import { generateInvoiceHTML, printInvoice } from '@/lib/invoice';
+import { getFirestoreDb, doc as fbDoc2, setDoc as fbSet2 } from '@/lib/firebase';
 import { DEFAULT_TEMPLATES } from '@/lib/job-templates';
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
@@ -100,7 +101,7 @@ export default function JobsPage() {
       if (!job.portalToken) return;
       try {
         const firestore = getFirestoreDb();
-        await fbSet(fbDoc(firestore, 'public_portals', job.portalToken), {
+        await fbSet2(fbDoc2(firestore, 'public_portals', job.portalToken), {
           status: job.status, client: job.client, phone: job.phone || '', address: job.address || '',
           desc: job.desc || '', scheduledDate: job.scheduledDate || '', scheduledTime: job.scheduledTime || job.time || '',
           techName: job.tech || '', revenue: job.revenue || 0, materials: job.materials || 0,
@@ -214,9 +215,8 @@ export default function JobsPage() {
       // Auto-update portal if exists
       if (updatedJob.portalToken) {
         try {
-          const { getFirestoreDb, doc: fbDoc, setDoc: fbSet } = await import('@/lib/firebase');
           const firestore = getFirestoreDb();
-          await fbSet(fbDoc(firestore, 'public_portals', updatedJob.portalToken), {
+          await fbSet2(fbDoc2(firestore, 'public_portals', updatedJob.portalToken), {
             type: 'job',
             bizName: cfg.biz_name || 'העסק',
             bizPhone: cfg.biz_phone || '',
@@ -567,7 +567,7 @@ export default function JobsPage() {
             const token = menuJob.portalToken || 'portal_' + Date.now();
             try {
               const firestore = getFirestoreDb();
-              await fbSet(fbDoc(firestore, 'public_portals', token), {
+              await fbSet2(fbDoc2(firestore, 'public_portals', token), {
                 type: 'job', bizName: cfg.biz_name || '', bizPhone: cfg.biz_phone || '',
                 client: menuJob.client, phone: menuJob.phone || '', address: menuJob.address || '',
                 desc: menuJob.desc || '', status: menuJob.status, scheduledDate: menuJob.scheduledDate || '',
@@ -602,7 +602,7 @@ export default function JobsPage() {
             const token = menuJob.portalToken || 'portal_' + Date.now();
             try {
               const firestore = getFirestoreDb();
-              await fbSet(fbDoc(firestore, 'public_portals', token), {
+              await fbSet2(fbDoc2(firestore, 'public_portals', token), {
                 type: 'job', bizName: cfg.biz_name || '', bizPhone: cfg.biz_phone || '',
                 client: menuJob.client, phone: menuJob.phone || '', address: menuJob.address || '',
                 desc: menuJob.desc || '', status: menuJob.status, scheduledDate: menuJob.scheduledDate || '',
@@ -631,7 +631,7 @@ export default function JobsPage() {
             const token = menuJob.portalToken || 'portal_' + Date.now();
             try {
               const firestore = getFirestoreDb();
-              await fbSet(fbDoc(firestore, 'public_portals', token), {
+              await fbSet2(fbDoc2(firestore, 'public_portals', token), {
                 type: 'job', bizName: cfg.biz_name || '', bizPhone: cfg.biz_phone || '',
                 client: menuJob.client, phone: menuJob.phone || '', address: menuJob.address || '',
                 desc: menuJob.desc || '', status: menuJob.status, scheduledDate: menuJob.scheduledDate || '',
