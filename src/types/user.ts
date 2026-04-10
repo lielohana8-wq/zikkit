@@ -11,6 +11,10 @@ export interface User {
   phone?: string;
   zip?: string;
   commission?: number;
+  payType?: "percentage" | "hourly" | "daily" | "fixed";
+  hourlyRate?: number;
+  dailyRate?: number;
+  fixedSalary?: number;
   firebaseUid?: string;
   bizId?: string;
   password?: string;

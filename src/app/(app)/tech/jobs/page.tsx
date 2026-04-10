@@ -122,6 +122,31 @@ export default function TechJobsPage() {
     if (waUrl) setWaPrompt({ url: waUrl });
   };
 
+  const sendPortal = async (method: 'whatsapp' | 'sms' | 'copy') => {
+    if (!selected) return;
+    const token = selected.portalToken || 'portal_' + Date.now();
+    try {
+      const firestore = getFirestoreDb();
+      await fbSetDoc(fbDoc(firestore, 'public_portals', token), {
+        type: 'job', bizName, bizPhone: cfg.biz_phone || '', client: selected.client, phone: selected.phone || '',
+        address: selected.address || '', desc: selected.desc || '', status: selected.status,
+        scheduledDate: selected.scheduledDate || '', scheduledTime: selected.scheduledTime || '',
+        techName, num: selected.num || formatJobNumber(selected.id), revenue: selected.revenue || 0,
+        materials: selected.materials || 0, paymentMethod: selected.paymentMethod || '',
+        photos: jobPhotos, items, signature: selected.signature, currency, created: new Date().toISOString(),
+      });
+      if (!selected.portalToken) {
+        const jobs = [...(db.jobs || [])]; const idx = jobs.findIndex((j: Job) => j.id === selected.id);
+        if (idx >= 0) { (jobs[idx] as any).portalToken = token; await saveData({ ...db, jobs }); setSelected({ ...jobs[idx] } as any); }
+      }
+      const url = window.location.origin + '/portal/' + token;
+      if (method === 'whatsapp' && selected.phone) window.open(waLink(selected.phone, 'היי ' + selected.client + ', הנה פרטי העבודה שלך מ-' + bizName + ': ' + url), '_blank');
+      else if (method === 'sms' && selected.phone) window.open('sms:' + selected.phone + '?body=' + encodeURIComponent('פרטי העבודה שלך מ-' + bizName + ': ' + url));
+      else if (method === 'copy') { navigator.clipboard?.writeText(url).then(() => toast('📋 קישור הועתק')); }
+      toast('📨 פורטל נשלח');
+    } catch (e) { console.error(e); toast('שגיאה'); }
+  };
+
   const sendQuote = async (method: 'whatsapp' | 'sms' | 'copy') => {
     if (!selected || items.length === 0) return;
     const token = 'quote_' + Date.now();
@@ -319,7 +344,20 @@ export default function TechJobsPage() {
                 )}
 
                 {/* Office call */}
-                {cfg.biz_phone && <Button fullWidth href={'tel:' + cfg.biz_phone} sx={{ mt: 1.5, borderRadius: '10px', bgcolor: '#4F46E506', color: '#4F46E5', fontSize: 12, fontWeight: 600, py: 1 }}>📞 התקשר למשרד</Button>}
+                {cfg.biz_phone && <Button fullWidth href={'tel:' + cfg.biz_phone} sx={{ mt: 1, borderRadius: '10px', bgcolor: '#4F46E506', color: '#4F46E5', fontSize: 12, fontWeight: 600, py: 1 }}>📞 התקשר למשרד</Button>}
+
+                {/* Send portal to client */}
+                {selected.status !== 'cancelled' && (
+                  <Box sx={{ mt: 1.5 }}>
+                    <Divider sx={{ mb: 1 }} />
+                    <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#78716C', mb: '6px' }}>📤 שלח פורטל ללקוח</Typography>
+                    <Box sx={{ display: 'flex', gap: '6px' }}>
+                      {selected.phone && <Button size='small' onClick={() => sendPortal('whatsapp')} sx={{ flex: 1, borderRadius: '8px', fontSize: 11, bgcolor: '#25D36610', color: '#25D366', fontWeight: 600 }}>💬 וואטסאפ</Button>}
+                      {selected.phone && <Button size='small' onClick={() => sendPortal('sms')} sx={{ flex: 1, borderRadius: '8px', fontSize: 11, bgcolor: '#4F46E508', color: '#4F46E5', fontWeight: 600 }}>📱 SMS</Button>}
+                      <Button size='small' onClick={() => sendPortal('copy')} sx={{ flex: 1, borderRadius: '8px', fontSize: 11, bgcolor: 'rgba(0,0,0,0.03)', color: '#78716C', fontWeight: 600 }}>🔗 העתק</Button>
+                    </Box>
+                  </Box>
+                )}
               </Box>)}
 
               {/* ═══ TAB: QUOTE ═══ */}

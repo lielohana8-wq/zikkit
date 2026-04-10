@@ -63,7 +63,7 @@ export default function TechniciansPage() {
   }, [techsWithStats, search]);
 
   const openNew = () => {
-    setEditTech({ name: '', email: '', phone: '', zip: '', role: 'technician', commission: 0 });
+    setEditTech({ name: '', email: '', phone: '', zip: '', role: 'technician', commission: 0, payType: 'percentage' } as any);
     setShowModal(true);
   };
 
@@ -203,13 +203,36 @@ export default function TechniciansPage() {
           <Button variant="contained" size="small" onClick={handleSave}>{editTech.id ? 'עדכן' : 'הוסף טכנאי'}</Button>
         </>}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <Box><Label text={L("Name *","שם *")} /><TextField fullWidth size="small" value={editTech.name || ''} onChange={(e) => setEditTech({ ...editTech, name: e.target.value })} placeholder={L('John Smith','שם הלקוח')} /></Box>
-          <Box><Label text={L("Email *","מייל *")} /><TextField fullWidth size="small" value={editTech.email || ''} onChange={(e) => setEditTech({ ...editTech, email: e.target.value })} placeholder={L("john@company.com","john@company.com")} /></Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-            <Box><Label text={L("Phone","טלפון")} /><TextField fullWidth size="small" value={editTech.phone || ''} onChange={(e) => setEditTech({ ...editTech, phone: e.target.value })} placeholder={L('(555) 000-0000','050-0000000')} /></Box>
-            <Box><Label text={L("ZIP","מיקוד")} /><TextField fullWidth size="small" value={editTech.zip || ''} onChange={(e) => setEditTech({ ...editTech, zip: e.target.value })} placeholder={L('10001','0000000')} /></Box>
-          </Box>
-          <Box><Label text={L("Commission %","עמלה %")} /><TextField fullWidth size="small" type="number" value={editTech.commission || 0} onChange={(e) => setEditTech({ ...editTech, commission: parseFloat(e.target.value) || 0 })} /></Box>
+          <Box>
+              <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '4px', textTransform: 'uppercase' }}>סוג תשלום</Typography>
+              <Select fullWidth size="small" value={(editTech as any).payType || 'percentage'} onChange={(e: any) => setEditTech({ ...editTech, payType: e.target.value } as any)}
+                sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 }, mb: '10px' }}>
+                <MenuItem value="percentage">📊 אחוז מהעבודה</MenuItem>
+                <MenuItem value="hourly">⏱️ שעתי</MenuItem>
+                <MenuItem value="daily">📅 יומי</MenuItem>
+                <MenuItem value="fixed">💰 משכורת קבועה</MenuItem>
+              </Select>
+              {(editTech as any).payType === 'percentage' && (
+                <Box><Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '4px' }}>אחוז עמלה (%)</Typography>
+                <TextField fullWidth size="small" type="number" value={editTech.commission || 0} onChange={(e) => setEditTech({ ...editTech, commission: parseFloat(e.target.value) || 0 })}
+                  sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} /></Box>
+              )}
+              {(editTech as any).payType === 'hourly' && (
+                <Box><Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '4px' }}>תעריף לשעה (₪)</Typography>
+                <TextField fullWidth size="small" type="number" value={(editTech as any).hourlyRate || 0} onChange={(e) => setEditTech({ ...editTech, hourlyRate: parseFloat(e.target.value) || 0 } as any)}
+                  sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} /></Box>
+              )}
+              {(editTech as any).payType === 'daily' && (
+                <Box><Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '4px' }}>תעריף יומי (₪)</Typography>
+                <TextField fullWidth size="small" type="number" value={(editTech as any).dailyRate || 0} onChange={(e) => setEditTech({ ...editTech, dailyRate: parseFloat(e.target.value) || 0 } as any)}
+                  sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} /></Box>
+              )}
+              {(editTech as any).payType === 'fixed' && (
+                <Box><Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '4px' }}>משכורת חודשית (₪)</Typography>
+                <TextField fullWidth size="small" type="number" value={(editTech as any).fixedSalary || 0} onChange={(e) => setEditTech({ ...editTech, fixedSalary: parseFloat(e.target.value) || 0 } as any)}
+                  sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} /></Box>
+              )}
+            </Box>
           {!editTech.id && (
             <Box sx={{ bgcolor: c.accentDim, border: '1px solid rgba(0,229,176,0.2)', borderRadius: '10px', p: '11px 14px', fontSize: 12, color: c.text2, lineHeight: 1.7 }}>
               💡 The technician will use their email to log in. Default password: <strong>Tech1234!</strong><br />
