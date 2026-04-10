@@ -319,18 +319,22 @@ function WeekView({ dates, jobs, techs, onEdit, onCreate, onDragStart, onDrop }:
             >
               {HOURS.map(h => <Box key={h} sx={{ position: 'absolute', top: (h - 6) * HOUR_H, left: 0, right: 0, height: '1px', bgcolor: 'rgba(0,0,0,0.04)' }} />)}
               {today && <Box sx={{ position: 'absolute', top: timeToY(new Date().getHours() + ':' + new Date().getMinutes()), left: 0, right: 0, height: 2, bgcolor: '#EF4444', zIndex: 3 }} />}
-              {dayJobs.map((job: Job) => {
+              {(() => {
+                const overlaps = calcOverlaps(dayJobs, jobTime, jobDur);
+                return dayJobs.map((job: Job) => {
                 const top = timeToY(jobTime(job));
                 const dur = jobDur(job);
                 const height = Math.max((dur / 60) * HOUR_H, 28);
                 const ti = techs.findIndex((t: User) => t.name === job.tech);
                 const clr = ti >= 0 ? tColor(ti) : (STATUS[job.status]?.color || '#5C8AFF');
+                const ol = overlaps[job.id] || { col: 0, totalCols: 1 };
+                const w = (100 - 4) / ol.totalCols;
                 return (
-                  <Box key={job.id} sx={{ position: 'absolute', top, left: 2, right: 2, height, zIndex: 1 }}>
+                  <Box key={job.id} sx={{ position: 'absolute', top, left: (2 + ol.col * w) + '%', width: w + '%', height, zIndex: 1 }}>
                     <JobCard job={job} color={clr} compact onClick={() => onEdit(job)} onDragStart={() => onDragStart(job)} />
                   </Box>
                 );
-              })}
+              }); })()}
             </Box>
           </Box>
         );
