@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         : (conv.bizName !== 'Business' ? `Hello! You've reached ${conv.bizName}. How can I help you?` : 'Hello! How can I help you?');
 
       return new NextResponse(
-        `<?xml version="1.0" encoding="UTF-8"?><Response><Say language="${twimlLang}" voice="${voice}">${greeting}</Say><Gather input="speech" language="${twimlLang}" speechTimeout="3" action="/api/voice" method="POST"><Say language="${twimlLang}" voice="${voice}"></Say></Gather><Say language="${twimlLang}" voice="${voice}">${conv.lang === 'he' ? 'לא שמעתי אותך. אנא נסה שוב.' : "I didn't catch that. Please try again."}</Say><Gather input="speech" language="${twimlLang}" speechTimeout="3" action="/api/voice" method="POST"><Say language="${twimlLang}" voice="${voice}"></Say></Gather></Response>`,
+        `<?xml version="1.0" encoding="UTF-8"?><Response><Say language="${twimlLang}" voice="${voice}">${greeting}</Say><Gather input="speech" language="${twimlLang}" speechTimeout="5" action="/api/voice" method="POST"><Say language="${twimlLang}" voice="${voice}"></Say></Gather><Say language="${twimlLang}" voice="${voice}">${conv.lang === 'he' ? 'לא שמעתי אותך. אנא נסה שוב.' : "I didn't catch that. Please try again."}</Say><Gather input="speech" language="${twimlLang}" speechTimeout="5" action="/api/voice" method="POST"><Say language="${twimlLang}" voice="${voice}"></Say></Gather></Response>`,
         { headers: { 'Content-Type': 'text/xml' } }
       );
     }
@@ -144,9 +144,7 @@ export async function POST(req: NextRequest) {
     conv.messages.push({ role: 'user', content: speechResult });
 
     // Call AI
-    let aiResponse = conv.lang === 'he'
-      ? 'תודה, קיבלנו את הפנייה שלך. נחזור אליך בהקדם.'
-      : 'Thank you, we received your request. We will get back to you shortly.';
+    let aiResponse = '';
 
     if (ANTHROPIC_KEY) {
       try {
@@ -162,9 +160,21 @@ export async function POST(req: NextRequest) {
         });
         const data = await res.json();
         aiResponse = data.content?.[0]?.text || aiResponse;
-      } catch (e) { console.error('[Voice] AI:', e); }
+      } catch (e) {
+        console.error('[Voice] AI:', e);
+        aiResponse = conv.lang === 'he'
+          ? 'סליחה, לא שמעתי טוב. אפשר לחזור על זה?'
+          : 'Sorry, I didn\'t catch that. Could you repeat?';
+      }
     }
 
+    // Fallback if AI returned empty
+    if (!aiResponse.trim()) {
+      aiResponse = conv.lang === 'he'
+        ? 'סליחה, לא שמעתי טוב. אפשר לחזור על זה?'
+        : 'Sorry, I didn\'t catch that. Could you repeat?';
+    }
+    
     // Add assistant message
     conv.messages.push({ role: 'assistant', content: aiResponse });
 
@@ -234,17 +244,17 @@ export async function POST(req: NextRequest) {
     } catch (e) { console.error('[Voice] Log:', e); }
 
     // Check if conversation is complete
-    const isComplete = aiResponse.includes('פתחתי עבודה') || aiResponse.includes('פתחתי פנייה') ||
-      aiResponse.includes("I've opened") || aiResponse.includes('service request') ||
-      aiResponse.includes('תודה רבה') || aiResponse.includes('Thank you') ||
-      conv.messages.length > 14; // Max 7 exchanges
+    // Only end when bot explicitly says goodbye phrase
+    const isComplete = (aiResponse.includes('פתחתי עבודה') || aiResponse.includes('פתחתי פנייה') || aiResponse.includes("I've opened")) &&
+      (aiResponse.includes('תודה') || aiResponse.includes('Thank')) ||
+      conv.messages.length > 20; // Max 10 exchanges
 
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say language="${twimlLang}" voice="${voice}">${aiResponse.replace(/[<>&"']/g, '')}</Say>
   ${isComplete
     ? `<Say language="${twimlLang}" voice="${voice}">${conv.lang === 'he' ? 'להתראות!' : 'Goodbye!'}</Say><Hangup/>`
-    : `<Gather input="speech" language="${twimlLang}" speechTimeout="4" action="/api/voice" method="POST"><Say language="${twimlLang}" voice="${voice}"></Say></Gather><Say language="${twimlLang}" voice="${voice}">${conv.lang === 'he' ? 'אתה עדיין שם?' : 'Are you still there?'}</Say><Gather input="speech" language="${twimlLang}" speechTimeout="3" action="/api/voice" method="POST"><Say language="${twimlLang}" voice="${voice}"></Say></Gather>`
+    : `<Gather input="speech" language="${twimlLang}" speechTimeout="5" action="/api/voice" method="POST"><Say language="${twimlLang}" voice="${voice}"></Say></Gather><Say language="${twimlLang}" voice="${voice}">${conv.lang === 'he' ? 'אתה עדיין שם?' : 'Are you still there?'}</Say><Gather input="speech" language="${twimlLang}" speechTimeout="5" action="/api/voice" method="POST"><Say language="${twimlLang}" voice="${voice}"></Say></Gather>`
   }
 </Response>`;
 
