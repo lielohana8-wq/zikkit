@@ -203,6 +203,16 @@ export default function TechniciansPage() {
           <Button variant="contained" size="small" onClick={handleSave}>{editTech.id ? 'עדכן' : 'הוסף טכנאי'}</Button>
         </>}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <Box><Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '4px' }}>שם טכנאי *</Typography>
+            <TextField fullWidth size="small" value={editTech.name || ''} onChange={(e) => setEditTech({ ...editTech, name: e.target.value })} placeholder="שם מלא" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} /></Box>
+          <Box><Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '4px' }}>אימייל *</Typography>
+            <TextField fullWidth size="small" type="email" value={editTech.email || ''} onChange={(e) => setEditTech({ ...editTech, email: e.target.value })} placeholder="email@example.com" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} /></Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <Box><Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '4px' }}>טלפון</Typography>
+              <TextField fullWidth size="small" value={editTech.phone || ''} onChange={(e) => setEditTech({ ...editTech, phone: e.target.value })} placeholder="050-0000000" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} /></Box>
+            <Box><Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '4px' }}>מיקוד</Typography>
+              <TextField fullWidth size="small" value={editTech.zip || ''} onChange={(e) => setEditTech({ ...editTech, zip: e.target.value })} placeholder="0000000" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} /></Box>
+          </Box>
           <Box>
               <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '4px', textTransform: 'uppercase' }}>סוג תשלום</Typography>
               <Select fullWidth size="small" value={(editTech as any).payType || 'percentage'} onChange={(e: any) => setEditTech({ ...editTech, payType: e.target.value } as any)}
