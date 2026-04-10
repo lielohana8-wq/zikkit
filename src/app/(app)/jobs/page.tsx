@@ -189,7 +189,7 @@ export default function JobsPage() {
         materials: closeMaterials,
         cost: closeMaterials + tax + commissionAmount,
         paymentMethod: closePayment,
-        notes: (jobsList[idx].notes || '') + (closeNotes ? '\n--- Closed ---\n' + closeNotes : ''),
+        notes: (jobsList[idx].notes || '') + (closeNotes ? '\n--- נסגר ---\n' + closeNotes : ''),
       };
       jobsList[idx] = updatedJob;
       await saveData({ ...db, jobs: jobsList });
@@ -285,7 +285,7 @@ export default function JobsPage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Delete ${selectedIds.size} jobs?`)) return;
+    if (!confirm(`למחוק ${selectedIds.size} עבודות?`)) return;
     await saveData({ ...db, jobs: (db.jobs || []).filter((j) => !selectedIds.has(j.id)) });
     toast(`🗑️ ${selectedIds.size} jobs deleted`);
     setSelectedIds(new Set());
@@ -560,7 +560,7 @@ export default function JobsPage() {
             handleCloseMenu();
           }}
             sx={{ fontSize: 12, gap: '8px', color: '#a78bfa', fontWeight: 700, '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' } }}>
-            {L('📧 Send Receipt to Client','📧 שלח קבלה ללקוח')}
+            {'📧 שלח קבלה במייל'}
           </MenuItem>
         )}
 
@@ -579,7 +579,7 @@ export default function JobsPage() {
             handleCloseMenu();
           }}
             sx={{ fontSize: 12, gap: '8px', color: '#4f8fff', '&:hover': { bgcolor: 'rgba(79,143,255,0.08)' } }}>
-            {L('🔗 Send Client Portal','🔗 שלח פורטל ללקוח')}
+            {'🔗 שלח פורטל במייל'}
           </MenuItem>
         )}
 
@@ -598,7 +598,7 @@ export default function JobsPage() {
             handleCloseMenu();
           }}
             sx={{ fontSize: 12, gap: '8px', color: '#06b6d4', '&:hover': { bgcolor: 'rgba(6,182,212,0.08)' } }}>
-            {L('🔄 Resend Portal Link','🔄 שלח לינק שוב')}
+            {'🔄 שלח לינק שוב במייל'}
           </MenuItem>
         )}
 

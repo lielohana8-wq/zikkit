@@ -32,7 +32,16 @@ export function usePortal() {
         taxRate: cfg.tax_rate || 0,
         quoteFooter: cfg.quote_footer || '',
         receiptFooter: cfg.receipt_footer || '',
-        ...(type === 'job' ? { job: record } : { quote: record }),
+        ...(type === 'job' ? {
+          job: record,
+          client: (record as any).client, phone: (record as any).phone, email: (record as any).email,
+          address: (record as any).address, desc: (record as any).desc, status: (record as any).status,
+          scheduledDate: (record as any).scheduledDate, scheduledTime: (record as any).scheduledTime,
+          techName: (record as any).tech, revenue: (record as any).revenue, materials: (record as any).materials,
+          paymentMethod: (record as any).paymentMethod, photos: (record as any).photos || [],
+          items: (record as any).lineItems || [], signature: (record as any).signature,
+          num: (record as any).num,
+        } : { quote: record }),
         created: new Date().toISOString(),
         bizId: bizId || '',
       });
@@ -62,7 +71,7 @@ export function usePortal() {
     // Save snapshot to public_portals
     const saved = await savePortalData(token, 'job', job);
     if (!saved) {
-      toast('Failed to create portal link', '#ff4d6d');
+      toast('שגיאה ביצירת קישור', '#ff4d6d');
       return null;
     }
 
@@ -85,7 +94,7 @@ export function usePortal() {
 
     const saved = await savePortalData(token, 'quote', quote);
     if (!saved) {
-      toast('Failed to create portal link', '#ff4d6d');
+      toast('שגיאה ביצירת קישור', '#ff4d6d');
       return null;
     }
 
