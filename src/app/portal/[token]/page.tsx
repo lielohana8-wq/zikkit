@@ -74,9 +74,14 @@ export default function PortalPage({ params }: { params: { token: string } }) {
   if (error === 'not_found') return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F5F0EB' }}><Typography>🔗 קישור לא תקין</Typography></Box>;
   if (error || !data) return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F5F0EB' }}><Typography>שגיאה בטעינה</Typography></Box>;
 
-  const status = data.status || 'open';
+  // Smart status: derive from data if raw status is behind
+  let status = data.status || 'open';
+  if (status === 'open' || status === 'assigned' || status === 'scheduled') {
+    if (data.techName && data.scheduledDate) status = 'scheduled';
+    else if (data.techName) status = 'assigned';
+  }
   const info = STATUS_MSG[status] || STATUS_MSG.open;
-  const activeStep = STATUS_STEPS.findIndex(s => s.key === status);
+  const activeStep = Math.max(0, STATUS_STEPS.findIndex(s => s.key === status));
   const photos = data.photos || [];
   const items = data.items || [];
   const sym = data.currency === 'ILS' ? '₪' : '$';
