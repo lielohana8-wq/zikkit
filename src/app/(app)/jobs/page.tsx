@@ -615,9 +615,10 @@ export default function JobsPage() {
         )}
 
         {menuJob && menuJob.phone && menuJob.status !== 'cancelled' && (
-          <MenuItem onClick={() => {
+          <MenuItem onClick={async () => {
             if (!menuJob) return;
-            const url = menuJob.portalToken ? `${window.location.origin}/portal/${menuJob.portalToken}` : '';
+            toast('⏳ יוצר קישור...');
+            const url = await createJobPortal(menuJob);
             const isReceipt = menuJob.status === 'completed';
             const msg = isReceipt
               ? `היי ${menuJob.client || ''}, הנה הקבלה שלך מ-${cfg.biz_name || 'העסק'}${url ? ': ' + url : ''}`
@@ -628,7 +629,7 @@ export default function JobsPage() {
             handleCloseMenu();
           }}
             sx={{ fontSize: 12, gap: '8px', color: '#25D366', fontWeight: 700, '&:hover': { bgcolor: 'rgba(37,211,102,0.08)' } }}>
-            {menuJob.status === 'completed' ? L('💬 Receipt via WhatsApp','💬 קבלה בוואטסאפ') : L('💬 Portal via WhatsApp','💬 פורטל בוואטסאפ')}
+            {menuJob.status === 'completed' ? L('💬 קבלה בוואטסאפ','💬 קבלה בוואטסאפ') : L('💬 פורטל בוואטסאפ','💬 פורטל בוואטסאפ')}
           </MenuItem>
         )}
 
