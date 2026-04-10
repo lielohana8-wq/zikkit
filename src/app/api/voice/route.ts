@@ -15,9 +15,8 @@ export async function POST(req: NextRequest) {
     const to = p.get('To') || '';
     const from = p.get('From') || '';
 
-    const lang = to.startsWith('+972') ? 'he' : 'en';
-    const sayLang = 'en-US'; // Hebrew TTS not supported on basic Twilio
-    const gatherLang = 'en-US'; // Twilio speech recognition doesn't support he-IL
+    let lang = 'he'; // default Hebrew, will update from business config
+    const gatherLang = 'en-US'; // Twilio STT only supports English
 
     // Load conversation from Firestore
     const fb = await import('@/lib/firebase');
@@ -32,6 +31,7 @@ export async function POST(req: NextRequest) {
         msgs = d.messages || [];
         biz = d.bizName || '';
         bizType = d.bizType || '';
+        lang = d.lang || 'he';
       } else {
         // First call - lookup business
         const clean = to.replace(/[^0-9]/g, '');
@@ -45,6 +45,8 @@ export async function POST(req: NextRequest) {
         }
       }
     } catch (e) { console.error('[Voice] DB:', e); }
+
+    const sayLang = lang === 'he' ? 'he-IL' : 'en-US';
 
     // First call - no speech yet
     if (!speech) {
@@ -64,7 +66,7 @@ export async function POST(req: NextRequest) {
       return xml(
         `<Say language="${sayLang}" voice="alice">${greeting}</Say>` +
         `<Gather input="speech" language="${gatherLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${sayLang}" voice="alice"> </Say></Gather>` +
-        `<Say language="${sayLang}" voice="alice">Are you still there? Tell me what's going on.</Say>` +
+        `<Say language="${sayLang}" voice="alice">${lang === 'he' ? 'אתה שם? ספר לי מה קורה.' : 'Are you still there? Tell me what happened.'}</Say>` +
         `<Gather input="speech" language="${gatherLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${sayLang}" voice="alice"> </Say></Gather>`
       );
     }
