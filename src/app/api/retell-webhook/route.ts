@@ -108,6 +108,36 @@ export async function POST(req: NextRequest) {
     }, { merge: true });
 
     console.log('[Retell] Lead created:', lead.name, lead.phone);
+
+    // Create portal for the lead
+    const portalToken = 'portal_' + Date.now();
+    try {
+      const bizCfg = bizData.cfg || {};
+      await fb.setDoc(fb.doc(db, 'public_portals', portalToken), {
+        type: 'job', bizName: bizCfg.biz_name || '', bizPhone: bizCfg.biz_phone || '',
+        client: lead.name, phone: lead.phone, address: lead.address || '',
+        desc: lead.notes || '', status: 'open', techName: '',
+        scheduledDate: '', scheduledTime: '',
+        currency: bizCfg.currency || 'ILS', created: new Date().toISOString(),
+      });
+
+      // Send portal link via WhatsApp (via Twilio if configured)
+      const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+      const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+      const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
+      if (twilioSid && twilioToken && twilioFrom && lead.phone) {
+        const portalUrl = 'https://zikkit-jvc7.vercel.app/portal/' + portalToken;
+        const smsBody = 'היי ' + lead.name + ', תודה שהתקשרת ל-' + (bizCfg.biz_name || '') + '! הנה פרטי הפנייה שלך: ' + portalUrl;
+        try {
+          await fetch('https://api.twilio.com/2010-04-01/Accounts/' + twilioSid + '/Messages.json', {
+            method: 'POST',
+            headers: { 'Authorization': 'Basic ' + Buffer.from(twilioSid + ':' + twilioToken).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ To: lead.phone, From: twilioFrom, Body: smsBody }).toString(),
+          });
+          console.log('[Retell] Portal SMS sent to:', lead.phone);
+        } catch (smsErr) { console.warn('[Retell] SMS failed:', smsErr); }
+      }
+    } catch (portalErr) { console.warn('[Retell] Portal creation failed:', portalErr); }
     return NextResponse.json({ ok: true, lead_created: true });
   } catch (e) {
     console.error('[Retell] Error:', e);
