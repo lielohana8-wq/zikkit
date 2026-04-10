@@ -215,6 +215,19 @@ export default function TechJobsPage() {
                   💰 {formatCurrency(j.lineItems.reduce((s: number, i: any) => s + i.price * i.qty, 0), currency)} · {j.lineItems.length} פריטים
                 </Typography>
               )}
+              {j.quoteStatus && (
+                <Chip label={({'draft':'טיוטה','sent':'נשלח','viewed':'נצפה','approved':'✅ אושר','declined':'❌ נדחה'} as any)[j.quoteStatus] || j.quoteStatus} size="small"
+                  sx={{ height: 20, fontSize: 9, fontWeight: 700, mt: '4px',
+                    bgcolor: j.quoteStatus === 'approved' ? '#05966915' : j.quoteStatus === 'declined' ? '#E11D4815' : j.quoteStatus === 'viewed' ? '#D9770615' : '#4F46E515',
+                    color: j.quoteStatus === 'approved' ? '#059669' : j.quoteStatus === 'declined' ? '#E11D48' : j.quoteStatus === 'viewed' ? '#D97706' : '#4F46E5' }} />
+              )}
+              {/* Quick quote button */}
+              {j.status !== 'completed' && j.status !== 'cancelled' && !j.quoteStatus && (
+                <Button size="small" onClick={(e) => { e.stopPropagation(); openJob(j); setTimeout(() => setTab('items'), 100); }}
+                  sx={{ mt: '4px', borderRadius: '16px', fontSize: 10, bgcolor: '#4F46E508', color: '#4F46E5', fontWeight: 600, p: '2px 10px', minHeight: 0 }}>
+                  💰 צור הצעת מחיר
+                </Button>
+              )}
             </Box>
           );
         })}
@@ -312,7 +325,7 @@ export default function TechJobsPage() {
                       </Button>
                     )}
                     {selected.phone && items.length > 0 && (
-                      <Button size="small" onClick={() => { const lines = items.map(i => i.name + ' x' + i.qty + ' - ' + formatCurrency(i.price * i.qty, currency)); const total = formatCurrency(itemsTotal, currency); const phone = selected.phone || ''; window.open(waLink(phone, ['היי ' + selected.client + ',', 'הצעת מחיר מ-' + bizName + ':', ...lines, '', 'סה״כ: ' + total].join(String.fromCharCode(10))), '_blank'); }}
+                      <Button size="small" onClick={() => { const nl3 = String.fromCharCode(10); const lines2 = items.map(ii => ii.name + " x" + ii.qty + " - " + formatCurrency(ii.price * ii.qty, currency)); const msg2 = "היי " + selected.client + ", הצעת מחיר מ-" + bizName + ":" + nl3 + lines2.join(nl3) + nl3 + "סה״כ: " + formatCurrency(itemsTotal, currency); window.open(waLink(selected.phone || "", msg2), "_blank"); }}
                         sx={{ borderRadius: '20px', fontSize: 12, bgcolor: '#25D36610', color: '#25D366', fontWeight: 600, border: '1px solid #25D36620', flex: 1 }}>
                         📤 שלח הצעה בוואטסאפ
                       </Button>
@@ -388,6 +401,74 @@ export default function TechJobsPage() {
                         sx={{ minWidth: 'auto', px: 1.5, fontSize: 16, borderRadius: '8px' }}>+</Button>
                     </Box>
                   </Box>
+
+                  {/* Send Quote */}
+                  {items.length > 0 && selected.status !== 'completed' && (
+                    <Box sx={{ mt: '16px', p: '14px', bgcolor: '#4F46E508', borderRadius: '12px', border: '1px solid #4F46E515' }}>
+                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#4F46E5', mb: '10px' }}>📤 שלח הצעת מחיר — {formatCurrency(itemsTotal, currency)}</Typography>
+                      
+                      {selected.quoteStatus && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', mb: '10px', p: '8px 12px', borderRadius: '8px',
+                          bgcolor: selected.quoteStatus === 'approved' ? '#05966908' : selected.quoteStatus === 'declined' ? '#E11D4808' : '#D9770608' }}>
+                          <Typography sx={{ fontSize: 12, fontWeight: 600,
+                            color: selected.quoteStatus === 'approved' ? '#059669' : selected.quoteStatus === 'declined' ? '#E11D48' : '#D97706' }}>
+                            {({'draft':'📝 טיוטה','sent':'📨 נשלח ללקוח','viewed':'👁️ הלקוח צפה','approved':'✅ הלקוח אישר!','declined':'❌ הלקוח סירב'} as any)[selected.quoteStatus]}
+                          </Typography>
+                        </Box>
+                      )}
+
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <Button fullWidth size="small" onClick={async () => {
+                          if (!selected) return;
+                          const token = 'quote_' + Date.now();
+                          try {
+                            const firestore = getFirestoreDb();
+                            await fbSetDoc(fbDoc(firestore, 'public_portals', token), {
+                              type: 'quote', quoteStatus: 'sent', bizName, bizPhone: cfg.biz_phone || '',
+                              client: selected.client, phone: selected.phone || '', address: selected.address || '', desc: selected.desc || '',
+                              techName, num: selected.num || formatJobNumber(selected.id), jobId: selected.id,
+                              items, currency: cfg.currency || (cfg.region === 'IL' ? 'ILS' : 'USD'), created: new Date().toISOString(),
+                            });
+                            const jobs = [...(db.jobs || [])]; const idx = jobs.findIndex((j: Job) => j.id === selected.id);
+                            if (idx >= 0) { jobs[idx] = { ...jobs[idx], quoteStatus: 'sent', quoteTotal: itemsTotal, quoteSentAt: new Date().toISOString() }; await saveData({ ...db, jobs }); setSelected({ ...jobs[idx] }); }
+                            const url = window.location.origin + '/quote/' + token;
+                            if (selected.phone) { window.open(waLink(selected.phone, 'היי ' + selected.client + ', הנה הצעת מחיר מ-' + bizName + ': ' + url), '_blank'); }
+                            toast('📨 הצעה נשלחה');
+                          } catch (e) { console.error(e); toast('שגיאה בשליחה'); }
+                        }} sx={{ borderRadius: '10px', bgcolor: '#25D36612', color: '#25D366', fontWeight: 700, fontSize: 13, py: 1 }}>
+                          💬 שלח בוואטסאפ
+                        </Button>
+                        <Button fullWidth size="small" onClick={async () => {
+                          if (!selected?.phone) { toast('אין מספר טלפון'); return; }
+                          const token = 'quote_' + Date.now();
+                          try {
+                            const firestore = getFirestoreDb();
+                            await fbSetDoc(fbDoc(firestore, 'public_portals', token), {
+                              type: 'quote', quoteStatus: 'sent', bizName, bizPhone: cfg.biz_phone || '',
+                              client: selected.client, phone: selected.phone, address: selected.address || '', desc: selected.desc || '',
+                              techName, num: selected.num || formatJobNumber(selected.id), jobId: selected.id,
+                              items, currency: cfg.currency || (cfg.region === 'IL' ? 'ILS' : 'USD'), created: new Date().toISOString(),
+                            });
+                            const jobs = [...(db.jobs || [])]; const idx = jobs.findIndex((j: Job) => j.id === selected.id);
+                            if (idx >= 0) { jobs[idx] = { ...jobs[idx], quoteStatus: 'sent', quoteTotal: itemsTotal, quoteSentAt: new Date().toISOString() }; await saveData({ ...db, jobs }); setSelected({ ...jobs[idx] }); }
+                            const url = window.location.origin + '/quote/' + token;
+                            window.open('sms:' + selected.phone + '?body=' + encodeURIComponent('הצעת מחיר מ-' + bizName + ': ' + url));
+                            toast('📨 הצעה נשלחה');
+                          } catch (e) { toast('שגיאה'); }
+                        }} sx={{ borderRadius: '10px', bgcolor: '#4F46E508', color: '#4F46E5', fontWeight: 600, fontSize: 12, py: 0.8 }}>
+                          💬 שלח ב-SMS
+                        </Button>
+                        <Button fullWidth size="small" onClick={() => {
+                          const lines = items.map(i => i.name + ' x' + i.qty + ' - ' + formatCurrency(i.price * i.qty, currency));
+                          const nl2 = String.fromCharCode(10); const text = 'הצעת מחיר מ-' + bizName + ':' + nl2 + lines.join(nl2) + nl2 + nl2 + 'סה״כ: ' + formatCurrency(itemsTotal, currency);
+
+                          navigator.clipboard?.writeText(text).then(() => toast('📋 הועתק'));
+                        }} sx={{ borderRadius: '10px', bgcolor: 'rgba(0,0,0,0.03)', color: '#78716C', fontWeight: 600, fontSize: 12, py: 0.8 }}>
+                          📋 העתק טקסט
+                        </Button>
+                      </Box>
+                    </Box>
+                  )}
                 </Box>
               )}
 

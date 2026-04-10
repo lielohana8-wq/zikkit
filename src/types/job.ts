@@ -46,6 +46,10 @@ export interface Job {
   lineItems?: { id: number; name: string; qty: number; price: number; image?: string }[];
   timerStart?: number;
   timerElapsed?: number;
+  quoteStatus?: "draft" | "sent" | "viewed" | "approved" | "declined";
+  quoteTotal?: number;
+  quoteSentAt?: string;
+  quoteSignedAt?: string;
 }
 
 export interface FollowUp {
