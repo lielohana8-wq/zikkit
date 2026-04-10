@@ -23,6 +23,44 @@ import type { User } from '@/types/user';
 
 /* ─── constants ──────────────────────────────── */
 const HOUR_H = 64;
+// Overlap detection for concurrent jobs
+function calcOverlaps(jobs: any[], jobTime: (j: any) => string, jobDur: (j: any) => number) {
+  const HOUR_H_LOCAL = 70;
+  const positioned = jobs.map(j => {
+    const t = jobTime(j).split(':'); const startMin = parseInt(t[0]) * 60 + parseInt(t[1] || '0');
+    const endMin = startMin + jobDur(j);
+    return { ...j, startMin, endMin, col: 0, totalCols: 1 };
+  }).sort((a, b) => a.startMin - b.startMin);
+
+  // Find overlapping groups
+  const groups: any[][] = [];
+  let currentGroup: any[] = [];
+  for (const job of positioned) {
+    if (currentGroup.length === 0 || job.startMin < Math.max(...currentGroup.map(j => j.endMin))) {
+      currentGroup.push(job);
+    } else {
+      if (currentGroup.length > 0) groups.push(currentGroup);
+      currentGroup = [job];
+    }
+  }
+  if (currentGroup.length > 0) groups.push(currentGroup);
+
+  // Assign columns within each group
+  for (const group of groups) {
+    const cols: number[] = [];
+    for (const job of group) {
+      let col = 0;
+      while (cols[col] && cols[col] > job.startMin) col++;
+      job.col = col;
+      cols[col] = job.endMin;
+    }
+    const totalCols = Math.max(...group.map(j => j.col + 1));
+    group.forEach(j => j.totalCols = totalCols);
+  }
+
+  return Object.fromEntries(positioned.map(j => [j.id, { col: j.col, totalCols: j.totalCols }]));
+}
+
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 6);
 const DAYS_HE = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 const DAYS_SHORT = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
@@ -211,11 +249,15 @@ function DayView({ date, jobs, allJobs, techs, onEdit, onCreate, onDragStart, on
               {isToday(date) && (
                 <Box sx={{ position: 'absolute', top: timeToY(new Date().getHours() + ':' + new Date().getMinutes()), left: 0, right: 0, height: 2, bgcolor: '#EF4444', zIndex: 3, '&::before': { content: '""', position: 'absolute', right: -4, top: -4, width: 10, height: 10, borderRadius: '50%', bgcolor: '#EF4444' } }} />
               )}
-              {techJobs.map((job: Job) => {
+              {(() => {
+                const overlaps = calcOverlaps(techJobs, jobTime, jobDur);
+                return techJobs.map((job: Job) => {
                 const top = timeToY(jobTime(job));
                 const dur = jobDur(job); const height = Math.max((dur / 60) * HOUR_H, 36);
+                const ol = overlaps[job.id] || { col: 0, totalCols: 1 };
+                const colWidth = (100 - 8) / ol.totalCols;
                 return (
-                  <Box key={job.id} sx={{ position: 'absolute', top, left: 4, right: 4, height, zIndex: 1 }}>
+                  <Box key={job.id} sx={{ position: 'absolute', top, left: (4 + ol.col * colWidth) + '%', width: colWidth + '%', height, zIndex: 1 }}>
                     <JobCard job={job} color={clr} onClick={() => onEdit(job)} onDragStart={() => onDragStart(job)} />
                     <Box
                       sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 8, cursor: 'ns-resize', display: 'flex', justifyContent: 'center', alignItems: 'center', '&:hover': { bgcolor: clr + '30' }, borderRadius: '0 0 8px 8px' }}
@@ -232,7 +274,7 @@ function DayView({ date, jobs, allJobs, techs, onEdit, onCreate, onDragStart, on
                     </Box>
                   </Box>
                 );
-              })}
+              })})()}
             </Box>
           </Box>
         );
