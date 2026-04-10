@@ -60,10 +60,10 @@ export async function POST(req: NextRequest) {
       } catch {}
 
       return xml(
-        `<Say language="${ttsLang}">${greeting}</Say>` +
-        `<Gather input="speech" language="${ttsLang}" speechTimeout="7" speechModel="experimental_conversations" enhanced="true" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>` +
-        `<Say language="${ttsLang}">${lang === 'he' ? 'אתה שם? ספר לי מה קורה.' : 'Are you there? Tell me what happened.'}</Say>` +
-        `<Gather input="speech" language="${ttsLang}" speechTimeout="7" speechModel="experimental_conversations" enhanced="true" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>`
+        `<Say language="${ttsLang}" voice="alice">${greeting}</Say>` +
+        `<Gather input="speech" language="${ttsLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${ttsLang}" voice="alice"> </Say></Gather>` +
+        `<Say language="${ttsLang}" voice="alice">${lang === 'he' ? 'אתה שם? ספר לי מה קורה.' : 'Are you there? Tell me what happened.'}</Say>` +
+        `<Gather input="speech" language="${ttsLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${ttsLang}" voice="alice"> </Say></Gather>`
       );
     }
 
@@ -234,12 +234,12 @@ Dana: Great. What's your name?`;
           }
         }
       } catch {}
-      return xml(`<Say language="${ttsLang}">${reply.replace(/[<>&]/g, '')}</Say><Hangup/>`);
+      return xml(`<Say language="${ttsLang}" voice="alice">${reply.replace(/[<>&]/g, '')}</Say><Hangup/>`);
     }
 
     return xml(
-      `<Say language="${ttsLang}">${reply.replace(/[<>&]/g, '').replace(/\. /g, '... ').replace(/! /g, '!... ').replace(/\? /g, '?... ')}</Say>` +
-      `<Gather input="speech" language="${ttsLang}" speechTimeout="7" speechModel="experimental_conversations" enhanced="true" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>`
+      `<Say language="${ttsLang}" voice="alice">${reply.replace(/[<>&]/g, '').replace(/\. /g, '... ').replace(/! /g, '!... ').replace(/\? /g, '?... ')}</Say>` +
+      `<Gather input="speech" language="${ttsLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${ttsLang}" voice="alice"> </Say></Gather>`
     );
   } catch (e) {
     console.error('[Voice] Fatal:', e);
