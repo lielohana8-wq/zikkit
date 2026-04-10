@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const from = p.get('From') || '';
 
     const lang = to.startsWith('+972') ? 'he' : 'en';
-    const sayLang = lang === 'he' ? 'he-IL' : 'en-US';
+    const sayLang = 'en-US'; // Hebrew TTS not supported on basic Twilio
     const gatherLang = 'en-US'; // Twilio speech recognition doesn't support he-IL
 
     // Load conversation from Firestore
@@ -48,13 +48,11 @@ export async function POST(req: NextRequest) {
 
     // First call - no speech yet
     if (!speech) {
-      const greeting = lang === 'he'
-        ? `היי!... ${biz ? 'כאן ' + biz + '.' : ''}... מה קרה?`
-        : `Hi!... ${biz ? 'This is ' + biz + '.' : ''}... What happened?`;
+      const greeting = biz ? `Hi! This is ${biz}. How can I help you?` : `Hi! How can I help you?`;
 
-      // Save initial state
+      // Save initial state (non-blocking)
       try {
-        await fb.setDoc(fb.doc(db, 'bot_conversations', callSid), {
+        fb.setDoc(fb.doc(db, 'bot_conversations', callSid), {
           messages: [{ role: 'assistant', content: greeting }],
           bizName: biz, bizType, lang, from, to, started: new Date().toISOString(),
         });
@@ -63,7 +61,7 @@ export async function POST(req: NextRequest) {
       return xml(
         `<Say language="${sayLang}" voice="alice">${greeting}</Say>` +
         `<Gather input="speech" language="${gatherLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${sayLang}" voice="alice"> </Say></Gather>` +
-        `<Say language="${sayLang}" voice="alice">${lang === 'he' ? 'אתה שם? ספר לי מה קורה.' : 'Are you there? Tell me what happened.'}</Say>` +
+        `<Say language="${sayLang}" voice="alice">Are you still there? Tell me what's going on.</Say>` +
         `<Gather input="speech" language="${gatherLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${sayLang}" voice="alice"> </Say></Gather>`
       );
     }
@@ -202,16 +200,14 @@ Dana: Great. What's your name?`;
 
     if (!reply) {
       reply = lang === 'he'
-        ? ['נו, ספר לי מה קורה', 'אוקיי, מה הבעיה?', 'כן, אני שומעת. מה קרה?'][Math.floor(Math.random() * 3)]
-        : ['So, tell me what happened', 'Okay, what seems to be the issue?', 'Yeah, I\'m listening. What\'s going on?'][Math.floor(Math.random() * 3)];
+        ? ['So tell me, what happened?', 'Okay, what seems to be the problem?', 'Yeah, I\'m listening. What\'s going on?'][Math.floor(Math.random() * 3)]
+        : ['So tell me, what happened?', 'Okay, what seems to be the problem?', 'Yeah, I\'m listening. What\'s going on?'][Math.floor(Math.random() * 3)];
     }
 
     msgs.push({ role: 'assistant', content: reply });
 
-    // Save conversation to Firestore
-    try {
-      await fb.setDoc(fb.doc(db, 'bot_conversations', callSid), { messages: msgs }, { merge: true });
-    } catch {}
+    // Save conversation (non-blocking)
+    fb.setDoc(fb.doc(db, 'bot_conversations', callSid), { messages: msgs }, { merge: true }).catch(() => {});
 
     // Check if done
     const done = reply.includes('ביי') || reply.includes('bye') || reply.includes('Bye') ||
