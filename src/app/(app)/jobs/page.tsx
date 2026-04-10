@@ -95,6 +95,21 @@ export default function JobsPage() {
     setShowModal(true);
   };
 
+  // Sync portal when job updates
+    const syncPortalJob = async (job: any) => {
+      if (!job.portalToken) return;
+      try {
+        const firestore = getFirestoreDb();
+        await fbSet(fbDoc(firestore, 'public_portals', job.portalToken), {
+          status: job.status, client: job.client, phone: job.phone || '', address: job.address || '',
+          desc: job.desc || '', scheduledDate: job.scheduledDate || '', scheduledTime: job.scheduledTime || job.time || '',
+          techName: job.tech || '', revenue: job.revenue || 0, materials: job.materials || 0,
+          paymentMethod: job.paymentMethod || '', photos: job.photos || [], items: job.lineItems || [],
+          num: job.num || '',
+        }, { merge: true });
+      } catch (e) { console.warn('[Portal sync]', e); }
+    };
+
   const handleSave = async () => {
     if (!editJob.client?.trim()) { toast('הכנס שם לקוח', '#ff4d6d'); return; }
     const jobsList = [...(db.jobs || [])];
@@ -110,6 +125,7 @@ export default function JobsPage() {
       jobsList.push(newJob);
     }
     await saveData({ ...db, jobs: jobsList });
+    if (editJob.id) { const saved = jobsList.find((j: any) => j.id === editJob.id); if (saved) syncPortalJob(saved); }
     setShowModal(false);
     toast(editJob.id ? '✅ עבודה עודכנה' : '✅ עבודה נוצרה');
   };

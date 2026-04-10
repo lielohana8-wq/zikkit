@@ -79,7 +79,7 @@ export default function TechJobsPage() {
   }, [allJobs, filter, search]);
 
   const openJob = (job: Job) => { setSelected(job); setItems(job.lineItems || []); setJobPhotos(job.photos || []); setJobNote(''); setTab('info'); };
-  const saveItems = async (ni: LineItem[]) => { setItems(ni); if (!selected) return; const jobs = [...(db.jobs || [])]; const idx = jobs.findIndex((j: Job) => j.id === selected.id); if (idx >= 0) { jobs[idx] = { ...jobs[idx], lineItems: ni, revenue: ni.reduce((s, i) => s + i.price * i.qty, 0) }; await saveData({ ...db, jobs }); setSelected({ ...jobs[idx] }); } };
+  const saveItems = async (ni: LineItem[]) => { setItems(ni); if (!selected) return; const jobs = [...(db.jobs || [])]; const idx = jobs.findIndex((j: Job) => j.id === selected.id); if (idx >= 0) { jobs[idx] = { ...jobs[idx], lineItems: ni, revenue: ni.reduce((s, i) => s + i.price * i.qty, 0) }; await saveData({ ...db, jobs }); setSelected({ ...jobs[idx] }); syncPortal(jobs[idx]); } };
   const addProduct = (p: any) => saveItems([...items, { id: Date.now(), name: p.name, qty: 1, price: p.price || 0 }]);
   const addCustomItem = () => { if (!newItem.name.trim()) return; saveItems([...items, { id: Date.now(), ...newItem }]); setNewItem({ name: '', qty: 1, price: 0 }); };
   const removeItem = (id: number) => saveItems(items.filter(i => i.id !== id));
@@ -118,8 +118,24 @@ export default function TechJobsPage() {
     let waUrl = '';
     if (job.phone && AUTO_MSGS[status]) waUrl = waLink(job.phone, AUTO_MSGS[status](job, bizName));
     const jobs = [...(db.jobs || [])]; const idx = jobs.findIndex((j: Job) => j.id === job.id);
-    if (idx >= 0) { jobs[idx] = { ...jobs[idx], status }; await saveData({ ...db, jobs }); toast('סטטוס עודכן ✓'); setSelected({ ...jobs[idx] }); }
+    if (idx >= 0) { jobs[idx] = { ...jobs[idx], status }; await saveData({ ...db, jobs }); toast('סטטוס עודכן ✓'); setSelected({ ...jobs[idx] }); syncPortal(jobs[idx]); }
     if (waUrl) setWaPrompt({ url: waUrl });
+  };
+
+  // Sync portal data whenever job is updated
+  const syncPortal = async (job: Job) => {
+    const token = (job as any).portalToken;
+    if (!token) return;
+    try {
+      const firestore = getFirestoreDb();
+      await fbSetDoc(fbDoc(firestore, 'public_portals', token), {
+        status: job.status, client: job.client, phone: job.phone || '', address: job.address || '',
+        desc: job.desc || '', scheduledDate: job.scheduledDate || '', scheduledTime: job.scheduledTime || job.time || '',
+        techName: job.tech || techName, revenue: job.revenue || 0, materials: job.materials || 0,
+        paymentMethod: job.paymentMethod || '', photos: job.photos || [], items: job.lineItems || [],
+        signature: job.signature || null, num: job.num || '',
+      }, { merge: true });
+    } catch (e) { console.warn('[Portal sync]', e); }
   };
 
   const sendPortal = async (method: 'whatsapp' | 'sms' | 'copy') => {
