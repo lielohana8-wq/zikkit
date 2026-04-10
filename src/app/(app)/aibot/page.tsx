@@ -31,6 +31,7 @@ export default function AiBotPage() {
   const [testStatus, setTestStatus] = useState('');
   const [platform, setPlatform] = useState<'android' | 'iphone'>('android');
   const [copied, setCopied] = useState(false);
+  const [localPhone, setLocalPhone] = useState('');
 
   const botPhone = (cfg as any).bot_phone || '';
   const botActive = (cfg as any).bot_active || false;
@@ -81,7 +82,7 @@ export default function AiBotPage() {
     navigator.clipboard?.writeText(botPhone).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
 
-  // Not activated yet
+  // Not activated yet — show setup
   if (!botActive || !botPhone) {
     return (
       <Box className="zk-fade-up">
@@ -89,48 +90,48 @@ export default function AiBotPage() {
           <Typography sx={{ fontSize: 22, fontWeight: 800 }}>🤖 בוט קולי AI — דנה</Typography>
           <Typography sx={{ fontSize: 12, color: '#A8A29E' }}>המזכירה שעונה ללקוחות 24/7</Typography>
         </Box>
-
-        <Box sx={{ maxWidth: 500, mx: 'auto', textAlign: 'center' }}>
-          <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.05)', p: '40px 30px', mb: '14px' }}>
+        <Box sx={{ maxWidth: 500, mx: 'auto' }}>
+          <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.05)', p: '30px', mb: '14px', textAlign: 'center' }}>
             <Typography sx={{ fontSize: 60, mb: 2 }}>🤖📞</Typography>
-            <Typography sx={{ fontSize: 20, fontWeight: 800, mb: '8px' }}>הפעל את דנה — המזכירה שלך</Typography>
+            <Typography sx={{ fontSize: 20, fontWeight: 800, mb: '8px' }}>הפעל את דנה</Typography>
             <Typography sx={{ fontSize: 13, color: '#78716C', lineHeight: 1.8, mb: 3 }}>
               דנה עונה לכל שיחה שאתה לא עונה.<br />
-              אוספת פרטים, משכנעת לקוחות, פותחת עבודות.<br />
               24/7, בעברית ואנגלית. כמו מזכירה אמיתית.
             </Typography>
-
-            <Box sx={{ bgcolor: '#F5F0EB', borderRadius: '12px', p: '16px', mb: 3, textAlign: 'right' }}>
-              <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '6px' }}>ברכה מותאמת (אופציונלי)</Typography>
-              <TextField fullWidth size="small" multiline rows={2} value={greeting} onChange={e => setGreeting(e.target.value)}
-                placeholder={`היי שלום! הגעת ל-${cfg.biz_name || 'העסק'}. מה קרה? ספר לי.`}
-                sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fff', borderRadius: '10px', fontSize: 13 } }} />
+            <Box sx={{ textAlign: 'right' }}>
+              <Box sx={{ mb: '14px' }}>
+                <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>מספר טלפון של דנה</Typography>
+                <TextField fullWidth size="small" value={localPhone} onChange={e => setLocalPhone(e.target.value)} dir="ltr"
+                  placeholder="+1XXXXXXXXXX" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 15 } }} />
+                <Typography sx={{ fontSize: 10, color: '#A8A29E', mt: '4px' }}>מספר שהוקצה לעסק שלך</Typography>
+              </Box>
+              <Box sx={{ mb: '14px' }}>
+                <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#78716C', mb: '4px' }}>ברכה מותאמת (אופציונלי)</Typography>
+                <TextField fullWidth size="small" multiline rows={2} value={greeting} onChange={e => setGreeting(e.target.value)}
+                  placeholder={`היי שלום! הגעת ל-${cfg.biz_name || 'העסק'}. מה קרה?`}
+                  sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 } }} />
+              </Box>
             </Box>
-
-            <Button fullWidth variant="contained" onClick={handleActivate} disabled={activating}
+            <Button fullWidth variant="contained" disabled={!localPhone} onClick={async () => {
+              await saveCfg({ ...cfg, bot_active: true, bot_phone: localPhone, bot_greeting: greeting });
+              toast('✅ דנה הופעלה!');
+            }}
               sx={{ borderRadius: '12px', py: 1.5, fontSize: 16, fontWeight: 800, bgcolor: '#059669', '&:hover': { bgcolor: '#047857' } }}>
-              {activating ? '⏳ מפעיל...' : '🚀 הפעל את דנה — חינם לתקופת הנסיון'}
+              🚀 הפעל את דנה
             </Button>
-
-            <Box sx={{ mt: 2, fontSize: 11, color: '#A8A29E', lineHeight: 1.8 }}>
-              ✅ לא צריך לשנות את המספר שלך<br />
-              ✅ הלקוחות ממשיכים להתקשר כרגיל<br />
-              ✅ הגדרה ב-2 דקות
+            <Box sx={{ mt: 2, fontSize: 11, color: '#A8A29E', lineHeight: 1.8, textAlign: 'center' }}>
+              ✅ לא צריך לשנות מספר · ✅ הגדרה ב-2 דקות
             </Box>
           </Box>
-
-          {/* What Dana does */}
           <Box sx={{ bgcolor: '#fff', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.05)', p: '20px', textAlign: 'right' }}>
             <Typography sx={{ fontSize: 14, fontWeight: 700, mb: '10px' }}>💡 מה דנה עושה?</Typography>
             <Box sx={{ fontSize: 12, color: '#78716C', lineHeight: 2.2 }}>
               <div>✅ עונה ללקוחות כשאתה עסוק — 24/7</div>
-              <div>✅ מדברת עברית ואנגלית בטבעיות</div>
-              <div>✅ שואלת שאלות חכמות על הבעיה</div>
+              <div>✅ מדברת עברית ואנגלית</div>
               <div>✅ אוספת שם, טלפון, כתובת</div>
               <div>✅ משכנעת לקוחות מהססים</div>
-              <div>✅ מטפלת בתלונות ובקשות</div>
               <div>✅ פותחת ליד אוטומטי במערכת</div>
-              <div>✅ שולחת ללקוח לינק לפורטל מעקב</div>
+              <div>✅ שולחת ללקוח לינק מעקב</div>
             </Box>
           </Box>
         </Box>
