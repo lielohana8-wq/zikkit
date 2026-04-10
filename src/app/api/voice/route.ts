@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
     // First call - no speech yet
     if (!speech) {
       const greeting = lang === 'he'
-        ? `היי! ${biz ? 'כאן ' + biz + '.' : ''} מה קרה? ספרו לי.`
-        : `Hi! ${biz ? 'This is ' + biz + '.' : ''} What happened? Tell me.`;
+        ? `היי!... ${biz ? 'כאן ' + biz + '.' : ''}... מה קרה?`
+        : `Hi!... ${biz ? 'This is ' + biz + '.' : ''}... What happened?`;
 
       // Save initial state
       try {
@@ -61,9 +61,9 @@ export async function POST(req: NextRequest) {
 
       return xml(
         `<Say language="${ttsLang}">${greeting}</Say>` +
-        `<Gather input="speech" language="${ttsLang}" speechTimeout="6" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>` +
+        `<Gather input="speech" language="${ttsLang}" speechTimeout="7" speechModel="experimental_conversations" enhanced="true" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>` +
         `<Say language="${ttsLang}">${lang === 'he' ? 'אתה שם? ספר לי מה קורה.' : 'Are you there? Tell me what happened.'}</Say>` +
-        `<Gather input="speech" language="${ttsLang}" speechTimeout="6" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>`
+        `<Gather input="speech" language="${ttsLang}" speechTimeout="7" speechModel="experimental_conversations" enhanced="true" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>`
       );
     }
 
@@ -73,11 +73,12 @@ export async function POST(req: NextRequest) {
     // Build system prompt
     const sysHe = `אתה דנה, מזכירה של ${biz || 'העסק'}. עסק ${bizType || 'שירות'}. שיחת טלפון חיה.
 
-אופי: חמה, ידידותית, טבעית, אנושית לגמרי. דברי כמו ישראלית אמיתית.
-אורך תשובה: משפט אחד בלבד! מקסימום שניים!
+אופי: חמה, ידידותית, טבעית, אנושית לגמרי. דברי כמו ישראלית אמיתית בטלפון.
+אורך תשובה: משפט אחד! מקסימום שניים קצרים!
+סגנון דיבור: תשתמשי במילות חיבור טבעיות כמו "אוקיי", "כן", "הבנתי", "נו", "יאללה", "סבבה". תגיבי קודם למה שהלקוח אמר ורק אז תשאלי.
 
 זרימה — שאלי אחת אחת, לא הכל ביחד:
-שלב 1: הלקוח סיפר בעיה → הגיבי בהזדהות ושאלי שאלה אחת על הבעיה
+שלב 1: הלקוח סיפר בעיה → קודם תגיבי ("אוי", "הבנתי", "אוקיי") ואז שאלי שאלה אחת
 שלב 2: הבנת את הבעיה → שאלי "איך קוראים לך?"
 שלב 3: קיבלת שם → שאלי "מה הכתובת [שם]?"
 שלב 4: קיבלת כתובת → שאלי "מתי נוח לך? יש לנו טכנאי פנוי"
@@ -91,8 +92,9 @@ export async function POST(req: NextRequest) {
 
     const sysEn = `You are Dana, receptionist at ${biz || 'the company'}. ${bizType || 'Service'} business. Live phone call.
 
-Personality: Warm, friendly, natural, totally human. Talk like a real American receptionist.
+Personality: Warm, friendly, natural, totally human. Talk like a real person on the phone.
 Response length: ONE sentence only! Two max!
+Speech style: Use natural fillers like "okay", "right", "got it", "sure thing". React to what they said FIRST, then ask your question.
 
 Flow — ask one thing at a time:
 Step 1: Customer told you the problem → React with empathy, ask ONE question about the issue
@@ -126,7 +128,9 @@ Never say: "Thank you for calling" / "We'll get back to you" / "Reference number
     } catch (e) { console.error('[Voice] AI fetch:', e); }
 
     if (!reply) {
-      reply = lang === 'he' ? 'ספר לי עוד, מה בדיוק קורה?' : 'Tell me more, what exactly is going on?';
+      reply = lang === 'he'
+        ? ['נו, ספר לי מה קורה', 'אוקיי, מה הבעיה?', 'כן, אני שומעת. מה קרה?'][Math.floor(Math.random() * 3)]
+        : ['So, tell me what happened', 'Okay, what seems to be the issue?', 'Yeah, I\'m listening. What\'s going on?'][Math.floor(Math.random() * 3)];
     }
 
     msgs.push({ role: 'assistant', content: reply });
@@ -162,8 +166,8 @@ Never say: "Thank you for calling" / "We'll get back to you" / "Reference number
     }
 
     return xml(
-      `<Say language="${ttsLang}">${reply.replace(/[<>&]/g, '')}</Say>` +
-      `<Gather input="speech" language="${ttsLang}" speechTimeout="6" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>`
+      `<Say language="${ttsLang}">${reply.replace(/[<>&]/g, '').replace(/\. /g, '... ').replace(/! /g, '!... ').replace(/\? /g, '?... ')}</Say>` +
+      `<Gather input="speech" language="${ttsLang}" speechTimeout="7" speechModel="experimental_conversations" enhanced="true" action="/api/voice" method="POST"><Say language="${ttsLang}"> </Say></Gather>`
     );
   } catch (e) {
     console.error('[Voice] Fatal:', e);
