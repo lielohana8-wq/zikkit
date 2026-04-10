@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
     const from = p.get('From') || '';
 
     const lang = to.startsWith('+972') ? 'he' : 'en';
-    const ttsLang = lang === 'he' ? 'he-IL' : 'en-US';
+    const sayLang = lang === 'he' ? 'he-IL' : 'en-US';
+    const gatherLang = 'en-US'; // Twilio speech recognition doesn't support he-IL
 
     // Load conversation from Firestore
     const fb = await import('@/lib/firebase');
@@ -60,10 +61,10 @@ export async function POST(req: NextRequest) {
       } catch {}
 
       return xml(
-        `<Say language="${ttsLang}" voice="alice">${greeting}</Say>` +
-        `<Gather input="speech" language="${ttsLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${ttsLang}" voice="alice"> </Say></Gather>` +
-        `<Say language="${ttsLang}" voice="alice">${lang === 'he' ? 'אתה שם? ספר לי מה קורה.' : 'Are you there? Tell me what happened.'}</Say>` +
-        `<Gather input="speech" language="${ttsLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${ttsLang}" voice="alice"> </Say></Gather>`
+        `<Say language="${sayLang}" voice="alice">${greeting}</Say>` +
+        `<Gather input="speech" language="${gatherLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${sayLang}" voice="alice"> </Say></Gather>` +
+        `<Say language="${sayLang}" voice="alice">${lang === 'he' ? 'אתה שם? ספר לי מה קורה.' : 'Are you there? Tell me what happened.'}</Say>` +
+        `<Gather input="speech" language="${gatherLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${sayLang}" voice="alice"> </Say></Gather>`
       );
     }
 
@@ -234,12 +235,12 @@ Dana: Great. What's your name?`;
           }
         }
       } catch {}
-      return xml(`<Say language="${ttsLang}" voice="alice">${reply.replace(/[<>&]/g, '')}</Say><Hangup/>`);
+      return xml(`<Say language="${sayLang}" voice="alice">${reply.replace(/[<>&]/g, '')}</Say><Hangup/>`);
     }
 
     return xml(
-      `<Say language="${ttsLang}" voice="alice">${reply.replace(/[<>&]/g, '').replace(/\. /g, '... ').replace(/! /g, '!... ').replace(/\? /g, '?... ')}</Say>` +
-      `<Gather input="speech" language="${ttsLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${ttsLang}" voice="alice"> </Say></Gather>`
+      `<Say language="${sayLang}" voice="alice">${reply.replace(/[<>&]/g, '').replace(/\. /g, '... ').replace(/! /g, '!... ').replace(/\? /g, '?... ')}</Say>` +
+      `<Gather input="speech" language="${gatherLang}" speechTimeout="7" action="/api/voice" method="POST"><Say language="${sayLang}" voice="alice"> </Say></Gather>`
     );
   } catch (e) {
     console.error('[Voice] Fatal:', e);
