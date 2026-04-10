@@ -1,110 +1,108 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const RETELL_API_KEY = process.env.RETELL_API_KEY || '';
+const RETELL_KEY = process.env.RETELL_API_KEY || '';
 
 export async function POST(req: NextRequest) {
   try {
-    const { bizName, bizType, bizPhone, greeting, bizId } = await req.json();
-    if (!RETELL_API_KEY) return NextResponse.json({ error: 'Retell API key not configured' }, { status: 500 });
+    const { bizId, bizName, bizType, greeting, bizPhone } = await req.json();
+    if (!RETELL_KEY) return NextResponse.json({ error: 'Retell not configured' }, { status: 500 });
 
+    // 1. Build prompt
     const prompt = `## תפקיד
-אתה דנה, מזכירה מקצועית וחמה של ${bizName}. סוג עסק: ${bizType}.
-אתה בשיחת טלפון חיה עם לקוח.
+אתה דנה, מזכירה ותיקה ומקצועית של ${bizName || 'העסק'}. סוג עסק: ${bizType || 'שירות'}.
+אתה בשיחת טלפון חיה. אתה לא AI, לא בוט. אתה בן אדם.
 
 ## ברכת פתיחה
-"${greeting || `היי שלום! הגעת ל-${bizName}. מה קרה? ספרי לי.`}"
+"${greeting || `היי שלום! הגעת ל-${bizName || 'העסק'}. מה קרה? ספר לי.`}"
 
-## סגנון דיבור
-- דברי כמו ישראלית אמיתית. חמה, ידידותית, אנושית.
-- משפט אחד עד שניים בכל תור.
-- השתמשי: "אוי", "וואלה", "אוקיי", "סבבה", "יאללה", "הבנתי"
-- אסור לנתק שיחה מוקדם! תמשיכי עד שאספת כל הפרטים.
+## סגנון
+- ישראלית אמיתית. חמה, ידידותית. משפט אחד-שניים מקסימום.
+- מילים: "אוי", "וואלה", "אוקיי", "סבבה", "יאללה"
+- אסור: "תודה על פנייתך" / "נחזור אליך" / "אני מערכת" / "אשמח לסייע"
 
-## מה אסור
-- "תודה על פנייתך" / "נציג יחזור" / "אני מערכת / בוט / AI" / "אשמח לסייע"
-
-## זרימת שיחה
-
-### שלב 1: הקשבה
-הלקוח מספר בעיה → תגיבי בהזדהות + שאלה חכמה אחת
-"אוי! מאיפה בדיוק נוזל?" / "וואלה, כמה זמן זה ככה?"
-
-### שלב 2: העמקה
-שאלי עוד שאלה אחת כדי להבין:
-"באיזה חדר?" / "זה קורה כל הזמן?" / "ניסית לעשות משהו?"
-
-### שלב 3: שם
-"הבנתי. איך קוראים לך?"
-
-### שלב 4: טלפון
-"מה מספר הטלפון שלך [שם]?"
-
-### שלב 5: כתובת
-"מה הכתובת?"
-
-### שלב 6: זמינות
-"מתי נוח לך? יש לנו טכנאי פנוי"
-
-### שלב 7: מבצעים
-"אגב, הביקור כולל בדיקה חינם. הטכנאי נותן הצעת מחיר במקום בלי התחייבות. ויש לנו אחריות על העבודה."
-
-### שלב 8: סגירה
-רק אחרי שם + טלפון + כתובת + זמן:
-"מעולה [שם]! רשמתי ל[זמן]. הטכנאי יתקשר לפני שמגיע. נשלח לך גם לינק בוואטסאפ עם פרטי העבודה שתוכל לעקוב. ביי!"
+## זרימה
+1. לקוח סיפר בעיה → תגיבי בהזדהות + שאלה אחת
+2. העמקה → שאלה נוספת
+3. "הבנתי. איך קוראים לך?"
+4. "מה הטלפון שלך [שם]?"
+5. "מה הכתובת?"
+6. "מתי נוח? יש לנו טכנאי פנוי"
+7. מבצעים: "אגב, הביקור כולל אבחון חינם. הטכנאי נותן הצעה במקום בלי התחייבות."
+8. "מעולה [שם]! רשמתי ל[זמן]. הטכנאי יתקשר לפני. נשלח לך גם לינק לעקוב. ביי!"
 
 ## מצבים
-- מחיר: "תלוי בעבודה. הטכנאי בודק ונותן הצעה בחינם. מתי נוח?"
+- מחיר: "הטכנאי בודק במקום ונותן הצעה בחינם"
 - דחוף: "מטפלים! מה הכתובת?"
 - כועס: "ממש מבינה. בוא נפתור עכשיו. מה הכתובת?"
 - מהסס: "הטכנאי בודק, אם אין מה לעשות — לא משלמים שקל"
-- שואל שם העסק: "הגעת ל-${bizName}! ספר לי מה קורה."
-- לא הבנת: "סליחה, אפשר לחזור על זה?"
+- מנהל: "המנהל יחזור אליך תוך שעה. מה השם והטלפון?"
+- תלונה: "מצטערת. המנהל יטפל בזה היום. מה השם והטלפון?"
 
-## חשוב מאוד
-- לא לנתק לפני שאספת: שם, טלפון, כתובת, זמן!
-- תמיד חיובית ואופטימית`;
+## חשוב
+- לא לנתק לפני שיש: שם + טלפון + כתובת + זמן!
+- אם רוצה לסיים בלי פרטים: "רגע, מה השם? שאוכל לעזור"`;
 
-    // Create agent in Retell
+    // 2. Create agent
     const agentRes = await fetch('https://api.retellai.com/v2/create-agent', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${RETELL_API_KEY}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${RETELL_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        agent_name: bizName + ' - Zikkit Bot',
-        response_engine: {
-          type: 'retell-llm',
-          llm_id: undefined,
-        },
-        voice_id: '11labs-Hebrew', // Will need to be configured
+        agent_name: (bizName || 'Business') + ' - Zikkit',
+        voice_id: '11labs-Grace',
         language: 'he-IL',
+        response_engine: { type: 'retell-llm', llm_id: '' },
         agent_prompt: prompt,
         webhook_url: new URL('/api/retell-webhook', req.url).toString(),
-        post_call_analysis_data: [
-          { name: 'customer_name', type: 'string', description: 'שם הלקוח' },
-          { name: 'customer_phone', type: 'string', description: 'מספר טלפון' },
-          { name: 'customer_address', type: 'string', description: 'כתובת' },
-          { name: 'issue', type: 'string', description: 'תיאור הבעיה' },
-          { name: 'preferred_time', type: 'string', description: 'זמן מועדף' },
-        ],
       }),
     });
+    const agent = await agentRes.json();
+    console.log('[Bot] Agent created:', agent.agent_id || agent);
 
-    const agentData = await agentRes.json();
+    if (!agent.agent_id) {
+      return NextResponse.json({ error: 'Agent creation failed: ' + JSON.stringify(agent) }, { status: 400 });
+    }
 
-    if (agentData.agent_id) {
-      // Save agent ID to business config in Firestore
+    // 3. Buy phone number
+    let phoneNumber = '';
+    try {
+      const phoneRes = await fetch('https://api.retellai.com/v2/create-phone-number', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${RETELL_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent_id: agent.agent_id,
+          area_code: '212',
+        }),
+      });
+      const phoneData = await phoneRes.json();
+      phoneNumber = phoneData.phone_number || '';
+      console.log('[Bot] Phone:', phoneNumber || phoneData);
+    } catch (e) {
+      console.error('[Bot] Phone error:', e);
+    }
+
+    // If buying failed, use existing Retell number
+    if (!phoneNumber) phoneNumber = process.env.RETELL_PHONE_NUMBER || '';
+
+    // 4. Save to Firestore
+    if (bizId) {
       try {
         const fb = await import('@/lib/firebase');
         const db = fb.getFirestoreDb();
         await fb.setDoc(fb.doc(db, 'businesses', bizId), {
-          cfg: { retell_agent_id: agentData.agent_id, bot_active: true }
+          cfg: { bot_active: true, bot_phone: phoneNumber, retell_agent_id: agent.agent_id, bot_greeting: greeting }
         }, { merge: true });
-      } catch {}
 
-      return NextResponse.json({ success: true, agentId: agentData.agent_id });
+        // Add phone lookup
+        if (phoneNumber) {
+          const clean = phoneNumber.replace(/[^0-9]/g, '');
+          await fb.setDoc(fb.doc(db, 'phone_lookup', clean), { bizId });
+        }
+      } catch (e) { console.error('[Bot] DB error:', e); }
     }
 
-    return NextResponse.json({ error: agentData.error || 'Failed to create agent' }, { status: 400 });
+    return NextResponse.json({ success: true, agentId: agent.agent_id, phoneNumber });
   } catch (e) {
+    console.error('[Bot] Fatal:', e);
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }
 }
