@@ -3,121 +3,131 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   try {
     const payload = await req.json();
-    console.log('[ElevenLabs] Webhook:', JSON.stringify(payload).slice(0, 1000));
+    console.log('[EL] Full payload:', JSON.stringify(payload).slice(0, 2000));
 
-    // Extract data from ElevenLabs webhook
-    const conversation = payload.conversation || payload;
-    const analysis = conversation.analysis || payload.analysis || {};
-    const dataCollection = analysis.data_collection || {};
-    const transcript = conversation.transcript || payload.transcript || '';
-    const fromNumber = conversation.phone_number || payload.phone_number || payload.from || '';
-    const toNumber = conversation.to_number || payload.to_number || '';
+    // ElevenLabs sends tool call data in different formats - try all
+    const customerName = payload.customer_name || payload.name || payload.data?.customer_name || '';
+    const customerPhone = payload.customer_phone || payload.phone || payload.contact_number || payload.data?.customer_phone || '';
+    const customerAddress = payload.customer_address || payload.address || payload.service_address || payload.data?.customer_address || '';
+    const issue = payload.issue || payload.issue_type || payload.notes || payload.data?.issue || '';
+    const notes = payload.notes || payload.summary || payload.data?.notes || issue;
+    const preferredTime = payload.preferred_time || payload.time || payload.data?.preferred_time || '';
 
-    const customerName = dataCollection.customer_name || '';
-    const customerPhone = dataCollection.contact_number || fromNumber;
-    const customerAddress = dataCollection.service_address || '';
-    const issue = dataCollection.issue_type || '';
-    const urgency = dataCollection.urgency_level || '';
+    console.log('[EL] Parsed:', { customerName, customerPhone, customerAddress, issue, preferredTime });
 
-    // Find business by phone number
+    // Find business
     const fb = await import('@/lib/firebase');
     const db = fb.getFirestoreDb();
+    let bizId = 'StsC7Ivcl7P8gR89Ljjxm7yTMO32'; // fallback
 
-    let bizId = '';
-    const cleanTo = (toNumber || '').replace(/[^0-9]/g, '');
-    const cleanFrom = (fromNumber || '').replace(/[^0-9]/g, '');
+    // Try phone_lookup with the business number
+    try {
+      const col = await fb.getDocs(fb.collection(db, 'phone_lookup'));
+      col.forEach((doc: any) => {
+        if (doc.data().bizId) bizId = doc.data().bizId;
+      });
+    } catch {}
 
-    // Try phone_lookup
-    if (cleanTo) {
-      try {
-        const snap = await fb.getDoc(fb.doc(db, 'phone_lookup', cleanTo));
-        if (snap.exists()) bizId = snap.data().bizId;
-      } catch {}
-    }
-
-    // Fallback: try all businesses
-    if (!bizId) {
-      try {
-        const col = await fb.getDocs(fb.collection(db, 'businesses'));
-        col.forEach((doc: any) => {
-          const cfg = doc.data().cfg || {};
-          const bPhone = (cfg.biz_phone || '').replace(/[^0-9]/g, '');
-          if (bPhone && (cleanTo.includes(bPhone) || bPhone.includes(cleanTo))) bizId = doc.id;
-        });
-      } catch {}
-    }
-
-    // Fallback to default
-    if (!bizId) bizId = 'StsC7Ivcl7P8gR89Ljjxm7yTMO32';
-
-    // Load business
     const bizSnap = await fb.getDoc(fb.doc(db, 'businesses', bizId));
-    if (!bizSnap.exists()) return NextResponse.json({ ok: true, warning: 'no_business' });
+    if (!bizSnap.exists()) return NextResponse.json({ ok: true });
 
     const bizData = bizSnap.data();
-    const leads = bizData.db?.leads || [];
-    const botLog = bizData.db?.botLog || [];
-
-    // Create lead
-    const leadPhone = customerPhone || fromNumber;
-    const existing = leads.findIndex((l: any) => l.phone === leadPhone);
-
-    const lead = {
-      id: Date.now(),
-      name: customerName || 'שיחה — ' + (leadPhone || 'לא ידוע'),
-      phone: leadPhone,
-      address: customerAddress,
-      source: 'ai_bot',
-      status: 'new',
-      notes: issue || '',
-      urgency,
-      created: new Date().toISOString(),
-    };
-
-    if (existing >= 0) leads[existing] = { ...leads[existing], ...lead, id: leads[existing].id };
-    else leads.push(lead);
-
-    // Log
-    botLog.push({
-      id: Date.now(), type: 'elevenlabs_call', from: fromNumber, to: toNumber,
-      transcript: typeof transcript === 'string' ? transcript.slice(0, 2000) : JSON.stringify(transcript).slice(0, 2000),
-      customerName, customerPhone: leadPhone, customerAddress, issue, urgency,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Save
-    await fb.setDoc(fb.doc(db, 'businesses', bizId), { db: { ...bizData.db, leads, botLog } }, { merge: true });
-
-    // Create portal + send SMS
-    const portalToken = 'portal_' + Date.now();
     const bizCfg = bizData.cfg || {};
-    try {
-      await fb.setDoc(fb.doc(db, 'public_portals', portalToken), {
-        type: 'job', bizName: bizCfg.biz_name || '', bizPhone: bizCfg.biz_phone || '',
-        client: lead.name, phone: leadPhone, address: customerAddress,
-        desc: issue, status: 'open', currency: bizCfg.currency || 'ILS',
-        created: new Date().toISOString(),
-      });
 
-      // Send SMS with portal link
+    // If we have a preferred time — create a JOB, not just a lead
+    if (customerName && customerAddress && preferredTime) {
+      const jobs = bizData.db?.jobs || [];
+      const newId = jobs.length > 0 ? Math.max(...jobs.map((j: any) => j.id || 0)) + 1 : 1;
+      
+      // Parse preferred time
+      let scheduledDate = new Date().toISOString().split('T')[0];
+      let scheduledTime = '09:00';
+      
+      if (preferredTime.includes('מחר') || preferredTime.toLowerCase().includes('tomorrow')) {
+        const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+        scheduledDate = tomorrow.toISOString().split('T')[0];
+      }
+      if (preferredTime.includes('אחה') || preferredTime.toLowerCase().includes('afternoon')) scheduledTime = '14:00';
+      if (preferredTime.includes('בוקר') || preferredTime.toLowerCase().includes('morning')) scheduledTime = '09:00';
+      if (preferredTime.includes('ערב') || preferredTime.toLowerCase().includes('evening')) scheduledTime = '17:00';
+      
+      // Extract hour if mentioned
+      const hourMatch = preferredTime.match(/(\d{1,2}):?(\d{2})?/);
+      if (hourMatch) scheduledTime = hourMatch[1].padStart(2, '0') + ':' + (hourMatch[2] || '00');
+
+      const job = {
+        id: newId,
+        num: 'JOB-' + String(newId).padStart(4, '0'),
+        client: customerName,
+        phone: customerPhone,
+        address: customerAddress,
+        desc: issue || notes || 'שיחת בוט',
+        status: 'open',
+        source: 'ai_bot',
+        scheduledDate,
+        scheduledTime,
+        notes: notes || '',
+        created: new Date().toISOString(),
+      };
+
+      jobs.push(job);
+      await fb.setDoc(fb.doc(db, 'businesses', bizId), { db: { ...bizData.db, jobs } }, { merge: true });
+      console.log('[EL] Job created:', job.num, job.client, job.scheduledDate, job.scheduledTime);
+
+      // Create portal
+      const portalToken = 'portal_' + Date.now();
+      try {
+        await fb.setDoc(fb.doc(db, 'public_portals', portalToken), {
+          type: 'job', bizName: bizCfg.biz_name || '', bizPhone: bizCfg.biz_phone || '',
+          client: customerName, phone: customerPhone, address: customerAddress,
+          desc: issue, status: 'open', scheduledDate, scheduledTime,
+          currency: bizCfg.currency || 'ILS', created: new Date().toISOString(),
+        });
+      } catch {}
+
+      // Send SMS
       const twilioSid = process.env.TWILIO_ACCOUNT_SID;
       const twilioToken = process.env.TWILIO_AUTH_TOKEN;
       const twilioFrom = process.env.TWILIO_PHONE_IL || process.env.TWILIO_PHONE_NUMBER;
-      if (twilioSid && twilioToken && twilioFrom && leadPhone) {
-        const url = 'https://zikkit-jvc7.vercel.app/portal/' + portalToken;
-        const body = 'היי ' + lead.name + ', תודה שהתקשרת! הנה פרטי הפנייה: ' + url;
-        await fetch('https://api.twilio.com/2010-04-01/Accounts/' + twilioSid + '/Messages.json', {
-          method: 'POST',
-          headers: { 'Authorization': 'Basic ' + Buffer.from(twilioSid + ':' + twilioToken).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ To: leadPhone, From: twilioFrom, Body: body }).toString(),
-        });
+      if (twilioSid && twilioToken && twilioFrom && customerPhone) {
+        try {
+          const url = 'https://zikkit-jvc7.vercel.app/portal/' + portalToken;
+          await fetch('https://api.twilio.com/2010-04-01/Accounts/' + twilioSid + '/Messages.json', {
+            method: 'POST',
+            headers: { 'Authorization': 'Basic ' + Buffer.from(twilioSid + ':' + twilioToken).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ To: customerPhone, From: twilioFrom, Body: 'היי ' + customerName + ', תודה! הנה פרטי העבודה: ' + url }).toString(),
+          });
+        } catch {}
       }
-    } catch (e) { console.warn('[ElevenLabs] Portal/SMS:', e); }
 
-    console.log('[ElevenLabs] Lead created:', lead.name);
-    return NextResponse.json({ ok: true, lead_created: true });
+      return NextResponse.json({ ok: true, type: 'job', jobId: newId });
+    }
+
+    // Otherwise create a LEAD
+    const leads = bizData.db?.leads || [];
+    const newId = leads.length > 0 ? Math.max(...leads.map((l: any) => l.id || 0)) + 1 : 1;
+
+    const lead = {
+      id: newId,
+      name: customerName || 'שיחה — ' + (customerPhone || 'לא ידוע'),
+      phone: customerPhone,
+      address: customerAddress,
+      source: 'ai_bot',
+      status: 'new',
+      notes: notes || issue || '',
+      created: new Date().toISOString(),
+    };
+
+    const existing = leads.findIndex((l: any) => l.phone && l.phone === customerPhone);
+    if (existing >= 0) leads[existing] = { ...leads[existing], ...lead, id: leads[existing].id };
+    else leads.push(lead);
+
+    await fb.setDoc(fb.doc(db, 'businesses', bizId), { db: { ...bizData.db, leads } }, { merge: true });
+    console.log('[EL] Lead created:', lead.name, lead.phone);
+
+    return NextResponse.json({ ok: true, type: 'lead', leadId: lead.id });
   } catch (e) {
-    console.error('[ElevenLabs] Error:', e);
+    console.error('[EL] Error:', e);
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }
 }
