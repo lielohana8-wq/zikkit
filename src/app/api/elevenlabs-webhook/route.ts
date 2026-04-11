@@ -55,6 +55,22 @@ export async function POST(req: NextRequest) {
       const hourMatch = preferredTime.match(/(\d{1,2}):?(\d{2})?/);
       if (hourMatch) scheduledTime = hourMatch[1].padStart(2, '0') + ':' + (hourMatch[2] || '00');
 
+      // Auto-assign technician
+      const techs = (bizData.db?.users || []).filter((u: any) => u.role === 'tech' || u.role === 'technician');
+      let assignedTech = '';
+      if (techs.length === 1) {
+        assignedTech = techs[0].name;
+      } else if (techs.length > 1) {
+        // Find least busy tech for that date/time
+        const dayJobs = jobs.filter((j: any) => j.scheduledDate === scheduledDate && j.status !== 'cancelled');
+        let minJobs = 999; let bestTech = techs[0]?.name || '';
+        for (const tech of techs) {
+          const techJobCount = dayJobs.filter((j: any) => j.tech === tech.name).length;
+          if (techJobCount < minJobs) { minJobs = techJobCount; bestTech = tech.name; }
+        }
+        assignedTech = bestTech;
+      }
+
       const job = {
         id: newId,
         num: 'JOB-' + String(newId).padStart(4, '0'),
@@ -62,8 +78,9 @@ export async function POST(req: NextRequest) {
         phone: customerPhone,
         address: customerAddress,
         desc: issue || notes || 'שיחת בוט',
-        status: 'open',
+        status: assignedTech ? 'assigned' : 'open',
         source: 'ai_bot',
+        tech: assignedTech,
         scheduledDate,
         scheduledTime,
         notes: notes || '',
@@ -80,7 +97,7 @@ export async function POST(req: NextRequest) {
         await fb.setDoc(fb.doc(db, 'public_portals', portalToken), {
           type: 'job', bizName: bizCfg.biz_name || '', bizPhone: bizCfg.biz_phone || '',
           client: customerName, phone: customerPhone, address: customerAddress,
-          desc: issue, status: 'open', scheduledDate, scheduledTime,
+          desc: issue, status: assignedTech ? 'assigned' : 'open', techName: assignedTech, scheduledDate, scheduledTime,
           currency: bizCfg.currency || 'ILS', created: new Date().toISOString(),
         });
       } catch {}
