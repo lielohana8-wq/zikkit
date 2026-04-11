@@ -109,12 +109,20 @@ export async function POST(req: NextRequest) {
       if (twilioSid && twilioToken && twilioFrom && customerPhone) {
         try {
           const url = 'https://zikkit-jvc7.vercel.app/portal/' + portalToken;
-          await fetch('https://api.twilio.com/2010-04-01/Accounts/' + twilioSid + '/Messages.json', {
+          // Format phone for SMS
+          let smsPhone = customerPhone.replace(/[^0-9+]/g, '');
+          if (smsPhone.startsWith('05')) smsPhone = '+972' + smsPhone.slice(1);
+          else if (smsPhone.startsWith('972')) smsPhone = '+' + smsPhone;
+          else if (!smsPhone.startsWith('+')) smsPhone = '+' + smsPhone;
+          console.log('[EL] Sending SMS to:', smsPhone, 'from:', twilioFrom, 'url:', url);
+          const smsRes = await fetch('https://api.twilio.com/2010-04-01/Accounts/' + twilioSid + '/Messages.json', {
             method: 'POST',
             headers: { 'Authorization': 'Basic ' + Buffer.from(twilioSid + ':' + twilioToken).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ To: customerPhone, From: twilioFrom, Body: 'היי ' + customerName + ', תודה! הנה פרטי העבודה: ' + url }).toString(),
+            body: new URLSearchParams({ To: smsPhone, From: twilioFrom, Body: 'היי ' + customerName + ', הנה פרטי העבודה שלך: ' + url + ' — ' + (bizCfg.biz_name || '') }).toString(),
           });
-        } catch {}
+          const smsData = await smsRes.json();
+          console.log('[EL] SMS result:', smsData.sid || smsData.message);
+        } catch (smsErr) { console.error('[EL] SMS error:', smsErr); }
       }
 
       return NextResponse.json({ ok: true, type: 'job', jobId: newId });
