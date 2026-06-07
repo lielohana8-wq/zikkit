@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Box, Typography, TextField, Button, Alert } from '@mui/material';
+import { Box, Typography, TextField, Button, Alert, Divider } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useGeoDetection } from '@/hooks/useGeoDetection';
@@ -15,9 +15,10 @@ export default function RegisterPage() {
   const [bizName, setBizName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { register, loading, error, clearError, logout } = useAuth();
+  const { register, loginWithGoogle, loading, error, clearError, logout } = useAuth();
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
-  const { plans, isIL } = useGeoDetection();
+  const { isIL } = useGeoDetection();
+  const router = useRouter();
 
   // Safe back — sign out first (in case Auth user was partially created)
   const goBackToLogin = async () => {
@@ -30,7 +31,6 @@ export default function RegisterPage() {
     setRegistrationSuccess(true);
     sessionStorage.removeItem('zikkit_registered');
   }
-  const router = useRouter();
 
   const handleRegister = async () => {
     clearError();
@@ -61,11 +61,11 @@ export default function RegisterPage() {
             {'שלחנו לך מייל אימות. לחץ על הקישור במייל כדי להפעיל את החשבון.'}
           </Typography>
           <Box sx={{
-            bgcolor: 'rgba(0,229,176,0.06)', border: '1px solid rgba(0,229,176,0.15)',
+            bgcolor: 'rgba(79,70,229,0.06)', border: '1px solid rgba(79,70,229,0.15)',
             borderRadius: '14px', p: '20px', mb: 3, textAlign: 'right',
           }}>
-            <Typography sx={{ fontSize: 13, color: '#00e5b0', fontWeight: 700, mb: 1 }}>
-              {'תוכנית'}: {selectedPlan}
+            <Typography sx={{ fontSize: 13, color: '#6366F1', fontWeight: 700, mb: 1 }}>
+              {'תוכנית'}: {selectedPlan || 'Trial'}
             </Typography>
             <Typography sx={{ fontSize: 12, color: '#888', lineHeight: 1.8 }}>
               {'✓ 14 ימי ניסיון חינם — גישה מלאה לכל הפיצ׳רים'}<br/>
@@ -94,96 +94,142 @@ export default function RegisterPage() {
       <Box sx={{ maxWidth: 900, mx: 'auto', p: '40px 20px' }}>
 
         {/* Header */}
-        <Box sx={{ textAlign: 'center', mb: '48px' }}>
+        <Box sx={{ textAlign: 'center', mb: '32px' }}>
           <Box onClick={goBackToLogin} sx={{
             position: 'absolute', top: 20, left: 20, cursor: 'pointer', color: '#666', fontSize: 13,
             display: 'flex', alignItems: 'center', gap: '6px',
-          }}>{'\u2190'} {'\u05D7\u05D6\u05E8\u05D4'}</Box>
+          }}>{'←'} {'חזרה'}</Box>
 
           {step === 'plan' ? (
             <>
-              <Typography sx={{ fontSize: 36, fontWeight: 900, color: '#fff', mb: '8px' }}>{'\u05D1\u05D7\u05E8 \u05EA\u05D5\u05DB\u05E0\u05D9\u05EA'}</Typography>
-              <Typography sx={{ fontSize: 15, color: '#666' }}>{'\u05D4\u05EA\u05D7\u05DC \u05D7\u05D9\u05E0\u05DD. \u05E9\u05D3\u05E8\u05D2 \u05DE\u05EA\u05D9 \u05E9\u05EA\u05E8\u05E6\u05D4.'}</Typography>
+              <Typography sx={{ fontSize: 36, fontWeight: 900, color: '#fff', mb: '8px' }}>{'בחר תוכנית'}</Typography>
+              <Typography sx={{ fontSize: 15, color: '#666' }}>{'התחל חינם. שדרג מתי שתרצה.'}</Typography>
             </>
           ) : (
             <>
-              <Typography sx={{ fontSize: 36, fontWeight: 900, color: '#fff', mb: '8px' }}>{'\u05E6\u05D5\u05E8 \u05D7\u05E9\u05D1\u05D5\u05DF'}</Typography>
+              <Typography sx={{ fontSize: 36, fontWeight: 900, color: '#fff', mb: '8px' }}>{'צור חשבון'}</Typography>
               <Typography sx={{ fontSize: 15, color: '#666' }}>
-                {'\u05EA\u05D5\u05DB\u05E0\u05D9\u05EA'}: <strong style={{ color: '#3ab54a' }}>{selectedPlan}</strong>
+                {'תוכנית'}: <strong style={{ color: '#6366F1' }}>{selectedPlan}</strong>
               </Typography>
             </>
           )}
         </Box>
 
         {step === 'plan' ? (
-          /* PRICING GRID */
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', mb: '40px', '@media(max-width:768px)': { gridTemplateColumns: '1fr' } }}>
-
-            {/* Trial */}
-            <Box sx={{ background: '#111', border: '1px solid #222', borderRadius: '20px', p: '28px', position: 'relative' }}>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '1px', mb: '12px' }}>{'\u05E0\u05D9\u05E1\u05D9\u05D5\u05DF \u05D7\u05D9\u05E0\u05DD'}</Typography>
-              <Typography sx={{ fontSize: 42, fontWeight: 900, color: '#fff', mb: '4px' }}>$0</Typography>
-              <Typography sx={{ fontSize: 13, color: '#555', mb: '24px' }}>14 {'\u05D9\u05D5\u05DD \u05D7\u05D9\u05E0\u05DD'}</Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px', mb: '28px' }}>
-                {['\u05D2\u05D9\u05E9\u05D4 \u05DE\u05DC\u05D0\u05D4 \u05DC\u05DB\u05DC \u05D4\u05E4\u05D9\u05E6\u05F3\u05E8\u05D9\u05DD', '\u05D1\u05DC\u05D9 \u05DB\u05E8\u05D8\u05D9\u05E1 \u05D0\u05E9\u05E8\u05D0\u05D9', '\u05E9\u05D3\u05E8\u05D5\u05D2 \u05D1\u05DB\u05DC \u05E2\u05EA'].map((f) => (
-                  <Typography key={f} sx={{ fontSize: 12, color: '#aaa', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#3ab54a' }}>{'\u2713'}</span> {f}
-                  </Typography>
-                ))}
-              </Box>
-              <Button fullWidth onClick={() => { setSelectedPlan('\u05E0\u05D9\u05E1\u05D9\u05D5\u05DF \u05D7\u05D9\u05E0\u05DD'); setStep('register'); }}
-                sx={{ p: '14px', borderRadius: '12px', border: '1px solid #333', bgcolor: 'transparent', color: '#fff', fontSize: 14, fontWeight: 700,
-                  '&:hover': { borderColor: '#3ab54a' } }}>
-                {'\u05D4\u05EA\u05D7\u05DC \u05E0\u05D9\u05E1\u05D9\u05D5\u05DF \u05D7\u05D9\u05E0\u05DD'}
+          <>
+            {/* Google Sign-Up - quick option above plans */}
+            <Box sx={{ maxWidth: 460, mx: 'auto', mb: '40px' }}>
+              <Button
+                fullWidth
+                onClick={loginWithGoogle}
+                disabled={loading}
+                sx={{
+                  py: '14px',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  background: '#fff',
+                  color: '#1f2937',
+                  textTransform: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1.5,
+                  '&:hover': {
+                    background: '#f3f4f6',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                  },
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 18 18" aria-hidden="true">
+                  <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                  <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                  <path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/>
+                  <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/>
+                </svg>
+                {'הרשמה מהירה עם Google'}
               </Button>
-            </Box>
-
-            {/* Business Monthly */}
-            <Box sx={{ background: 'linear-gradient(135deg, #0d1f0d, #111)', border: '2px solid #3ab54a', borderRadius: '20px', p: '28px', position: 'relative' }}>
-              <Box sx={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', bgcolor: '#3ab54a', color: '#000', fontSize: 11, fontWeight: 800, p: '4px 16px', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {'\u05D4\u05DB\u05D9 \u05E4\u05D5\u05E4\u05D5\u05DC\u05E8\u05D9'}
-              </Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#3ab54a', textTransform: 'uppercase', letterSpacing: '1px', mb: '12px' }}>Business</Typography>
-              <Typography sx={{ fontSize: 42, fontWeight: 900, color: '#fff', mb: '4px' }}>{isIL ? '\u20AA499' : '$699'}</Typography>
-              <Typography sx={{ fontSize: 13, color: '#555', mb: '24px' }}>{isIL ? '\u05DC\u05D7\u05D5\u05D3\u05E9' : 'per month'}</Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px', mb: '28px' }}>
-                {['\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA \u05D5\u05DC\u05D9\u05D3\u05D9\u05DD \u05DC\u05DC\u05D0 \u05D4\u05D2\u05D1\u05DC\u05D4', '\u05D1\u05D5\u05D8 AI \u05E7\u05D5\u05DC\u05D9', '\u05DE\u05E2\u05E7\u05D1 GPS', '\u05D0\u05D5\u05D8\u05D5\u05DE\u05E6\u05D9\u05D4 \u05D5\u05D3\u05D5\u05D7\u05D5\u05EA', '\u05E2\u05D3 10 \u05D8\u05DB\u05E0\u05D0\u05D9\u05DD'].map((f) => (
-                  <Typography key={f} sx={{ fontSize: 12, color: '#aaa', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#3ab54a' }}>{'\u2713'}</span> {f}
-                  </Typography>
-                ))}
-              </Box>
-              <Button fullWidth onClick={() => { setSelectedPlan('Business \u05D7\u05D5\u05D3\u05E9\u05D9'); setStep('register'); }}
-                sx={{ p: '14px', borderRadius: '12px', border: 'none', bgcolor: '#3ab54a', color: '#000', fontSize: 14, fontWeight: 800,
-                  '&:hover': { bgcolor: '#4dcc5e' } }}>
-                {'\u05D4\u05EA\u05D7\u05DC \u05E2\u05DB\u05E9\u05D9\u05D5'} {'\u2192'}
-              </Button>
-            </Box>
-
-            {/* Business Annual */}
-            <Box sx={{ background: '#111', border: '1px solid #333', borderRadius: '20px', p: '28px', position: 'relative' }}>
-              <Box sx={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', bgcolor: '#f59e0b', color: '#000', fontSize: 11, fontWeight: 800, p: '4px 16px', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {isIL ? '\u05D7\u05D9\u05E1\u05DB\u05D5\u05DF \u20AA1,500' : 'Save $2,100'}
-              </Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '1px', mb: '12px' }}>Business {'\u05E9\u05E0\u05EA\u05D9'}</Typography>
-              <Typography sx={{ fontSize: 42, fontWeight: 900, color: '#fff', mb: '4px' }}>{isIL ? '\u20AA4,490' : '$6,290'}</Typography>
-              <Typography sx={{ fontSize: 13, color: '#555', mb: '24px' }}>
-                {isIL ? '\u05DC\u05E9\u05E0\u05D4' : 'per year'} {'\u00B7'} <span style={{ color: '#f59e0b' }}>{isIL ? '\u20AA374/\u05D7\u05D5\u05D3\u05E9' : '$524/mo'}</span>
+              <Typography sx={{ textAlign: 'center', fontSize: 11, color: '#666', mt: '10px' }}>
+                {'נסיון חינם 14 יום אוטומטי - בלי כרטיס אשראי'}
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px', mb: '28px' }}>
-                {['\u05D4\u05DB\u05DC \u05D1-Business', '2 \u05D7\u05D5\u05D3\u05E9\u05D9\u05DD \u05D7\u05D9\u05E0\u05DD', '\u05EA\u05DE\u05D9\u05DB\u05D4 \u05E2\u05D3\u05D9\u05E4\u05D4', '\u05D4\u05D3\u05E8\u05DB\u05D4 \u05D0\u05D9\u05E9\u05D9\u05EA'].map((f) => (
-                  <Typography key={f} sx={{ fontSize: 12, color: '#aaa', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#f59e0b' }}>{'\u2713'}</span> {f}
-                  </Typography>
-                ))}
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: '24px' }}>
+                <Divider sx={{ flex: 1, borderColor: 'rgba(255,255,255,0.1)' }} />
+                <Typography sx={{ fontSize: 11, color: '#666', fontWeight: 600 }}>{'או בחר תוכנית בתשלום'}</Typography>
+                <Divider sx={{ flex: 1, borderColor: 'rgba(255,255,255,0.1)' }} />
               </Box>
-              <Button fullWidth onClick={() => { setSelectedPlan('Business \u05E9\u05E0\u05EA\u05D9'); setStep('register'); }}
-                sx={{ p: '14px', borderRadius: '12px', border: '1px solid #f59e0b', bgcolor: 'transparent', color: '#f59e0b', fontSize: 14, fontWeight: 700,
-                  '&:hover': { bgcolor: 'rgba(245,158,11,0.1)' } }}>
-                {'\u05EA\u05D5\u05DB\u05E0\u05D9\u05EA \u05E9\u05E0\u05EA\u05D9\u05EA'} {'\u2192'}
-              </Button>
             </Box>
-          </Box>
+
+            {/* PRICING GRID */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', mb: '40px', '@media(max-width:768px)': { gridTemplateColumns: '1fr' } }}>
+
+              {/* Trial */}
+              <Box sx={{ background: '#111', border: '1px solid #222', borderRadius: '20px', p: '28px', position: 'relative' }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '1px', mb: '12px' }}>{'ניסיון חינם'}</Typography>
+                <Typography sx={{ fontSize: 42, fontWeight: 900, color: '#fff', mb: '4px' }}>$0</Typography>
+                <Typography sx={{ fontSize: 13, color: '#555', mb: '24px' }}>14 {'יום חינם'}</Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px', mb: '28px' }}>
+                  {['גישה מלאה לכל הפיצ׳רים', 'בלי כרטיס אשראי', 'שדרוג בכל עת'].map((f) => (
+                    <Typography key={f} sx={{ fontSize: 12, color: '#aaa', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: '#6366F1' }}>{'✓'}</span> {f}
+                    </Typography>
+                  ))}
+                </Box>
+                <Button fullWidth onClick={() => { setSelectedPlan('ניסיון חינם'); setStep('register'); }}
+                  sx={{ p: '14px', borderRadius: '12px', border: '1px solid #333', bgcolor: 'transparent', color: '#fff', fontSize: 14, fontWeight: 700,
+                    '&:hover': { borderColor: '#6366F1' } }}>
+                  {'התחל ניסיון חינם'}
+                </Button>
+              </Box>
+
+              {/* Pro Monthly */}
+              <Box sx={{ background: 'linear-gradient(135deg, #1a1a2e, #111)', border: '2px solid #6366F1', borderRadius: '20px', p: '28px', position: 'relative' }}>
+                <Box sx={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', bgcolor: '#6366F1', color: '#fff', fontSize: 11, fontWeight: 800, p: '4px 16px', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {'הכי פופולרי'}
+                </Box>
+                <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#6366F1', textTransform: 'uppercase', letterSpacing: '1px', mb: '12px' }}>Pro</Typography>
+                <Typography sx={{ fontSize: 42, fontWeight: 900, color: '#fff', mb: '4px' }}>{isIL ? '₪479' : '$129'}</Typography>
+                <Typography sx={{ fontSize: 13, color: '#555', mb: '24px' }}>{isIL ? 'לחודש' : 'per month'}</Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px', mb: '28px' }}>
+                  {['עבודות ולידים ללא הגבלה', 'בוט AI קולי', 'מעקב GPS', 'אוטומציה ודוחות', 'עד 15 טכנאים'].map((f) => (
+                    <Typography key={f} sx={{ fontSize: 12, color: '#aaa', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: '#6366F1' }}>{'✓'}</span> {f}
+                    </Typography>
+                  ))}
+                </Box>
+                <Button fullWidth onClick={() => { setSelectedPlan('Pro חודשי'); setStep('register'); }}
+                  sx={{ p: '14px', borderRadius: '12px', border: 'none', bgcolor: '#6366F1', color: '#fff', fontSize: 14, fontWeight: 800,
+                    '&:hover': { bgcolor: '#4F46E5' } }}>
+                  {'התחל עכשיו'} {'→'}
+                </Button>
+              </Box>
+
+              {/* Pro Annual */}
+              <Box sx={{ background: '#111', border: '1px solid #333', borderRadius: '20px', p: '28px', position: 'relative' }}>
+                <Box sx={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', bgcolor: '#f59e0b', color: '#000', fontSize: 11, fontWeight: 800, p: '4px 16px', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {isIL ? 'חיסכון ₪1,149' : 'Save 20%'}
+                </Box>
+                <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '1px', mb: '12px' }}>Pro {'שנתי'}</Typography>
+                <Typography sx={{ fontSize: 42, fontWeight: 900, color: '#fff', mb: '4px' }}>{isIL ? '₪4,599' : '$1,239'}</Typography>
+                <Typography sx={{ fontSize: 13, color: '#555', mb: '24px' }}>
+                  {isIL ? 'לשנה' : 'per year'} {'·'} <span style={{ color: '#f59e0b' }}>{isIL ? '₪383/חודש' : '$103/mo'}</span>
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px', mb: '28px' }}>
+                  {['הכל ב-Pro', '2 חודשים חינם', 'תמיכה עדיפה', 'הדרכה אישית'].map((f) => (
+                    <Typography key={f} sx={{ fontSize: 12, color: '#aaa', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: '#f59e0b' }}>{'✓'}</span> {f}
+                    </Typography>
+                  ))}
+                </Box>
+                <Button fullWidth onClick={() => { setSelectedPlan('Pro שנתי'); setStep('register'); }}
+                  sx={{ p: '14px', borderRadius: '12px', border: '1px solid #f59e0b', bgcolor: 'transparent', color: '#f59e0b', fontSize: 14, fontWeight: 700,
+                    '&:hover': { bgcolor: 'rgba(245,158,11,0.1)' } }}>
+                  {'תוכנית שנתית'} {'→'}
+                </Button>
+              </Box>
+            </Box>
+          </>
         ) : (
           /* REGISTER FORM */
           <Box sx={{ maxWidth: 420, mx: 'auto' }}>
@@ -192,6 +238,43 @@ export default function RegisterPage() {
               border: '1px solid ' + c.border2, borderRadius: '24px', p: '32px',
               boxShadow: '0 40px 100px rgba(0,0,0,0.7)',
             }}>
+              {/* Google option also in form step */}
+              <Button
+                fullWidth
+                onClick={loginWithGoogle}
+                disabled={loading}
+                sx={{
+                  py: '12px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  background: '#fff',
+                  color: '#1f2937',
+                  textTransform: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1.5,
+                  mb: '16px',
+                  '&:hover': { background: '#f3f4f6' },
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+                  <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                  <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                  <path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/>
+                  <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/>
+                </svg>
+                {'הרשמה עם Google'}
+              </Button>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: '16px' }}>
+                <Divider sx={{ flex: 1, borderColor: c.border2 }} />
+                <Typography sx={{ fontSize: 11, color: c.text3, fontWeight: 600 }}>{'או'}</Typography>
+                <Divider sx={{ flex: 1, borderColor: c.border2 }} />
+              </Box>
+
               {error && (
                 <Alert severity="error" sx={{ mb: '14px', bgcolor: c.hotDim, border: '1px solid rgba(255,77,109,0.25)', borderRadius: '10px', fontSize: 12, color: c.hot }}>
                   {error}
@@ -199,8 +282,8 @@ export default function RegisterPage() {
               )}
 
               {[
-                { label: '\u05E9\u05DD \u05D4\u05E2\u05E1\u05E7', value: bizName, set: setBizName, placeholder: '\u05D4\u05E2\u05E1\u05E7 \u05E9\u05DC\u05D9' },
-                { label: '\u05DE\u05D9\u05D9\u05DC', value: email, set: setEmail, placeholder: 'email@example.com' },
+                { label: 'שם העסק', value: bizName, set: setBizName, placeholder: 'העסק שלי' },
+                { label: 'מייל', value: email, set: setEmail, placeholder: 'email@example.com' },
               ].map((f) => (
                 <Box key={f.label} sx={{ mb: '15px' }}>
                   <Typography sx={{ fontSize: 10, fontWeight: 700, color: c.text3, mb: '7px', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
@@ -212,25 +295,25 @@ export default function RegisterPage() {
 
               <Box sx={{ mb: '15px' }}>
                 <Typography sx={{ fontSize: 10, fontWeight: 700, color: c.text3, mb: '7px', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
-                  {'\u05E1\u05D9\u05E1\u05DE\u05D4 (\u05DC\u05E4\u05D7\u05D5\u05EA 6 \u05EA\u05D5\u05D5\u05D9\u05DD)'}
+                  {'סיסמה (לפחות 6 תווים)'}
                 </Typography>
-                <TextField fullWidth size="small" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={'\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'} onKeyDown={handleKeyDown} />
+                <TextField fullWidth size="small" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={'••••••••'} onKeyDown={handleKeyDown} />
               </Box>
 
               <Button fullWidth variant="contained" onClick={handleRegister} disabled={loading}
                 sx={{ mt: '8px', p: '12px', fontSize: 13, fontWeight: 800, borderRadius: '10px' }}>
-                {loading ? '\u05D9\u05D5\u05E6\u05E8 \u05D7\u05E9\u05D1\u05D5\u05DF...' : '\u05E6\u05D5\u05E8 \u05D7\u05E9\u05D1\u05D5\u05DF \u05E2\u05E1\u05E7\u05D9'}
+                {loading ? 'יוצר חשבון...' : 'צור חשבון עסקי'}
               </Button>
 
               <Button fullWidth onClick={() => setStep('plan')}
                 sx={{ mt: '10px', color: c.text3, fontSize: 11 }}>
-                {'\u2190'} {'\u05D7\u05D6\u05E8\u05D4 \u05DC\u05EA\u05D5\u05DB\u05E0\u05D9\u05D5\u05EA'}
+                {'←'} {'חזרה לתוכניות'}
               </Button>
             </Box>
 
             <Button fullWidth onClick={goBackToLogin}
               sx={{ mt: '16px', color: c.text3, fontSize: 11, '&:hover': { color: c.accent } }}>
-              {'\u05D9\u05E9 \u05DC\u05DA \u05D7\u05E9\u05D1\u05D5\u05DF? \u05D4\u05EA\u05D7\u05D1\u05E8'}
+              {'יש לך חשבון? התחבר'}
             </Button>
           </Box>
         )}

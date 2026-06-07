@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Box, Typography, TextField, Button, Alert } from '@mui/material';
+import { Box, Typography, TextField, Button, Alert, Divider } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -15,11 +15,10 @@ export function LoginForm() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotError, setForgotError] = useState('');
-  const { login, loading, error, clearError, user, sendPasswordReset } = useAuth();
+  const { login, loginWithGoogle, loading, error, clearError, user, sendPasswordReset } = useAuth();
   const { lang, setLang, t } = useLanguage();
   const router = useRouter();
 
-  // Redirect if already logged in — in useEffect, not during render
   useEffect(() => {
     if (user) {
       router.replace(getDefaultRoute(user.role));
@@ -47,7 +46,6 @@ export function LoginForm() {
     }
   };
 
-  // Don't render form if already logged in
   if (user) return null;
 
   return (
@@ -57,16 +55,10 @@ export function LoginForm() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         bgcolor: c.bg,
         backgroundImage: [
-          'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(0,229,176,0.06) 0%, transparent 55%)',
-          'radial-gradient(ellipse 50% 40% at 85% 85%, rgba(79,143,255,0.04) 0%, transparent 50%)',
+          'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(79,70,229,0.06) 0%, transparent 55%)',
+          'radial-gradient(ellipse 50% 40% at 85% 85%, rgba(124,58,237,0.04) 0%, transparent 50%)',
           'radial-gradient(ellipse 40% 30% at 10% 70%, rgba(167,139,250,0.03) 0%, transparent 50%)',
         ].join(','),
-        '&::before': {
-          content: '""', position: 'absolute', inset: 0, pointerEvents: 'none',
-          backgroundImage:
-            'repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(255,255,255,0.008) 40px,rgba(255,255,255,0.008) 41px),' +
-            'repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(255,255,255,0.008) 40px,rgba(255,255,255,0.008) 41px)',
-        },
       }}
     >
       <Box
@@ -106,8 +98,8 @@ export function LoginForm() {
             width: 56, height: 56, borderRadius: '16px',
             background: 'linear-gradient(135deg, ' + c.accent + ', ' + c.accent2 + ')',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 18, color: '#000',
-            boxShadow: '0 8px 28px ' + c.accentGlow + ', 0 0 0 1px rgba(0,229,176,0.25)',
+            fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 18, color: '#fff',
+            boxShadow: '0 8px 28px ' + c.accentGlow + ', 0 0 0 1px rgba(79,70,229,0.25)',
           }}>Zk</Box>
           <Typography sx={{
             fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 800,
@@ -115,9 +107,52 @@ export function LoginForm() {
           }}>Zikkit</Typography>
         </Box>
 
-        <Typography sx={{ fontSize: 12, color: c.text3, textAlign: 'center', mb: '26px', mt: '2px' }}>
+        <Typography sx={{ fontSize: 12, color: c.text3, textAlign: 'center', mb: '22px', mt: '2px' }}>
           {t('subtitle') || 'Field Service Management Platform'}
         </Typography>
+
+        {/* Google Sign-In Button */}
+        <Button
+          fullWidth
+          onClick={loginWithGoogle}
+          disabled={loading}
+          variant="outlined"
+          sx={{
+            py: '11px',
+            fontSize: 13,
+            fontWeight: 600,
+            borderRadius: '10px',
+            borderColor: c.border2,
+            background: c.surface1,
+            color: c.text,
+            textTransform: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1.5,
+            mb: '16px',
+            '&:hover': {
+              borderColor: c.accent,
+              background: c.accentDim,
+              color: c.text,
+            },
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+            <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+            <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+            <path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/>
+            <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/>
+          </svg>
+          {'התחבר עם Google'}
+        </Button>
+
+        {/* Divider */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: '18px' }}>
+          <Divider sx={{ flex: 1, borderColor: c.border2 }} />
+          <Typography sx={{ fontSize: 11, color: c.text3, fontWeight: 600 }}>{'או'}</Typography>
+          <Divider sx={{ flex: 1, borderColor: c.border2 }} />
+        </Box>
 
         {/* Error */}
         {error && (
@@ -146,7 +181,7 @@ export function LoginForm() {
             onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown} size="small" autoComplete="current-password" />
           <Button size="small" onClick={() => { setForgotEmail(email); setShowForgot(true); setForgotSent(false); setForgotError(''); }}
             sx={{ mt: '6px', p: 0, fontSize: 10, color: c.accent, textTransform: 'none', minWidth: 'auto', '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' } }}>
-            שכחת סיסמה?
+            {'שכחת סיסמה?'}
           </Button>
         </Box>
 
@@ -160,11 +195,11 @@ export function LoginForm() {
         <Button fullWidth onClick={() => router.push('/register')}
           sx={{ mt: '12px', color: c.text3, fontSize: 11, textTransform: 'none',
             '&:hover': { color: c.accent, bgcolor: 'transparent' } }}>
-          אין לך חשבון? <span style={{ color: c.accent, marginLeft: 4 }}>צור חשבון עסקי →</span>
+          {'אין לך חשבון?'} <span style={{ color: c.accent, marginLeft: 4 }}>{'צור חשבון עסקי →'}</span>
         </Button>
       </Box>
 
-      {/* ══ Forgot Password Modal ══ */}
+      {/* Forgot Password Modal */}
       {showForgot && (
         <Box onClick={(e) => { if (e.target === e.currentTarget) setShowForgot(false); }} sx={{
           position: 'fixed', inset: 0, zIndex: 9999, bgcolor: 'rgba(0,0,0,0.78)',
@@ -177,10 +212,10 @@ export function LoginForm() {
             animation: 'fadeUp 0.28s cubic-bezier(0.16,1,0.3,1)',
           }}>
             <Typography sx={{ fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, mb: '6px' }}>
-              איפוס סיסמה
+              {'איפוס סיסמה'}
             </Typography>
             <Typography sx={{ fontSize: 12, color: c.text3, mb: '20px', lineHeight: 1.6 }}>
-              הכנס כתובת מייל ונשלח לך קישור לאיפוס.
+              {'הכנס כתובת מייל ונשלח לך קישור לאיפוס.'}
             </Typography>
 
             {forgotSent ? (
@@ -188,7 +223,7 @@ export function LoginForm() {
                 <Typography sx={{ fontSize: 28, mb: '8px' }}>📧</Typography>
                 <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#22c55e', mb: '4px' }}>{t('reset_sent')}</Typography>
                 <Typography sx={{ fontSize: 11, color: c.text3 }}>
-                  בדוק את תיבת המייל: <strong>{forgotEmail}</strong>
+                  {'בדוק את תיבת המייל:'} <strong>{forgotEmail}</strong>
                 </Typography>
               </Box>
             ) : (
@@ -199,7 +234,7 @@ export function LoginForm() {
                   </Alert>
                 )}
                 <Typography component="label" sx={{ fontSize: 10, fontWeight: 700, color: c.text3, mb: '7px', letterSpacing: '0.6px', textTransform: 'uppercase', display: 'block' }}>
-                  כתובת מייל
+                  {'כתובת מייל'}
                 </Typography>
                 <TextField fullWidth placeholder="email@business.com" value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)} size="small"
@@ -213,7 +248,7 @@ export function LoginForm() {
               </Button>
               {!forgotSent && (
                 <Button size="small" variant="contained" onClick={handleForgotPassword}>
-                  שלח קישור
+                  {'שלח קישור'}
                 </Button>
               )}
             </Box>
