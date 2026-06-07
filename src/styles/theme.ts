@@ -1,26 +1,36 @@
 "use client";
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 
+/**
+ * Zikkit Brand Theme — aligned with marketing landing page.
+ * Palette: Cream paper (#FCFBF9) + Indigo accent (#4F46E5).
+ * Typography: Outfit (display) + Rubik / Heebo (body, with full Hebrew support).
+ */
 const palette = {
-  bg: "#F5F0EB",
-  surface1: "#FAF7F4",
-  surface2: "#F5F0EB",
-  surface3: "#EFEBE7",
-  surface4: "#E7E2DD",
-  surface5: "#DDD8D3",
+  // Surfaces — cream-based, brighter & cleaner
+  bg: "#FCFBF9",
+  surface1: "#FFFFFF",
+  surface2: "#FAF8F4",
+  surface3: "#F5F1EB",
+  surface4: "#EFEAE3",
+  surface5: "#E7E0D7",
+  // Glass
   glass: "rgba(0,0,0,0.02)",
   glass2: "rgba(0,0,0,0.04)",
   glass3: "rgba(0,0,0,0.07)",
   glassBorder: "rgba(0,0,0,0.06)",
+  // Borders
   border: "rgba(0,0,0,0.06)",
   border2: "rgba(0,0,0,0.10)",
   border3: "rgba(0,0,0,0.16)",
+  // Brand accent — Indigo (matches landing page)
   accent: "#4F46E5",
   accent2: "#6366F1",
   accent3: "#3730A3",
   accentGlow: "rgba(79,70,229,0.12)",
   accentDim: "rgba(79,70,229,0.08)",
   accentMid: "rgba(79,70,229,0.14)",
+  // Status colors
   amber: "#D97706",
   amberDim: "rgba(217,119,6,0.10)",
   blue: "#2563EB",
@@ -37,6 +47,7 @@ const palette = {
   greenDim: "rgba(5,150,105,0.08)",
   teal: "#0D9488",
   tealDim: "rgba(13,148,136,0.08)",
+  // Text
   text: "#1C1917",
   text2: "#57534E",
   text3: "#A8A29E",
@@ -57,9 +68,9 @@ const t: ThemeOptions = {
     divider: palette.border,
   },
   typography: {
-    fontFamily: "'Rubik', 'Heebo', system-ui, sans-serif",
-    h1: { fontWeight: 700, fontSize: "1.75rem", color: palette.text },
-    h2: { fontWeight: 700, fontSize: "1.35rem", color: palette.text },
+    fontFamily: "'Outfit', 'Rubik', 'Heebo', system-ui, sans-serif",
+    h1: { fontWeight: 700, fontSize: "1.75rem", color: palette.text, letterSpacing: "-0.02em" },
+    h2: { fontWeight: 700, fontSize: "1.35rem", color: palette.text, letterSpacing: "-0.01em" },
     h3: { fontWeight: 600, fontSize: "1.15rem", color: palette.text },
     h4: { fontWeight: 600, fontSize: "1rem" },
     h5: { fontWeight: 600, fontSize: "0.9rem" },
@@ -69,7 +80,7 @@ const t: ThemeOptions = {
     caption: { fontSize: "0.6875rem", fontWeight: 500 },
     button: { fontWeight: 600, textTransform: "none" as const, fontSize: "0.8125rem" },
   },
-  shape: { borderRadius: 10 },
+  shape: { borderRadius: 12 },
   components: {
     MuiCssBaseline: { styleOverrides: {
       body: { background: palette.bg, color: palette.text, WebkitFontSmoothing: "antialiased" },
@@ -85,27 +96,27 @@ const t: ThemeOptions = {
       ".zk-fade-up-4": { animation: "fadeUp 0.3s ease 0.2s forwards", opacity: 0 },
     }},
     MuiButton: { styleOverrides: {
-      root: { borderRadius: 20, padding: "8px 20px", fontWeight: 600, fontSize: "0.8125rem", boxShadow: "none", "&:hover": { boxShadow: "none" } },
-      containedPrimary: { background: palette.accent, color: "#fff", "&:hover": { background: palette.accent3, boxShadow: "0 2px 8px rgba(79,70,229,0.2)" } },
-      outlined: { borderColor: palette.border2, color: palette.text2, background: palette.surface3, "&:hover": { borderColor: palette.accent, color: palette.accent, background: palette.accentDim } },
+      root: { borderRadius: 22, padding: "9px 22px", fontWeight: 600, fontSize: "0.8125rem", boxShadow: "none", "&:hover": { boxShadow: "none" } },
+      containedPrimary: { background: palette.accent, color: "#fff", "&:hover": { background: palette.accent3, boxShadow: "0 4px 14px rgba(79,70,229,0.25)" } },
+      outlined: { borderColor: palette.border2, color: palette.text2, background: palette.surface1, "&:hover": { borderColor: palette.accent, color: palette.accent, background: palette.accentDim } },
     }, defaultProps: { disableElevation: true } },
     MuiTextField: { styleOverrides: { root: {
       "& .MuiOutlinedInput-root": {
-        background: palette.surface1, borderRadius: 10, fontSize: "0.875rem",
+        background: palette.surface1, borderRadius: 12, fontSize: "0.875rem",
         "& fieldset": { borderColor: palette.border2 },
         "&:hover fieldset": { borderColor: palette.border3 },
         "&.Mui-focused fieldset": { borderColor: palette.accent, boxShadow: "0 0 0 3px " + palette.accentDim },
       },
       "& .MuiInputBase-input": { padding: "10px 14px", color: palette.text },
     }}},
-    MuiSelect: { styleOverrides: { root: { background: palette.surface1, borderRadius: 10, fontSize: "0.875rem" } } },
+    MuiSelect: { styleOverrides: { root: { background: palette.surface1, borderRadius: 12, fontSize: "0.875rem" } } },
     MuiCard: { styleOverrides: { root: {
-      background: palette.surface1, border: "none", borderRadius: 12,
-      boxShadow: "0 1px 4px rgba(0,0,0,0.04)", transition: "all 0.2s ease",
-      "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.07)" },
+      background: palette.surface1, border: "1px solid " + palette.border, borderRadius: 14,
+      boxShadow: "0 1px 4px rgba(0,0,0,0.03)", transition: "all 0.2s ease",
+      "&:hover": { boxShadow: "0 6px 20px rgba(0,0,0,0.06)" },
     }}},
     MuiDialog: { styleOverrides: { paper: {
-      background: palette.surface1, border: "none", borderRadius: 16,
+      background: palette.surface1, border: "none", borderRadius: 18,
       boxShadow: "0 24px 60px rgba(0,0,0,0.12)",
     }}},
     MuiChip: { styleOverrides: { root: { borderRadius: 20, fontWeight: 600, fontSize: "0.6875rem" } } },
