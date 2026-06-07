@@ -222,13 +222,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn('[Auth] tech_lookup check failed:', e);
         }
 
-        // 5. No business doc found — let them in as basic owner
-        //    so they can complete setup or contact support.
-        //    DO NOT sign them out — this was the bug that locked users out.
-        console.warn('[Zikkit Auth] User authenticated but no business doc found. Letting in as basic user.');
+        // 5. No business doc found — let them in WITHOUT owner privileges.
+        //    DO NOT sign them out (that was the old lockout bug), but also
+        //    DO NOT grant owner role to an unknown account. Give a minimal
+        //    "pending" role so they can complete setup / contact support,
+        //    without seeing owner-only data or controls.
+        console.warn('[Zikkit Auth] User authenticated but no business doc found. Letting in as pending user.');
         setState({
           firebaseUser: fbUser,
-          user: { id: uid, name: email.split('@')[0] || 'User', role: 'owner', email },
+          user: { id: uid, name: email.split('@')[0] || 'User', role: 'pending' as User['role'], email },
           bizId: uid,
           loading: false,
           error: null,
@@ -236,10 +238,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       } catch (e) {
         console.error('[Zikkit Auth] Fatal error during auth check:', e);
-        // Even on fatal error — let them in as basic user. Better than locking them out.
+        // Even on fatal error — let them in, but with a minimal role, never owner.
         setState({
           firebaseUser: fbUser,
-          user: { id: uid, name: email.split('@')[0] || 'User', role: 'owner', email },
+          user: { id: uid, name: email.split('@')[0] || 'User', role: 'pending' as User['role'], email },
           bizId: uid,
           loading: false,
           error: null,
@@ -330,7 +332,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if this user already has a business
       const existing = await getDoc(doc(db, 'businesses', user.uid));
 
-      if (!existing.exists()) {
+      // CRITICAL: before creating a new business, check if this email belongs
+      // to a technician/dispatcher in an existing business. If so, DO NOT create
+      // a new owner business — let onAuthStateChanged route them as their real role.
+      let isExistingTeamMember = false;
+      if (!existing.exists() && user.email) {
+        try {
+          const emailLower = user.email.toLowerCase();
+          const lookupKey = emailLower.replace(/[@.]/g, '_');
+          const techLookup = await getDoc(doc(db, 'tech_lookup', lookupKey));
+          if (techLookup.exists()) {
+            isExistingTeamMember = true;
+          } else {
+            // Scan businesses for this email as a non-owner team member
+            const bizsSnap = await getDocs(collection(db, 'businesses'));
+            for (const bizDoc of bizsSnap.docs) {
+              const users = bizDoc.data()?.db?.users || [];
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const member = users.find((u: any) =>
+                u.email?.toLowerCase() === emailLower && u.role !== 'owner'
+              );
+              if (member) {
+                isExistingTeamMember = true;
+                // Heal tech_lookup so next login is fast
+                try {
+                  await setDoc(doc(db, 'tech_lookup', lookupKey), {
+                    bizId: bizDoc.id,
+                    email: emailLower,
+                    name: member.name || '',
+                    role: member.role || 'technician',
+                    created: new Date().toISOString(),
+                  });
+                } catch {}
+                break;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[Zikkit Auth] Team member check failed:', e);
+        }
+      }
+
+      if (!existing.exists() && !isExistingTeamMember) {
         // First-time Google sign-in — create a business with their name
         const bizName = user.displayName || (user.email?.split('@')[0] || 'My Business');
         const newDb = {
