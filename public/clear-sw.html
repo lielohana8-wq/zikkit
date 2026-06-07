@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zikkit - איפוס דפדפן</title>
+  <style>
+    body {
+      font-family: 'Rubik', 'Heebo', system-ui, sans-serif;
+      background: #FCFBF9;
+      color: #1C1917;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 18px;
+      padding: 40px;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      margin: 16px 0 12px;
+      color: #1C1917;
+    }
+    p {
+      font-size: 14px;
+      color: #57534E;
+      line-height: 1.6;
+      margin: 8px 0;
+    }
+    .icon {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+    .status {
+      background: rgba(79,70,229,0.06);
+      border: 1px solid rgba(79,70,229,0.15);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 24px 0;
+      font-size: 13px;
+      color: #4F46E5;
+      font-weight: 600;
+    }
+    .btn {
+      background: #4F46E5;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 32px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 16px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn:hover { background: #3730A3; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🧹</div>
+    <h1>מנקה את הדפדפן...</h1>
+    <p>אנו מסירים גרסה ישנה של המערכת מהדפדפן שלך.</p>
+    <p>זה ייקח 5 שניות.</p>
+    <div class="status" id="status">מנקה...</div>
+    <a href="/" class="btn" id="btn" style="display:none;">חזור לאתר</a>
+  </div>
+
+  <script>
+    (async function() {
+      const status = document.getElementById('status');
+      const btn = document.getElementById('btn');
+
+      try {
+        // Unregister all service workers
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const reg of registrations) {
+            await reg.unregister();
+          }
+        }
+
+        // Clear all caches
+        if ('caches' in window) {
+          const names = await caches.keys();
+          await Promise.all(names.map(n => caches.delete(n)));
+        }
+
+        // Clear storage
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (e) {}
+
+        status.textContent = '✓ הניקוי הסתיים!';
+        status.style.background = 'rgba(5,150,105,0.08)';
+        status.style.color = '#059669';
+        status.style.borderColor = 'rgba(5,150,105,0.2)';
+        btn.style.display = 'inline-block';
+
+        // Auto-redirect after 3 seconds
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 3000);
+      } catch (e) {
+        status.textContent = 'שגיאה: ' + e.message;
+        status.style.background = 'rgba(225,29,72,0.08)';
+        status.style.color = '#E11D48';
+        btn.style.display = 'inline-block';
+      }
+    })();
+  </script>
+</body>
+</html>
