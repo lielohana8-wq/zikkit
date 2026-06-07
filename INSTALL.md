@@ -1,155 +1,103 @@
-# Zikkit Dana Smart + Customer Portal
+# Zikkit Dana Wizard V3 - AI מובנה + UI מחודש
 
-## 📦 מה בחבילה
+## ✨ מה חדש בגרסה הזאת
+
+### 1. 🧠 AI מזהה את העסק אוטומטית
+- **תזין שם עסק** ("ליאו שירותי ניקיון")
+- לחץ **"זהה את העסק אוטומטית"**
+- Claude מזהה: תחום, סוג שירות, מציע 4-8 שירותים, מחירים ושאלות
+
+### 2. 🎨 UI מעוצב מחדש
+- Progress bar אלגנטי במקום מספרים
+- כרטיסיות שירותים מתקפלות (Expandable)
+- אייקונים יפים בכל שדה
+- אנימציות חלקות
+- ניסוחים חדשים בעברית טבעית
+
+### 3. 🎙️ קולות מעודכנים
+- נועה, תומר, שרון, איתן, מאיה
+- כל קול עם תיאור אישיות
+
+### 4. 📞 כפתור "התקשר עכשיו לבדיקה" בסוף
+
+## 📦 קבצים
 
 ```
-src/app/api/dana/webhook/route.ts                  — Webhook מ-ElevenLabs (יוצר ליד אחרי שיחה)
-src/app/api/dana/tools/check-availability/route.ts — Tool: בודק זמינות יומן
-src/app/api/dana/tools/book-appointment/route.ts   — Tool: קובע מועד ביומן
-src/app/api/portal/[token]/route.ts                — API לפורטל לקוח
-src/app/portal/[token]/page.tsx                    — דף פורטל ללקוח
+src/app/api/dana/suggest-services/route.ts   — AI זיהוי עסק (Anthropic)
+src/app/dana-setup/page.tsx                  — Wizard מחודש לגמרי
 ```
 
-## 🎯 מה זה עושה
-
-### זרימת שיחה מלאה:
-1. **לקוח מתקשר** למספר דנה
-2. **דנה שואלת** את השאלות שהגדרת
-3. **דנה בודקת יומן** דרך `check-availability` tool
-4. **דנה מציעה מועדים** ללקוח
-5. **דנה קובעת מועד** דרך `book-appointment` tool
-6. **השיחה מסתיימת** → ElevenLabs שולח webhook
-7. **המערכת יוצרת ליד** ב-Firestore
-8. **משייכת לטכנאי** אוטומטית (round-robin)
-9. **שולחת SMS:**
-   - ללקוח עם לינק לפורטל
-   - לבעל העסק עם סיכום
-   - לטכנאי המשובץ עם פרטים
-10. **הלקוח רואה פורטל** עם הסטטוס שלו (מתעדכן כל 30 שניות)
-
-## 🚀 התקנה — 4 שלבים
+## 🚀 התקנה
 
 ### 1. חילוץ
-
 ```cmd
 cd C:\zikkit
-tar -xzf ZIKKIT-DANA-SMART.tar.gz
+tar -xzf ZIKKIT-DANA-V3.tar.gz
 ```
 
-### 2. ⚠️ חובה - הוסף Service Account Key ב-Vercel
+### 2. ⚠️ ENV VAR קיים?
+תוודא שיש לך **ANTHROPIC_API_KEY** ב-Vercel (אמור להיות כבר מהקיים).
 
-זה הקריטי - בלי זה כלום לא יעבוד.
-
-#### א. השג את ה-Service Account JSON
-
-יש לך כבר את הקובץ `new-db-key.json` בתיקיית Downloads (משלב המיגרציה).
-
-תפתח אותו (Notepad). תראה משהו כזה:
-```json
-{
-  "type": "service_account",
-  "project_id": "zikkit-e87ff",
-  "private_key_id": "...",
-  "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
-  "client_email": "firebase-adminsdk-xxx@zikkit-e87ff.iam.gserviceaccount.com",
-  ...
-}
-```
-
-#### ב. העתק את כל התוכן
-
-Ctrl+A → Ctrl+C על כל הקובץ.
-
-#### ג. הוסף ל-Vercel
-
-תפתח: **https://vercel.com/lielohana8-wqs-projects/zikkit-jvc7/settings/environment-variables**
-
-לחץ **Add New** → תכניס:
-
-- **Name:** `FIREBASE_SERVICE_ACCOUNT_KEY`
-- **Value:** הדבק את **כל ה-JSON** (הכל בשורה אחת)
-- **Environments:** סמן ✅ Production, Preview, Development
-
-לחץ **Save**.
-
-### 3. בדיקת build
-
+### 3. Build + Deploy
 ```cmd
 rmdir /S /Q .next
 npm run build
-```
-
-### 4. דחוף
-
-```cmd
 git add .
-git commit -m "feat: Dana Smart - leads, scheduling, customer portal"
+git commit -m "feat: Dana Wizard V3 - AI business detection + new UI"
 git push
 vercel --prod
 ```
 
-## 🛠️ הגדרת ElevenLabs Tools
+## 🎯 איך זה עובד
 
-לאחר deploy, צריך להגדיר את ה-Tools ב-ElevenLabs כדי שדנה תוכל להשתמש בהם.
+### תרחיש 1 - בעל עסק חדש
+1. נכנס ל-`/dana-setup`
+2. כותב "ליאו שירותי ניקיון"
+3. לוחץ "✨ זהה את העסק אוטומטית"
+4. **תוך 5 שניות** ה-AI מציע:
+   - תחום: ניקיון
+   - שירותים: ניקוי משרדים (₪500), ניקיון כללי (₪400), ניקוי שטיחים (₪200)...
+   - שאלות: גודל, סוג, האם זה ניקוי חד-פעמי
+   - שורת פתיחה מותאמת
+5. הוא יכול לערוך/למחוק/להוסיף
+6. ממשיך לבחירת קול, וכו'
 
-תפתח: **https://elevenlabs.io/app/conversational-ai/agents**
+### תרחיש 2 - עסק לא שגרתי
+"דוד ושמעון - מסעדה אסייתית" - ה-AI יזהה כמסעדה ויציע: הזמנת שולחן, תפריט, שעות פתיחה.
 
-תבחר את ה-agent של ליאו שירותי ניקיון (נוצר אוטומטית מהוויזרד).
+"קליניקה וטרינרית של דר. כהן" - AI יזהה: בדיקה רגילה (₪250), חיסונים (₪150), טיפול חירום.
 
-### Tool 1: check_availability
+## 💡 מה ה-AI עושה (טכנית)
 
-- **Type:** Webhook
-- **URL:** `https://zikkit-jvc7.vercel.app/api/dana/tools/check-availability`
-- **Method:** POST
-- **Description:** Check available appointment slots in the business calendar
-- **Parameters:**
-  - `bizId` (string, required) - The business ID
-  - `requestedDate` (string, optional) - Preferred date
+API מקבל:
+```json
+{ "businessName": "ליאו שירותי ניקיון" }
+```
 
-### Tool 2: book_appointment
+שולח ל-Claude prompt שמבקש:
+- לזהות תחום
+- להציע 4-8 שירותים נפוצים
+- מחירים ריאליים לישראל 2026
+- שאלות שעוזרות לתת הצעת מחיר
+- שורת פתיחה ידידותית
 
-- **Type:** Webhook
-- **URL:** `https://zikkit-jvc7.vercel.app/api/dana/tools/book-appointment`
-- **Method:** POST
-- **Description:** Book an appointment after customer confirms time
-- **Parameters:**
-  - `bizId` (string, required)
-  - `customerName` (string, required)
-  - `customerPhone` (string)
-  - `service` (string)
-  - `scheduledDate` (string, required) - YYYY-MM-DD
-  - `scheduledTime` (string, required) - HH:MM
-  - `notes` (string)
+מחזיר:
+```json
+{
+  "businessType": "ניקוי בתים, משרדים ומוסדות",
+  "industry": "ניקיון",
+  "suggestedGreeting": "שלום, הגעתם לליאו שירותי ניקיון, איך אוכל לעזור?",
+  "services": [
+    { "name": "ניקוי משרדים", "pricingType": "variable", "defaultPrice": "350", "whatToAsk": "גודל המשרד במ\"ר, כמה עובדים, סוג רצפה" },
+    ...
+  ]
+}
+```
 
-### Post-call Webhook
+## 🔮 שדרוגים עתידיים
 
-ב-agent settings → Post-call webhook:
-- **URL:** `https://zikkit-jvc7.vercel.app/api/dana/webhook`
-
-## 🧪 בדיקה
-
-### 1. התקשר למספר דנה
-המספר שקיבלת בסיום ה-Wizard.
-
-### 2. תגיד "אני רוצה לקבוע מועד"
-דנה תשאל פרטים, תבדוק זמינות, תציע מועדים.
-
-### 3. אשר מועד
-דנה תקבע אותו ב-Firestore.
-
-### 4. נתק
-תוך כ-15 שניות תקבל:
-- SMS ללקוח עם לינק לפורטל
-- SMS לבעל העסק (אם הוגדר טלפון)
-- ליד חדש בדאשבורד
-
-### 5. פתח את הפורטל
-לקוח לוחץ על הלינק → רואה את כל הפרטים.
-
-## 🔮 לעתיד - שיפורים
-
-- **שעות עבודה custom** - להוסיף בהגדרות העסק
-- **שיוך טכנאי חכם** - לפי אזור, מומחיות, זמינות
-- **WhatsApp** במקום SMS
-- **ביטול תור דרך הפורטל** ע"י הלקוח
-- **דירוג השירות** אחרי סיום
+- AI מציע שעות פעילות לפי תחום
+- AI מציע אזורי שירות
+- "שכלל את הסוכן" - לחיצה שמוסיפה שירותים נוספים
+- AI מציע מבצעים ופרסום
+- WhatsApp Templates אוטומטיים
