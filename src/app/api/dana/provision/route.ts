@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFirestoreDb, doc, setDoc, getDoc } from '@/lib/firebase';
 
 /**
  * POST /api/dana/provision
  *
  * Provisions a complete Dana setup for a business:
- * 1. Validates user is authenticated
- * 2. Saves config to Firestore (businesses/{bizId}/dana_config)
+ * 1. Validates that bizId is present
+ * 2. Saves config to Firestore via REST (using bizId)
  * 3. Provisions an Israeli phone number from Twilio (if available)
  * 4. Creates an ElevenLabs Conversational AI agent
- * 5. Connects the phone number to the agent
- * 6. Returns the phone number to the client
+ * 5. Returns the phone number to the client
  */
 export async function POST(req: NextRequest) {
   try {
@@ -26,7 +24,7 @@ export async function POST(req: NextRequest) {
       fieldsToCollect,
     } = body;
 
-    // === Validation ===
+    // Validation
     if (!businessName || !contactName || !services || services.length === 0) {
       return NextResponse.json(
         { success: false, error: 'חסרים פרטים חיוניים' },
@@ -34,19 +32,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get authenticated user
+    // Get bizId from header (sent by client)
+    const bizId = req.headers.get('x-biz-id');
     const authHeader = req.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ success: false, error: 'לא מאומת' }, { status: 401 });
+
+    if (!bizId || !authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, error: 'לא מאומת. נסה לרענן את הדף.' },
+        { status: 401 }
+      );
     }
 
-    // For now we'll use a placeholder UID. In production:
-    // const decodedToken = await getAuth().verifyIdToken(authHeader.slice(7));
-    // const bizId = decodedToken.uid;
-    const bizId = req.headers.get('x-biz-id') || 'placeholder';
+    const idToken = authHeader.slice(7);
 
-    // === Step 1: Save Dana config to Firestore ===
-    const db = getFirestoreDb();
+    // === Save Dana config to Firestore via REST API ===
     const danaConfig = {
       businessName,
       contactName,
@@ -56,28 +55,31 @@ export async function POST(req: NextRequest) {
       voiceName,
       greeting,
       fieldsToCollect,
-      provisioned: false,
       createdAt: new Date().toISOString(),
     };
 
-    await setDoc(
-      doc(db, 'businesses', bizId),
-      { dana: danaConfig },
-      { merge: true }
-    );
+    try {
+      await updateBusinessDana(bizId, danaConfig, idToken);
+    } catch (e) {
+      console.error('[Dana Provision] Save config failed:', e);
+      // Continue anyway - phone provision is the important part
+    }
 
     // === Step 2: Provision Twilio phone number ===
     let phoneNumber: string | null = null;
+    let twilioError: string | null = null;
     try {
       phoneNumber = await provisionTwilioNumber(bizId);
     } catch (twilioErr) {
+      twilioError = (twilioErr as Error).message;
       console.error('[Dana Provision] Twilio failed:', twilioErr);
-      // Fallback: assign a shared development number
+      // Fallback: assign shared dev number
       phoneNumber = process.env.TWILIO_PHONE_IL || '+972528615350';
     }
 
     // === Step 3: Create ElevenLabs agent ===
     let elevenLabsAgentId: string | null = null;
+    let elevenLabsError: string | null = null;
     try {
       elevenLabsAgentId = await createElevenLabsAgent({
         businessName,
@@ -88,40 +90,41 @@ export async function POST(req: NextRequest) {
         fieldsToCollect,
       });
     } catch (elevenErr) {
+      elevenLabsError = (elevenErr as Error).message;
       console.error('[Dana Provision] ElevenLabs failed:', elevenErr);
-      // Continue without — admin can configure later
     }
 
-    // === Step 4: Link phone -> agent via phone_lookup ===
-    if (phoneNumber) {
-      const normalizedPhone = phoneNumber.replace(/[^\d]/g, '');
-      await setDoc(doc(db, 'phone_lookup', normalizedPhone), {
+    // === Step 4: Save final state ===
+    try {
+      await updateBusinessDana(
         bizId,
-        agentId: elevenLabsAgentId,
-        businessName,
-        createdAt: new Date().toISOString(),
-      });
-    }
-
-    // === Step 5: Update Dana config with phone + agent ID ===
-    await setDoc(
-      doc(db, 'businesses', bizId),
-      {
-        dana: {
+        {
           ...danaConfig,
           phoneNumber,
           elevenLabsAgentId,
           provisioned: true,
           provisionedAt: new Date().toISOString(),
         },
-      },
-      { merge: true }
-    );
+        idToken
+      );
+
+      // Also write phone_lookup
+      if (phoneNumber) {
+        const normalizedPhone = phoneNumber.replace(/[^\d]/g, '');
+        await writePhoneLookup(normalizedPhone, bizId, elevenLabsAgentId, businessName, idToken);
+      }
+    } catch (e) {
+      console.error('[Dana Provision] Final save failed:', e);
+    }
 
     return NextResponse.json({
       success: true,
       phoneNumber,
       agentId: elevenLabsAgentId,
+      warnings: {
+        twilio: twilioError,
+        elevenLabs: elevenLabsError,
+      },
     });
   } catch (e) {
     console.error('[Dana Provision] Error:', e);
@@ -130,6 +133,79 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Update business.dana via Firestore REST API
+ */
+async function updateBusinessDana(bizId: string, danaConfig: Record<string, unknown>, idToken: string) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'zikkit-e87ff';
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/businesses/${bizId}?updateMask.fieldPaths=dana`;
+
+  const firestoreDoc = {
+    fields: {
+      dana: firestoreEncode(danaConfig),
+    },
+  };
+
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(firestoreDoc),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error('Firestore update failed: ' + errText);
+  }
+}
+
+/**
+ * Write phone_lookup document
+ */
+async function writePhoneLookup(phone: string, bizId: string, agentId: string | null, businessName: string, idToken: string) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'zikkit-e87ff';
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/phone_lookup/${phone}`;
+
+  const firestoreDoc = {
+    fields: firestoreEncode({
+      bizId,
+      agentId: agentId || '',
+      businessName,
+      createdAt: new Date().toISOString(),
+    }).mapValue?.fields || {},
+  };
+
+  await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(firestoreDoc),
+  });
+}
+
+/**
+ * Convert JS value to Firestore REST API value format
+ */
+function firestoreEncode(value: unknown): Record<string, unknown> {
+  if (value === null || value === undefined) return { nullValue: null };
+  if (typeof value === 'string') return { stringValue: value };
+  if (typeof value === 'number') return Number.isInteger(value) ? { integerValue: value.toString() } : { doubleValue: value };
+  if (typeof value === 'boolean') return { booleanValue: value };
+  if (Array.isArray(value)) return { arrayValue: { values: value.map(firestoreEncode) } };
+  if (typeof value === 'object') {
+    const fields: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      fields[k] = firestoreEncode(v);
+    }
+    return { mapValue: { fields } };
+  }
+  return { stringValue: String(value) };
 }
 
 /**
@@ -143,27 +219,20 @@ async function provisionTwilioNumber(bizId: string): Promise<string> {
     throw new Error('Twilio credentials missing');
   }
 
-  // 1. Search for available Israeli mobile numbers
+  // 1. Search
   const searchUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/AvailablePhoneNumbers/IL/Mobile.json?Limit=1`;
   const searchRes = await fetch(searchUrl, {
-    headers: {
-      Authorization: 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
-    },
+    headers: { Authorization: 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64') },
   });
-
-  if (!searchRes.ok) {
-    throw new Error('Twilio search failed: ' + searchRes.status);
-  }
+  if (!searchRes.ok) throw new Error('Twilio search failed: ' + searchRes.status);
 
   const searchData = await searchRes.json();
   const numbers = searchData.available_phone_numbers || [];
-  if (numbers.length === 0) {
-    throw new Error('No Israeli numbers available');
-  }
+  if (numbers.length === 0) throw new Error('No Israeli numbers available');
 
   const phoneNumber = numbers[0].phone_number;
 
-  // 2. Purchase the number
+  // 2. Purchase
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://zikkit-jvc7.vercel.app';
   const buyUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/IncomingPhoneNumbers.json`;
   const buyRes = await fetch(buyUrl, {
@@ -188,7 +257,7 @@ async function provisionTwilioNumber(bizId: string): Promise<string> {
 }
 
 /**
- * Creates an ElevenLabs Conversational AI agent
+ * Creates ElevenLabs Conversational AI agent
  */
 async function createElevenLabsAgent(params: {
   businessName: string;
@@ -201,13 +270,12 @@ async function createElevenLabsAgent(params: {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error('ELEVENLABS_API_KEY missing');
 
-  // Map our voice IDs to ElevenLabs voice IDs (you'll need to update these with real IDs)
   const VOICE_MAP: Record<string, string> = {
-    tai: 'pNInz6obpgDQGcFmaJgB', // Adam (placeholder)
-    linda: '21m00Tcm4TlvDq8ikWAM', // Rachel (placeholder)
-    roni: 'AZnzlk1XvdvUeBnXmlld', // Domi (placeholder)
-    dani: 'EXAVITQu4vr4xnSDxMaL', // Bella (placeholder)
-    maya: 'ErXwobaYiN019PkySvjV', // Antoni (placeholder)
+    tai: 'pNInz6obpgDQGcFmaJgB',
+    linda: '21m00Tcm4TlvDq8ikWAM',
+    roni: 'AZnzlk1XvdvUeBnXmlld',
+    dani: 'EXAVITQu4vr4xnSDxMaL',
+    maya: 'ErXwobaYiN019PkySvjV',
   };
 
   const fieldsLabels: Record<string, string> = {
@@ -262,9 +330,7 @@ ${handlingInstructions}
       name: `Zikkit - ${params.businessName}`,
       conversation_config: {
         agent: {
-          prompt: {
-            prompt: systemPrompt,
-          },
+          prompt: { prompt: systemPrompt },
           first_message: params.greeting,
           language: 'he',
         },
