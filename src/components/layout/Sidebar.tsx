@@ -18,7 +18,7 @@ const OWNER_NAV: NavItem[] = [
   { key: 'quotes', icon: '📄', label: 'הצעות מחיר', href: '/quotes' },
   { key: 'team', icon: '👷', label: 'צוות', href: '/technicians' },
   { key: 'finance', icon: '💰', label: 'כספים', href: '/reports' },
-  { key: 'automation', icon: '🤖', label: 'אוטומציה', href: '/aibot' },
+  { key: 'automation', icon: '🤖', label: 'אוטומציה', href: '/dana-setup' },
   { key: 'products', icon: '📦', label: 'מוצרים ומלאי', href: '/products' },
   { key: 'gps', icon: '🗺️', label: 'GPS', href: '/gps-tracking' },
   { key: 'settings', icon: '⚙️', label: 'הגדרות', href: '/settings' },

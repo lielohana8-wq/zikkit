@@ -41,7 +41,7 @@ export default function ReviewsPage() {
 
   return (
     <Box className="zk-fade-up">
-      <PageTabs tabs={[{ label: 'בוט AI', href: '/aibot', icon: '🤖' }, { label: 'וואטסאפ', href: '/whatsapp', icon: '💬' }, { label: 'ביקורות', href: '/reviews', icon: '⭐' }]} />
+      <PageTabs tabs={[{ label: 'בוט AI', href: '/dana-setup', icon: '🤖' }, { label: 'וואטסאפ', href: '/whatsapp', icon: '💬' }, { label: 'ביקורות', href: '/reviews', icon: '⭐' }]} />
       <SectionHeader title="ביקורות ומוניטין" subtitle={`${reviews.length} ביקורות · ממוצע ${avg.toFixed(1)} ⭐`} actions={
         <FormControlLabel control={<Switch checked={autoSend} onChange={e => setAutoSend(e.target.checked)} color="success" />} label="שליחה אוטומטית" />
       } />

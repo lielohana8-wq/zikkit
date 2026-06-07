@@ -10,7 +10,7 @@ const ACTIONS = [
   { icon: '📄', label: 'הצעת מחיר חדשה', href: '/quotes', sub: 'Send estimate' },
   { icon: '👷', label: 'Add Technician', href: '/technicians', sub: 'Expand team' },
   { icon: '📈', label: 'צפייה בדוחות', href: '/reports', sub: 'Revenue stats' },
-  { icon: '🤖', label: 'בוט AI', href: '/aibot', sub: 'Configure bot' },
+  { icon: '🤖', label: 'בוט AI', href: '/dana-setup', sub: 'Configure bot' },
 ];
 
 export function QuickActions() {

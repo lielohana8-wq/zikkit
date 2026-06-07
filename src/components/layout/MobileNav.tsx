@@ -19,7 +19,7 @@ const OWNER_MORE = [
   { icon: '🧑', he: 'לקוחות', href: '/customers' },
   { icon: '👷', he: 'צוות', href: '/technicians' },
   { icon: '💰', he: 'כספים', href: '/reports' },
-  { icon: '🤖', he: 'בוט AI', href: '/aibot' },
+  { icon: '🤖', he: 'בוט AI', href: '/dana-setup' },
   { icon: '📦', he: 'מוצרים', href: '/products' },
   { icon: '🗺️', he: 'GPS', href: '/gps-tracking' },
   { icon: '⚙️', he: 'הגדרות', href: '/settings' },

@@ -67,7 +67,7 @@ const PAGE_SUGGESTIONS: Record<string, string[]> = {
     'What time periods are available?',
     'How to use custom date range?',
   ],
-  '/aibot': [
+  '/dana-setup': [
     'How do I set up the AI bot?',
     'What voices are available?',
     'How to create a conversation flow?',

@@ -53,7 +53,7 @@ export default function WhatsAppPage() {
 
   return (
     <Box className="zk-fade-up">
-      <PageTabs tabs={[{ label: 'בוט AI', href: '/aibot', icon: '🤖' }, { label: 'וואטסאפ', href: '/whatsapp', icon: '💬' }, { label: 'ביקורות', href: '/reviews', icon: '⭐' }]} />
+      <PageTabs tabs={[{ label: 'בוט AI', href: '/dana-setup', icon: '🤖' }, { label: 'וואטסאפ', href: '/whatsapp', icon: '💬' }, { label: 'ביקורות', href: '/reviews', icon: '⭐' }]} />
       <SectionHeader title="וואטסאפ בוט" subtitle="שיחות ותבניות אוטומטיות" actions={
         <FormControlLabel control={<Switch checked={botEnabled} onChange={(e) => { setBotEnabled(e.target.checked); toast(e.target.checked ? 'בוט הופעל' : 'בוט כובה'); }} color="success" />} label={botEnabled ? 'פעיל' : 'כבוי'} />
       } />
