@@ -22,6 +22,7 @@ export interface User {
   passwordChangedAt?: string;
   // Solo edition team fields
   active?: boolean;
+  color?: string;            // calendar colour (hex)
   inviteToken?: string;
   invitedAt?: string;
   uid?: string;

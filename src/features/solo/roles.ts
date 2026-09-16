@@ -24,16 +24,17 @@ export const seesMoney = (r: SoloRole | null) => r === 'owner' || r === 'partner
 
 /** Routes each role may open; anything else redirects to the role home. */
 export const ROLE_ROUTES: Record<SoloRole, string[]> = {
-  owner: ['/dashboard', '/jobs', '/customers', '/quotes', '/receipts', '/closings', '/team', '/settings'],
-  partner: ['/dashboard', '/jobs', '/customers', '/quotes', '/receipts', '/closings'],
-  dispatcher: ['/dashboard', '/jobs', '/customers', '/quotes', '/receipts', '/closings'],
-  technician: ['/dashboard', '/jobs', '/closings'],
+  owner: ['/dashboard', '/schedule', '/jobs', '/customers', '/quotes', '/receipts', '/closings', '/team', '/settings'],
+  partner: ['/dashboard', '/schedule', '/jobs', '/customers', '/quotes', '/receipts', '/closings'],
+  dispatcher: ['/dashboard', '/schedule', '/jobs', '/customers', '/quotes', '/receipts', '/closings'],
+  technician: ['/dashboard', '/schedule', '/jobs', '/closings'],
 };
 
 export interface NavEntry { key: string; icon: string; label: string; href: string }
 export const ROLE_NAV: Record<SoloRole, NavEntry[]> = {
   owner: [
     { key: 'dashboard', icon: '📊', label: 'Dashboard', href: '/dashboard' },
+    { key: 'schedule', icon: '📅', label: 'Schedule', href: '/schedule' },
     { key: 'jobs', icon: '🔧', label: 'Jobs', href: '/jobs' },
     { key: 'customers', icon: '🧑', label: 'Customers', href: '/customers' },
     { key: 'quotes', icon: '📄', label: 'Quotes', href: '/quotes' },
@@ -44,6 +45,7 @@ export const ROLE_NAV: Record<SoloRole, NavEntry[]> = {
   ],
   partner: [
     { key: 'dashboard', icon: '📊', label: 'Dashboard', href: '/dashboard' },
+    { key: 'schedule', icon: '📅', label: 'Schedule', href: '/schedule' },
     { key: 'jobs', icon: '🔧', label: 'Jobs', href: '/jobs' },
     { key: 'customers', icon: '🧑', label: 'Customers', href: '/customers' },
     { key: 'quotes', icon: '📄', label: 'Quotes', href: '/quotes' },
@@ -52,6 +54,7 @@ export const ROLE_NAV: Record<SoloRole, NavEntry[]> = {
   ],
   dispatcher: [
     { key: 'dashboard', icon: '📊', label: 'Dashboard', href: '/dashboard' },
+    { key: 'schedule', icon: '📅', label: 'Schedule', href: '/schedule' },
     { key: 'jobs', icon: '🔧', label: 'Jobs', href: '/jobs' },
     { key: 'customers', icon: '🧑', label: 'Customers', href: '/customers' },
     { key: 'quotes', icon: '📄', label: 'Quotes', href: '/quotes' },
@@ -60,6 +63,7 @@ export const ROLE_NAV: Record<SoloRole, NavEntry[]> = {
   ],
   technician: [
     { key: 'dashboard', icon: '🏠', label: 'Today', href: '/dashboard' },
+    { key: 'schedule', icon: '📅', label: 'Schedule', href: '/schedule' },
     { key: 'jobs', icon: '🔧', label: 'My jobs', href: '/jobs' },
     { key: 'closings', icon: '✅', label: 'My closings', href: '/closings' },
   ],
@@ -67,4 +71,13 @@ export const ROLE_NAV: Record<SoloRole, NavEntry[]> = {
 
 export function emailKey(email: string): string {
   return email.trim().toLowerCase().replace(/[@.]/g, '_');
+}
+
+/** Calendar colours — one per team member, deterministic from the uid so every device agrees; owners can override via Team → colour. */
+export const MEMBER_PALETTE = ['#4F46E5', '#0EA5E9', '#059669', '#D97706', '#DB2777', '#7C3AED', '#DC2626', '#0891B2', '#65A30D', '#9333EA'];
+export function colorForUid(uid?: string | null, override?: string): string {
+  if (override) return override;
+  if (!uid) return '#6B7280';
+  let h = 0; for (let i = 0; i < uid.length; i++) h = (h * 31 + uid.charCodeAt(i)) >>> 0;
+  return MEMBER_PALETTE[h % MEMBER_PALETTE.length];
 }

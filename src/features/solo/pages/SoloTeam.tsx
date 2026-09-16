@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/useToast';
 import { newId } from '@/lib/data/collections';
 import { useSolo, randomToken } from '../useSolo';
 import { SelectField } from '../components/SoloUI';
-import { ROLE_LABELS, ROLE_DESCRIPTIONS, emailKey } from '../roles';
+import { ROLE_LABELS, ROLE_DESCRIPTIONS, emailKey, MEMBER_PALETTE, colorForUid } from '../roles';
 import type { User, SoloRole, Invite } from '@/types';
 
 /**
@@ -22,7 +22,7 @@ import type { User, SoloRole, Invite } from '@/types';
 export default function SoloTeam() {
   const { team, bizId, cfg, db, saveMember, deleteItem } = useSolo();
   const { toast } = useToast();
-  const [draft, setDraft] = useState<{ id?: number; name: string; email: string; phone: string; role: SoloRole } | null>(null);
+  const [draft, setDraft] = useState<{ id?: number; name: string; email: string; phone: string; role: SoloRole; color?: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [showLink, setShowLink] = useState<User | null>(null);
 
@@ -42,7 +42,7 @@ export default function SoloTeam() {
       const existing = draft.id != null ? team.find((u) => u.id === draft.id) : undefined;
       const token = existing?.inviteToken || randomToken(24);
       const member: User = {
-        ...(existing || {}), id: existing?.id ?? newId(), name: draft.name.trim(), email, phone: normalizePhone(draft.phone), role: draft.role,
+        ...(existing || {}), id: existing?.id ?? newId(), name: draft.name.trim(), email, phone: normalizePhone(draft.phone), role: draft.role, color: draft.color || existing?.color,
         active: true, inviteToken: token, invitedAt: existing?.invitedAt || new Date().toISOString(),
       } as User;
       const firestore = getFirestoreDb();
@@ -87,13 +87,13 @@ export default function SoloTeam() {
             return (
               <Paper key={u.id} sx={{ p: 1.75, borderRadius: 3, border: `1px solid ${c.border}` }}>
                 <Stack direction="row" alignItems="center" spacing={1.5}>
-                  <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: c.accentDim, color: c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{(u.name || '?').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}</Box>
+                  <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: colorForUid(joined?.uid || u.email, u.color), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{(u.name || '?').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}</Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Stack direction="row" spacing={1} alignItems="center"><Typography sx={{ fontWeight: 800, fontSize: 14 }}>{u.name}</Typography><Chip size="small" label={ROLE_LABELS[(u.role as SoloRole)] || u.role} sx={{ height: 20, fontSize: 10 }} />{joined ? <Chip size="small" color="success" label="Joined" sx={{ height: 20, fontSize: 10 }} /> : <Chip size="small" color="warning" label="Invited — not signed up yet" sx={{ height: 20, fontSize: 10 }} />}</Stack>
                     <Typography sx={{ fontSize: 12, color: c.text3 }}>{u.email}{u.phone ? ` · ${u.phone}` : ''}</Typography>
                   </Box>
                   <IconButton size="small" onClick={() => setShowLink(u)} title="Invite link"><LinkIcon fontSize="small" /></IconButton>
-                  <IconButton size="small" onClick={() => setDraft({ id: u.id as number, name: u.name, email: u.email, phone: u.phone || '', role: (u.role as SoloRole) || 'technician' })} title="Edit">✏️</IconButton>
+                  <IconButton size="small" onClick={() => setDraft({ id: u.id as number, name: u.name, email: u.email, phone: u.phone || '', role: (u.role as SoloRole) || 'technician', color: u.color })} title="Edit">✏️</IconButton>
                   <IconButton size="small" color="error" onClick={() => remove(u)}><Delete fontSize="small" /></IconButton>
                 </Stack>
               </Paper>
@@ -113,6 +113,12 @@ export default function SoloTeam() {
               <TextField label="Phone" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} fullWidth />
               <SelectField label="Role" value={draft.role} onChange={(v) => setDraft({ ...draft, role: v })} options={(['technician', 'dispatcher', 'partner'] as SoloRole[]).map((r) => ({ value: r, label: ROLE_LABELS[r] }))} size="medium" />
               <Typography sx={{ fontSize: 12, color: c.text3 }}>{ROLE_DESCRIPTIONS[draft.role]}</Typography>
+              <Box>
+                <Typography sx={{ fontSize: 12, color: c.text3, mb: 0.5 }}>Calendar colour</Typography>
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                  {MEMBER_PALETTE.map((col) => <Box key={col} onClick={() => setDraft({ ...draft, color: col })} sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: col, cursor: 'pointer', outline: draft.color === col ? `3px solid ${c.text}` : '3px solid transparent', outlineOffset: 2 }} />)}
+                </Stack>
+              </Box>
             </Stack>
           )}
         </DialogContent>

@@ -1,4 +1,6 @@
 'use client';
+import { IS_SOLO_EDITION } from '@/lib/region';
+import SoloSchedule from '@/features/solo/pages/SoloSchedule';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Box, Typography, IconButton, Button, Chip, Avatar, Tooltip,
@@ -675,7 +677,7 @@ function autoAssign(unassigned: Job[], techs: User[], allJobs: Job[]) {
   return assignments;
 }
 
-export default function SchedulePage() {
+function LegacySchedulePage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { db, saveData } = useData();
@@ -935,4 +937,9 @@ export default function SchedulePage() {
       />
     </Box>
   );
+}
+
+
+export default function SchedulePageRouter() {
+  return IS_SOLO_EDITION ? <SoloSchedule /> : <LegacySchedulePage />;
 }

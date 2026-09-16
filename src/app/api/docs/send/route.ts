@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { sendMail } from '@/lib/server/mail';
 
 export const runtime = 'nodejs';
 
@@ -34,8 +35,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (channel === 'email') {
-      const key = process.env.RESEND_API_KEY;
-      if (!key) return NextResponse.json({ error: 'Email is not configured (RESEND_API_KEY)' }, { status: 501 });
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(to))) return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
       const subject = `${cap(label)} ${number || ''} from ${biz}`.trim();
       const html = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px;color:#111">
@@ -44,13 +43,9 @@ export async function POST(req: NextRequest) {
         <p style="margin:28px 0"><a href="${url}" style="background:#4F46E5;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">View ${label}</a></p>
         <p style="font-size:12px;color:#666">If the button doesn't work, copy this link: ${url}</p>
       </div>`;
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: process.env.RESEND_FROM_EMAIL || 'Zikkit <noreply@zikkit.com>', to, subject, html, ...(replyTo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(replyTo)) ? { reply_to: replyTo } : {}) }),
-      });
-      const data = await res.json();
-      if (!res.ok) return NextResponse.json({ error: (data.message || data.error || 'Resend error') + (String(data.message || '').includes('domain') ? ' — RESEND_FROM_EMAIL must use a domain verified in Resend (resend.com/domains), or onboarding@resend.dev for testing.' : '') }, { status: 502 });
-      return NextResponse.json({ ok: true, id: data.id });
+      const r = await sendMail({ to: String(to), subject, html, replyTo: typeof replyTo === 'string' ? replyTo : undefined, fromName: biz });
+      if (!r.ok) return NextResponse.json({ error: r.error }, { status: 502 });
+      return NextResponse.json({ ok: true, id: r.id });
     }
 
     return NextResponse.json({ error: 'Unknown channel' }, { status: 400 });

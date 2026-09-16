@@ -158,7 +158,7 @@ export function ShareDialog({ open, onClose, url, kind, number, to, bizName, tok
           <TextField size="small" label="Email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
           <Button variant="contained" startIcon={<Email />} onClick={() => send('email')} disabled={!email || busy === 'email'}>Email</Button>
         </Stack>
-        <Typography sx={{ fontSize: 11, color: c.text3, mt: 1.5 }}>SMS needs a Twilio number and Email needs Resend configured in the environment. WhatsApp and Copy work right away.</Typography>
+        <Typography sx={{ fontSize: 11, color: c.text3, mt: 1.5 }}>Email sends from your Gmail once GMAIL_USER + GMAIL_APP_PASSWORD are set; SMS needs a Twilio number. WhatsApp and Copy work right away.</Typography>
       </DialogContent>
       <DialogActions><Button onClick={onClose}>Close</Button></DialogActions>
     </Dialog>

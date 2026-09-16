@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/server/admin';
+import { sendMail, mailConfigured } from '@/lib/server/mail';
 
 export const runtime = 'nodejs';
 
@@ -41,15 +42,11 @@ export async function POST(req: NextRequest) {
 
       // Notify the owner by email when possible (best effort)
       try {
-        const key = process.env.RESEND_API_KEY;
         const to = data.biz?.email;
-        if (key && to) {
+        if (to && mailConfigured()) {
           const num = data.doc?.number || `Q-${data.doc?.id}`;
           const total = data.doc?.total;
-          await fetch('https://api.resend.com/emails', {
-            method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ from: process.env.RESEND_FROM_EMAIL || 'Zikkit <noreply@zikkit.com>', to, subject: `${status === 'accepted' ? '✅' : '❌'} Quote ${num} ${status} by ${name || data.doc?.client || 'customer'}`, html: `<p>Quote <b>${num}</b> for <b>${data.doc?.client || ''}</b> was <b>${status}</b>${total != null ? ` — ${data.currency || ''} ${Number(total).toFixed(2)}` : ''}.</p><p>Open Zikkit to create the receipt.</p>` }),
-          });
+          await sendMail({ to, subject: `${status === 'accepted' ? '✅' : '❌'} Quote ${num} ${status} by ${name || data.doc?.client || 'customer'}`, html: `<p>Quote <b>${num}</b> for <b>${data.doc?.client || ''}</b> was <b>${status}</b>${total != null ? ` — ${data.currency || ''} ${Number(total).toFixed(2)}` : ''}.</p><p>Open Zikkit to create the receipt.</p>`, fromName: 'Zikkit' });
         }
       } catch { /* ignore */ }
     }
