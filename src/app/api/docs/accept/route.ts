@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/admin';
+import { adminDb, adminUpload } from '@/lib/server/admin';
 import { sendMail, mailConfigured } from '@/lib/server/mail';
+import { buildQuotePdf } from '@/lib/server/quotePdf';
 
 export const runtime = 'nodejs';
 
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
     const now = new Date().toISOString();
     const status = action === 'accept' ? 'accepted' : 'declined';
+    let signedPdfUrl: string | undefined;
     const portalPatch: Record<string, unknown> = { status, [action === 'accept' ? 'acceptedAt' : 'declinedAt']: now, signedName: name || '', signedIP: ip, updated: now };
     if (signature) portalPatch.signature = signature;
     await portalRef.set(portalPatch, { merge: true });
@@ -40,17 +42,39 @@ export async function POST(req: NextRequest) {
       if (signature) qPatch.signatureToken = token;
       await qRef.set(qPatch, { merge: true });
 
-      // Notify the owner by email when possible (best effort)
-      try {
-        const to = data.biz?.email;
-        if (to && mailConfigured()) {
+      // Accepted → signed-agreement PDF: stored in Storage (link on the quote + customer page) and emailed to owner + customer
+      if (status === 'accepted') {
+        try {
           const num = data.doc?.number || `Q-${data.doc?.id}`;
-          const total = data.doc?.total;
-          await sendMail({ to, subject: `${status === 'accepted' ? '✅' : '❌'} Quote ${num} ${status} by ${name || data.doc?.client || 'customer'}`, html: `<p>Quote <b>${num}</b> for <b>${data.doc?.client || ''}</b> was <b>${status}</b>${total != null ? ` — ${data.currency || ''} ${Number(total).toFixed(2)}` : ''}.</p><p>Open Zikkit to create the receipt.</p>`, fromName: 'Zikkit' });
-        }
-      } catch { /* ignore */ }
+          const pdf = await buildQuotePdf({ biz: data.biz || { name: 'Business' }, doc: data.doc || {}, currency: data.currency || 'CAD', acceptance: { name: name || '', at: now, ip, signature } });
+          const pdfBuf = Buffer.from(pdf);
+          try {
+            signedPdfUrl = await adminUpload(`businesses/${data.bizId}/media/quotes/${data.doc?.id}/${String(num).replace(/[^\w.-]/g, '_')}-signed.pdf`, pdfBuf, 'application/pdf');
+            await portalRef.set({ signedPdfUrl }, { merge: true });
+            await qRef.set({ signedPdfUrl }, { merge: true });
+          } catch (e) { console.warn('[accept] pdf upload failed:', (e as Error).message); }
+
+          if (mailConfigured()) {
+            const bizName = data.biz?.name || 'Business';
+            const total = data.doc?.total != null ? `${data.currency || 'CAD'} ${Number(data.doc.total).toFixed(2)}` : '';
+            const attachments = [{ filename: `${num}-signed.pdf`, content: pdfBuf, contentType: 'application/pdf' }];
+            const ownerTo = data.biz?.email;
+            if (ownerTo) {
+              await sendMail({ to: ownerTo, subject: `✅ Quote ${num} accepted by ${name || data.doc?.client || 'customer'}`, fromName: 'Zikkit', attachments,
+                html: `<p>Quote <b>${num}</b> for <b>${data.doc?.client || ''}</b> was <b>accepted</b>${total ? ` — ${total}` : ''}.</p><p>The signed agreement is attached.</p><p>Open Zikkit to schedule the job and create the receipt.</p>` });
+            }
+            const custTo = data.doc?.email;
+            if (custTo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(custTo))) {
+              await sendMail({ to: String(custTo), subject: `Your accepted quote ${num} from ${bizName}`, fromName: bizName, replyTo: ownerTo || undefined, attachments,
+                html: `<p>Hi ${name || data.doc?.client || ''},</p><p>Thanks — your quote <b>${num}</b> from <b>${bizName}</b>${total ? ` (${total})` : ''} is accepted. A copy of the signed agreement is attached.</p>${data.biz?.phone ? `<p>Questions? Call ${bizName} at ${data.biz.phone}.</p>` : ''}` });
+            }
+          }
+        } catch (e) { console.warn('[accept] pdf/email failed:', (e as Error).message); }
+      } else if (mailConfigured() && data.biz?.email) {
+        try { await sendMail({ to: data.biz.email, subject: `❌ Quote ${data.doc?.number || `Q-${data.doc?.id}`} declined by ${name || data.doc?.client || 'customer'}`, fromName: 'Zikkit', html: `<p>Quote <b>${data.doc?.number || ''}</b> for <b>${data.doc?.client || ''}</b> was <b>declined</b>.</p>` }); } catch { /* ignore */ }
+      }
     }
-    return NextResponse.json({ ok: true, status });
+    return NextResponse.json({ ok: true, status, signedPdfUrl });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }

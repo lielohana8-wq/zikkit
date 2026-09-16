@@ -17,7 +17,7 @@ interface Portal {
   kind: 'quote' | 'receipt';
   biz: { name: string; phone?: string; email?: string; address?: string; logo?: string; color?: string; website?: string; taxNumber?: string; taxLabel?: string; paymentInstructions?: string; footer?: string };
   doc: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
-  currency: string; locale?: string; status?: string; acceptedAt?: string; declinedAt?: string; signedName?: string; signature?: string;
+  currency: string; locale?: string; status?: string; acceptedAt?: string; declinedAt?: string; signedName?: string; signature?: string; signedPdfUrl?: string;
 }
 
 const METHOD: Record<string, string> = { etransfer: 'Interac e-Transfer', cash: 'Cash', credit: 'Credit card', debit: 'Debit', cheque: 'Cheque', other: 'Other' };
@@ -62,7 +62,7 @@ export function PublicDoc({ token, kind }: { token: string; kind: 'quote' | 'rec
       const res = await fetch('/api/docs/accept', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, action, name: name.trim(), signature }) });
       const data = await res.json();
       if (!res.ok || data.error) { setResult({ ok: false, text: data.error || 'Something went wrong. Try again.' }); return; }
-      setPortal((p) => (p ? { ...p, status: data.status, signedName: name.trim(), signature, acceptedAt: new Date().toISOString() } : p));
+      setPortal((p) => (p ? { ...p, status: data.status, signedName: name.trim(), signature, acceptedAt: new Date().toISOString(), signedPdfUrl: data.signedPdfUrl } : p));
       setResult({ ok: true, text: action === 'accept' ? 'Thank you — your acceptance is recorded.' : 'Thanks for letting us know.' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch { setResult({ ok: false, text: 'No connection. Try again.' }); }
@@ -135,6 +135,7 @@ export function PublicDoc({ token, kind }: { token: string; kind: 'quote' | 'rec
               <div>
                 <div><strong>Accepted</strong>{portal.signedName ? ` by ${portal.signedName}` : ''}{portal.acceptedAt ? ` on ${dateOf(portal.acceptedAt)}` : ''}</div>
                 {portal.signature && <img className="zd-sig" src={portal.signature} alt="Signature" />}
+                {portal.signedPdfUrl && <a className="zd-link no-print" href={portal.signedPdfUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 8 }}>Download the signed agreement (PDF)</a>}
               </div>
             </div>
           )}

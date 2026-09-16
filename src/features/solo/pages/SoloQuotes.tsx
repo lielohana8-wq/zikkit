@@ -134,6 +134,7 @@ export default function SoloQuotes() {
           <MenuItem key="send" onClick={() => { const q = menu.q; setMenu(null); sendQuote(q); }}><Send fontSize="small" sx={{ mr: 1 }} />{menu.q.portalToken ? 'Share link again' : 'Send'}</MenuItem>,
           <MenuItem key="edit" onClick={() => { setDraft(fromQuote(menu.q)); setMenu(null); }}><Edit fontSize="small" sx={{ mr: 1 }} />Edit</MenuItem>,
           <MenuItem key="dup" onClick={() => { duplicate(menu.q); setMenu(null); }}><ContentCopy fontSize="small" sx={{ mr: 1 }} />Duplicate</MenuItem>,
+          ...(menu.q.signedPdfUrl ? [<MenuItem key="pdf" component="a" href={menu.q.signedPdfUrl} target="_blank" rel="noreferrer" onClick={() => setMenu(null)}>📄 Signed agreement (PDF)</MenuItem>] : []),
           <Divider key="d1" />,
           <MenuItem key="acc" onClick={() => { setStatus(menu.q, 'accepted'); setMenu(null); }} disabled={menu.q.status === 'accepted'}><CheckCircle fontSize="small" sx={{ mr: 1 }} />Mark accepted</MenuItem>,
           <MenuItem key="dec" onClick={() => { setStatus(menu.q, 'declined'); setMenu(null); }} disabled={menu.q.status === 'declined'}><Cancel fontSize="small" sx={{ mr: 1 }} />Mark declined</MenuItem>,

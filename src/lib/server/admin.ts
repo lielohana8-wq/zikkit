@@ -1,5 +1,7 @@
 import { getApps, initializeApp, cert, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
+import { randomUUID } from 'crypto';
 
 /**
  * firebase-admin singleton for API routes.
@@ -32,4 +34,14 @@ export function adminDb(): Firestore {
 
 export function isAdminConfigured(): boolean {
   return Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+}
+
+/** Upload a file to the default Storage bucket and return a Firebase download URL (token-based; works with public-read rules). */
+export async function adminUpload(path: string, data: Buffer | Uint8Array, contentType: string): Promise<string> {
+  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  if (!bucketName) throw new Error('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET is not set');
+  const bucket = getStorage(adminApp()).bucket(bucketName);
+  const token = randomUUID();
+  await bucket.file(path).save(Buffer.from(data), { contentType, metadata: { metadata: { firebaseStorageDownloadTokens: token } }, resumable: false });
+  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
 }

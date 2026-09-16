@@ -39,4 +39,6 @@ export interface Quote {
   signedName?: string;
   receiptId?: number;
   currency?: string;
+  signedPdfUrl?: string;
+  signatureToken?: string;
 }

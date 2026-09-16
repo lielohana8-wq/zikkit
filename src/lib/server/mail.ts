@@ -6,7 +6,8 @@ import nodemailer from 'nodemailer';
  *   2. Resend: RESEND_API_KEY + RESEND_FROM_EMAIL (needs a verified domain).
  * Gmail wins when both are set.
  */
-export interface Mail { to: string; subject: string; html: string; replyTo?: string; fromName?: string }
+export interface MailAttachment { filename: string; content: Buffer; contentType?: string }
+export interface Mail { to: string; subject: string; html: string; replyTo?: string; fromName?: string; attachments?: MailAttachment[] }
 
 export function mailConfigured(): 'gmail' | 'resend' | null {
   if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) return 'gmail';
@@ -23,7 +24,7 @@ export async function sendMail(m: Mail): Promise<{ ok: true; id?: string } | { o
     const pass = String(process.env.GMAIL_APP_PASSWORD).replace(/\s+/g, '');
     const transport = nodemailer.createTransport({ host: 'smtp.gmail.com', port: 465, secure: true, auth: { user, pass } });
     try {
-      const info = await transport.sendMail({ from: m.fromName ? `"${m.fromName.replace(/"/g, '')}" <${user}>` : user, to: m.to, subject: m.subject, html: m.html, replyTo: m.replyTo || undefined });
+      const info = await transport.sendMail({ from: m.fromName ? `"${m.fromName.replace(/"/g, '')}" <${user}>` : user, to: m.to, subject: m.subject, html: m.html, replyTo: m.replyTo || undefined, attachments: m.attachments?.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType })) });
       return { ok: true, id: info.messageId };
     } catch (e) {
       const msg = (e as Error).message || String(e);
@@ -36,7 +37,7 @@ export async function sendMail(m: Mail): Promise<{ ok: true; id?: string } | { o
   const from = process.env.RESEND_FROM_EMAIL || 'Zikkit <noreply@zikkit.com>';
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to: m.to, subject: m.subject, html: m.html, ...(m.replyTo ? { reply_to: m.replyTo } : {}) }),
+    body: JSON.stringify({ from, to: m.to, subject: m.subject, html: m.html, ...(m.replyTo ? { reply_to: m.replyTo } : {}), ...(m.attachments?.length ? { attachments: m.attachments.map((a) => ({ filename: a.filename, content: a.content.toString('base64') })) } : {}) }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) return { ok: false, error: (data.message || data.error || 'Resend error') + (String(data.message || '').includes('domain') ? ' — RESEND_FROM_EMAIL must use a domain verified in Resend.' : '') };
