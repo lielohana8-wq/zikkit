@@ -27,8 +27,8 @@ export function LogoUpload() {
         reader.readAsDataURL(file);
       });
 
-      // Resize to max 150px to keep base64 small for Firestore
-      const resized = await resizeImage(dataUrl, 150);
+      // Resize (the data layer uploads it to Storage and keeps only a URL in cfg)
+      const resized = await resizeImage(dataUrl, 480); // sharp on retina; the data layer uploads it to Storage
       setPreview(resized);
       await saveCfg({ logo_url: resized });
       toast('Logo saved!');
@@ -83,7 +83,9 @@ function resizeImage(dataUrl: string, maxSize: number): Promise<string> {
         const ctx = canvas.getContext('2d');
         if (!ctx) { reject(new Error('No canvas context')); return; }
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
+        // Keep transparency for PNG/SVG/WebP logos (JPEG would paint the background black)
+        const transparent = /^data:image\/(png|svg\+xml|webp)/i.test(dataUrl);
+        resolve(transparent ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.85));
       } catch (e) { reject(e); }
     };
     img.onerror = () => reject(new Error('Image load failed'));

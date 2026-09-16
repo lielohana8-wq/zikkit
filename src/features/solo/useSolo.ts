@@ -110,7 +110,8 @@ export function useSolo() {
       biz: {
         name: cfg.biz_name || 'Business', phone: cfg.biz_phone || '', email: cfg.biz_email || '',
         address: [cfg.biz_address, cfg.biz_city, cfg.biz_province, cfg.biz_postal].filter(Boolean).join(', '),
-        logo: [cfg.logo_url, cfg.biz_logo].find((l) => l && !String(l).startsWith('data:')) || '',
+        // Storage URL when the upload worked; otherwise the (small, resized) inline image so the logo never goes missing
+        logo: [cfg.logo_url, cfg.biz_logo].find((l) => l && (!String(l).startsWith('data:') || String(l).length < 300_000)) || '',
         color: cfg.biz_color || '#4F46E5', website: cfg.biz_website || '', taxNumber: cfg.tax_number || '',
         taxLabel, paymentInstructions: cfg.payment_instructions || '',
         footer: kind === 'quote' ? (cfg.quote_footer || '') : (cfg.receipt_footer || ''),
