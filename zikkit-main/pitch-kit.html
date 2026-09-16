@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zikkit — חבילת שיווק ופיילוט</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Heebo',sans-serif;background:#0a0d12;color:#e0e8ef;line-height:1.7}
+.page{max-width:850px;margin:0 auto;padding:32px 24px}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-green{background:rgba(0,229,176,0.12);color:#00e5b0;border:1px solid rgba(0,229,176,0.25)}
+.badge-blue{background:rgba(79,143,255,0.12);color:#4f8fff;border:1px solid rgba(79,143,255,0.25)}
+.badge-hot{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.25)}
+
+h1{font-size:32px;font-weight:900;margin-bottom:8px;background:linear-gradient(135deg,#00e5b0,#4f8fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{font-size:22px;font-weight:800;color:#fff;margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid rgba(0,229,176,0.2)}
+h3{font-size:17px;font-weight:700;color:#00e5b0;margin:20px 0 8px}
+h4{font-size:14px;font-weight:700;color:#4f8fff;margin:14px 0 6px}
+p{margin:6px 0;font-size:14px;color:#a8bcc8}
+.subtitle{font-size:14px;color:#5a7080;margin-bottom:24px}
+
+.card{background:#0f1318;border:1px solid rgba(255,255,255,0.055);border-radius:14px;padding:20px;margin:12px 0}
+.card-accent{border-color:rgba(0,229,176,0.2);background:rgba(0,229,176,0.03)}
+
+.script{background:#141920;border:1px solid rgba(0,229,176,0.15);border-radius:12px;padding:20px;margin:12px 0;font-size:15px;color:#e0e8ef;line-height:2}
+.script .action{font-size:12px;color:#5a7080;font-style:italic;display:block;margin:8px 0}
+.script .you{color:#00e5b0;font-weight:700}
+.script .them{color:#4f8fff;font-weight:600}
+
+.copybox{background:#0f1318;border:1px solid rgba(79,143,255,0.2);border-radius:12px;padding:16px;margin:10px 0;position:relative;cursor:pointer;font-size:13px;line-height:1.8;white-space:pre-wrap}
+.copybox:hover{border-color:#4f8fff}
+.copybox::after{content:'📋 לחץ להעתקה';position:absolute;top:8px;left:8px;font-size:10px;color:#5a7080;opacity:0;transition:opacity 0.2s}
+.copybox:hover::after{opacity:1}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+
+.tip{background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:10px;padding:12px 16px;margin:8px 0;font-size:13px;color:#f59e0b}
+.avoid{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:10px;padding:12px 16px;margin:8px 0;font-size:13px;color:#ef4444}
+
+.checklist{list-style:none;padding:0}
+.checklist li{padding:6px 0;font-size:13px;color:#a8bcc8}
+.checklist li::before{content:'✅';margin-left:8px}
+
+.stat{text-align:center;padding:12px}
+.stat-num{font-size:28px;font-weight:900;color:#00e5b0}
+.stat-label{font-size:11px;color:#5a7080;text-transform:uppercase;letter-spacing:0.5px}
+
+.toc{background:#0f1318;border:1px solid rgba(255,255,255,0.055);border-radius:14px;padding:20px;margin:0 0 24px}
+.toc a{display:block;padding:6px 0;color:#4f8fff;text-decoration:none;font-size:14px;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.03)}
+.toc a:hover{color:#00e5b0}
+
+hr{border:none;border-top:1px solid rgba(255,255,255,0.06);margin:24px 0}
+
+@media print{
+  body{background:#fff;color:#222}
+  h1{-webkit-text-fill-color:#0a6c55}
+  .card,.copybox,.script,.toc{background:#f8f9fa;border-color:#ddd}
+  p,.checklist li{color:#444}
+  .stat-num{color:#0a6c55}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div style="text-align:center;margin-bottom:32px">
+  <div style="font-size:48px;margin-bottom:8px">⚡</div>
+  <h1>Zikkit — חבילת פיילוט ושיווק</h1>
+  <p class="subtitle">כל מה שצריך כדי לגייס 5-10 בעלי עסקים לפיילוט — נאומים, הודעות, פוסטים, וטיפים</p>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">
+    <span class="badge badge-green">🟢 המערכת מוכנה 100%</span>
+    <span class="badge badge-blue">📱 138 קבצים · 16,064 שורות קוד</span>
+    <span class="badge badge-hot">🔥 מוכן לגיוס היום</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <strong style="color:#fff;font-size:13px;display:block;margin-bottom:10px">📑 תוכן העניינים</strong>
+  <a href="#elevator">1. נאום מעלית (60 שניות)</a>
+  <a href="#full-pitch">2. נאום מלא (3 דקות)</a>
+  <a href="#whatsapp">3. הודעות WhatsApp מוכנות</a>
+  <a href="#facebook">4. פוסטים לפייסבוק</a>
+  <a href="#objections">5. תשובות להתנגדויות</a>
+  <a href="#demo-script">6. תסריט דמו חי</a>
+  <a href="#pilot-plan">7. תוכנית פיילוט 30 יום</a>
+  <a href="#tips">8. טיפים וטעויות נפוצות</a>
+  <a href="#features">9. רשימת פיצ'רים מלאה (למכירה)</a>
+</div>
+
+<!-- ============================== -->
+<!-- 1. ELEVATOR PITCH -->
+<!-- ============================== -->
+<h2 id="elevator">1. 🎤 נאום מעלית — 60 שניות</h2>
+<p>זה הנאום שאתה אומר כשפוגש בעל עסק שירות. בכנס, בחנות חלקים, באירוע, בטלפון.</p>
+
+<div class="script">
+  <span class="action">🎯 שלב 1: שאל שאלה (תן להם לדבר)</span>
+  <span class="you">אתה:</span> "תגיד, איך אתה מנהל היום את העבודות שלך?"
+  
+  <span class="action">⏳ מחכה לתשובה — תמיד יגידו: אקסל, פתקים, וואטסאפ, הראש</span>
+  <span class="them">הם:</span> "אקסל... פתקים... הראש... וואטסאפ..."
+
+  <span class="action">🎯 שלב 2: חידוד הכאב</span>
+  <span class="you">אתה:</span> "וזה עובד? כמה פעמים שכחת לחזור ללקוח?"
+  
+  <span class="action">⏳ תמיד יגידו: לא ממש, קורה...</span>
+
+  <span class="action">🎯 שלב 3: הפתרון</span>
+  <span class="you">אתה:</span> "אז בדיוק בשביל זה בניתי את Zikkit. זו מערכת שמרכזת לך הכל במקום אחד — כל העבודות, כל הלידים, הצעות מחיר, הטכנאים. בסוף החודש אתה פותח ורואה בשנייה כמה הרווחת, מאיפה הגיע הכסף, ואיפה אתה מפסיד."
+
+  <span class="action">🎯 שלב 4: ה-Close</span>
+  <span class="you">אתה:</span> "אני נותן לך את זה חינם לחודש. אם זה עוזר — נמשיך. אם לא — לפחות ניסית. מה אומר?"
+</div>
+
+<div class="tip">💡 טיפ: <strong>אל תדבר על טכנולוגיה.</strong> לא "Next.js", לא "Firebase", לא "AI". תדבר על תוצאות: "תפסיק להפסיד לקוחות", "תראה כמה הרווחת בשנייה".</div>
+
+<!-- ============================== -->
+<!-- 2. FULL PITCH -->
+<!-- ============================== -->
+<h2 id="full-pitch">2. 🎤 נאום מלא — 3 דקות</h2>
+<p>לפגישת וידאו, שיחת טלפון ארוכה, או דמו פנים אל פנים.</p>
+
+<div class="script">
+  <span class="you">אתה:</span> "תקשיב, אני רוצה לספר לך מה בניתי ולמה.
+  
+  <strong style="color:#fff">הבעיה:</strong> כל בעל עסק שירות שאני מכיר — מיזוג, אינסטלציה, חשמל, מנעולנות — מנהל את העסק מהראש. הלקוח מתקשר, כותבים על פתק, הפתק נעלם, שוכחים לחזור, מפסידים עבודה של 3,000 שקל.
+  
+  <strong style="color:#fff">מה זה Zikkit:</strong> מערכת ניהול שבניתי ספציפית לעסקי שירות. לא SAP, לא Monday — משהו שבעל עסק עם 2-10 טכנאים יכול לפתוח בטלפון ולנהל את כל העסק.
+  
+  <strong style="color:#fff">מה יש בפנים:</strong>
+  🔹 <strong>ניהול עבודות</strong> — כל עבודה עם סטטוס, טכנאי, תאריך, סכום. רואה בשנייה מה פתוח, מה בטיפול, מה נסגר.
+  🔹 <strong>ניהול לידים</strong> — מישהו התקשר? נכנס למערכת. לא חוזר ללקוח תוך יום? המערכת מתריעה. ליד הופך לעבודה בלחיצה.
+  🔹 <strong>הצעות מחיר</strong> — בוחר מוצרים מהמחירון, המערכת מחשבת, שולח ללקוח בוואטסאפ. מקצועי, בשנייה.
+  🔹 <strong>ניהול טכנאים</strong> — מי עובד על מה, מי פנוי מחר, מי סגר הכי הרבה החודש.
+  🔹 <strong>דוחות</strong> — כמה הכנסת היום, השבוע, החודש. בלי לגעת באקסל.
+  🔹 <strong>GPS</strong> — רואה איפה כל טכנאי נמצא בזמן אמת.
+  🔹 <strong>בוט AI</strong> — עונה ללקוחות 24/7, פותח עבודות אוטומטית, אף שיחה לא הולכת לאיבוד.
+  
+  <strong style="color:#fff">למה עכשיו:</strong> אני מחפש 5 בעלי עסקים חכמים שרוצים לנסות חינם לחודש. בתמורה — פידבק כנה. אתה ממש משפיע על המוצר.
+  
+  <strong style="color:#fff">מה זה עולה:</strong> חודש ראשון — חינם לגמרי. אחרי זה — 499 ₪ לחודש. פחות ממה שעבודה אחת שנפלה בגלל פתק שנעלם הייתה מכניסה לך.
+  
+  <strong style="color:#fff">מה אני צריך ממך:</strong> שתשתמש 10 דקות ביום, ופעם בשבוע נדבר 15 דקות.
+  
+  מה אומר, רוצה לנסות?"
+</div>
+
+<!-- ============================== -->
+<!-- 3. WHATSAPP MESSAGES -->
+<!-- ============================== -->
+<h2 id="whatsapp">3. 💬 הודעות WhatsApp מוכנות</h2>
+<p>העתק, הדבק, שלח. מוכן לשימוש.</p>
+
+<h4>הודעה למכר / חבר שמכיר בעל עסק</h4>
+<div class="copybox" onclick="navigator.clipboard.writeText(this.innerText)">היי [שם] 👋
+סליחה שאני מטריד — בניתי מערכת ניהול לעסקי שירות (מיזוג, אינסטלציה, חשמל).
+מחפש 5 בעלי עסקים שרוצים לנסות חינם לחודש.
+מכיר מישהו שיכול להתאים?
+🙏</div>
+
+<h4>הודעה ישירה לבעל עסק (קר)</h4>
+<div class="copybox" onclick="navigator.clipboard.writeText(this.innerText)">שלום [שם] 👋
+ראיתי שאתה מנהל עסק שירות [מיזוג/אינסטלציה/חשמל].
+בניתי מערכת ניהול שמחליפה את האקסלים והפתקים — עבודות, לידים, הצעות מחיר, דוחות, הכל במקום אחד.
+אני מחפש 5 בעלי עסקים לפיילוט חינם לחודש (בלי התחייבות, בלי כרטיס אשראי).
+רוצה לראות דמו של 5 דקות?</div>
+
+<h4>הודעת מעקב (אחרי שראה ולא ענה)</h4>
+<div class="copybox" onclick="navigator.clipboard.writeText(this.innerText)">היי [שם], רק עוקב 🙂
+אם עדיין רלוונטי — יש לי עוד 2 מקומות פנויים לפיילוט החינם.
+אשמח לשיחה קצרה של 10 דקות, מתי נוח?</div>
+
+<h4>הודעה אחרי דמו מוצלח</h4>
+<div class="copybox" onclick="navigator.clipboard.writeText(this.innerText)">היי [שם] 👋
+שמח שאהבת! הנה הלינק לרישום:
+[לינק]
+תצטרך ליצור חשבון ולהכניס את פרטי העסק — לוקח 3 דקות.
+אם תצטרך עזרה — אני כאן. בהצלחה! 🚀</div>
+
+<!-- ============================== -->
+<!-- 4. FACEBOOK POSTS -->
+<!-- ============================== -->
+<h2 id="facebook">4. 📱 פוסטים לפייסבוק</h2>
+<p>לקבוצות כמו: "בעלי עסקים בתחום השירות", "מיזוג אוויר ישראל", "עסקים קטנים ובינוניים"</p>
+
+<h4>פוסט מס' 1 — גיוס פיילוט</h4>
+<div class="copybox" onclick="navigator.clipboard.writeText(this.innerText)">🔧 מחפש 5 בעלי עסקי שירות לפיילוט חינם!
+
+בניתי מערכת ניהול עבודות שמחליפה את האקסלים, הפתקים והוואטסאפים.
+
+מה תקבלו:
+✅ חודש חינם מלא
+✅ הטמעה אישית 1-על-1
+✅ תמיכה ישירה ממני (המפתח)
+✅ השפעה ישירה על הפיצ'רים
+
+מה אני צריך ממכם:
+📱 שימוש יומי של 10 דקות
+💬 פידבק כנה פעם בשבוע
+
+🔹 ניהול עבודות + לידים + הצעות מחיר
+🔹 מעקב טכנאים + GPS
+🔹 דוחות הכנסה + רווח
+🔹 בוט AI שעונה ללקוחות 24/7
+
+מי רוצה לנסות? שלחו לי הודעה 👇</div>
+
+<h4>פוסט מס' 2 — כאב + פתרון</h4>
+<div class="copybox" onclick="navigator.clipboard.writeText(this.innerText)">שאלה לבעלי עסקי שירות:
+
+כמה פעמים בחודש שכחת לחזור ללקוח?
+כמה הצעות מחיר נעלמו בוואטסאפ?
+כמה עבודות נפלו בגלל פתק שנשכח?
+
+🤔 עכשיו תכפילו את זה ב-3,000 ₪ ותראו כמה כסף הלך.
+
+בניתי מערכת שפותרת את זה — במקום אחד, בטלפון, בעברית.
+
+5 מקומות פנויים לניסיון חינם. מי בפנים?</div>
+
+<h4>פוסט מס' 3 — Build in Public</h4>
+<div class="copybox" onclick="navigator.clipboard.writeText(this.innerText)">עדכון: בניתי מערכת ניהול לעסקי שירות בישראל 🇮🇱
+
+138 קבצים. 16,000 שורות קוד. 26 מסכים. בוט AI שעונה ללקוחות.
+
+עכשיו אני מחפש 5 בעלי עסקים אמיצים שרוצים להיות הראשונים לנסות.
+
+חינם לחודש. בלי התחייבות. בלי כרטיס אשראי.
+
+למה כדאי? כי אתה משפיע ישירות על מה שנבנה — ואם זה עוזר לך, אתה נכנס לפני כולם.
+
+DM פתוח 🚀</div>
+
+<!-- ============================== -->
+<!-- 5. OBJECTION HANDLING -->
+<!-- ============================== -->
+<h2 id="objections">5. 🛡️ תשובות להתנגדויות</h2>
+
+<div class="card">
+  <h4>❓ "אין לי זמן ללמוד מערכת חדשה"</h4>
+  <p style="color:#e0e8ef">"מסכים. בדיוק בשביל זה Zikkit פשוט — 10 דקות ביום. בשבוע הראשון אני יושב איתך ומכניס הכל. תוך 3 ימים אתה כבר עובד לבד."</p>
+</div>
+
+<div class="card">
+  <h4>❓ "יש לי אקסל, זה עובד"</h4>
+  <p style="color:#e0e8ef">"אקסל מעולה — לשלב מסוים. אבל כשיש לך 5 טכנאים, 30 עבודות פתוחות, ו-20 לידים שמחכים — אקסל לא מתריע כשלקוח נופל. Zikkit כן."</p>
+</div>
+
+<div class="card">
+  <h4>❓ "499 ₪ זה יקר"</h4>
+  <p style="color:#e0e8ef">"כמה עולה עבודה אחת שנפלה? 2,000? 5,000? אם Zikkit מציל לך עבודה אחת בחודש — זה כבר שילם על עצמו פי 4. ובכל מקרה — חודש ראשון חינם, תראה בעצמך."</p>
+</div>
+
+<div class="card">
+  <h4>❓ "צריך לחשוב על זה"</h4>
+  <p style="color:#e0e8ef">"בטח, קח זמן. אבל זה חינם לחודש, אז אין מה להפסיד. מה דעתך נקבע שיחה של 15 דקות מחר ואני מראה לך את זה חי?"</p>
+</div>
+
+<div class="card">
+  <h4>❓ "כבר יש לי Workiz / Monday / משהו אחר"</h4>
+  <p style="color:#e0e8ef">"מעולה שאתה משתמש במשהו — זה אומר שאתה מבין את הערך. Zikkit נבנה ספציפית לעסקי שירות בישראל, עם עברית מלאה, שיתוף בוואטסאפ, ובוט AI שעונה ללקוחות. כמה זה עולה לך היום? בוא נשווה."</p>
+</div>
+
+<!-- ============================== -->
+<!-- 6. DEMO SCRIPT -->
+<!-- ============================== -->
+<h2 id="demo-script">6. 🖥️ תסריט דמו חי — 5 דקות</h2>
+<p>הסדר המדויק שבו מראים את המערכת לבעל עסק.</p>
+
+<div class="card card-accent">
+  <h4>⏱️ דקה 1 — Dashboard</h4>
+  <p style="color:#e0e8ef">"זה הדבר הראשון שאתה רואה כשנכנס. <strong>כמה הרווחת היום, כמה עבודות פתוחות, מי הטכנאי הכי טוב שלך, ואיפה יש בעיות.</strong> שנייה אחת ואתה יודע את מצב העסק."</p>
+</div>
+
+<div class="card">
+  <h4>⏱️ דקה 2 — עבודות</h4>
+  <p style="color:#e0e8ef">"הנה כל העבודות. פתוח, בטיפול, ממתין לחלקים, הושלם. <strong>לחיצה — ואתה רואה הכל.</strong> בוא נסגור עבודה — הנה, הכנסה, עלות חומרים, רווח. סגור."</p>
+</div>
+
+<div class="card">
+  <h4>⏱️ דקה 3 — לידים ← הצעת מחיר ← WhatsApp</h4>
+  <p style="color:#e0e8ef">"ליד חדש נכנס. בלחיצה אחת — הופך לעבודה. <strong>בוא נשלח לו הצעת מחיר</strong> — בוחר מוצרים, המחיר מחושב אוטומטי, שולח בוואטסאפ. הלקוח מקבל הודעה מקצועית בשנייה."</p>
+</div>
+
+<div class="card">
+  <h4>⏱️ דקה 4 — דוחות</h4>
+  <p style="color:#e0e8ef">"וזה הקסם — <strong>דוחות.</strong> הכנסה לפי חודש, לפי טכנאי, לפי מקור. אתה רואה בדיוק מאיפה מגיע הכסף ואיפה צריך להשקיע. בלי אקסלים."</p>
+</div>
+
+<div class="card card-accent">
+  <h4>⏱️ דקה 5 — Close</h4>
+  <p style="color:#e0e8ef">"אז מה אמרת? רוצה לנסות חודש חינם? אני מכניס אותך עכשיו, מחר בבוקר יש לך מערכת עובדת."</p>
+</div>
+
+<!-- ============================== -->
+<!-- 7. PILOT PLAN -->
+<!-- ============================== -->
+<h2 id="pilot-plan">7. 📋 תוכנית פיילוט 30 יום</h2>
+
+<div class="grid2">
+  <div class="card">
+    <h4>📅 שבוע 1 — הטמעה</h4>
+    <ul class="checklist">
+      <li>יום 1: שיחת וידאו 30 דקות — הכנסת נתונים ראשונים</li>
+      <li>יום 2: הודעת WhatsApp "הכל בסדר?"</li>
+      <li>יום 3: בדיקה שהם מכניסים עבודות</li>
+      <li>יום 5: שיחה קצרה — שאלות ובעיות</li>
+      <li>יום 7: פידבק שבועי ראשון (15 דקות)</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>📅 שבוע 2 — שימוש</h4>
+    <ul class="checklist">
+      <li>בדיקה יומית שהם פעילים</li>
+      <li>יום 10: הודעה "ראית את הדוחות?"</li>
+      <li>יום 14: שיחת פידבק שנייה</li>
+      <li>תיעוד כל בעיה / בקשה</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>📅 שבוע 3 — ערך</h4>
+    <ul class="checklist">
+      <li>שליחת סיכום: "הנה מה שעשית ב-Zikkit"</li>
+      <li>יום 21: שיחה על המשך + מחיר</li>
+      <li>"אם זה חוסך לך שעתיים בשבוע — שווה?"</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>📅 שבוע 4 — סגירה</h4>
+    <ul class="checklist">
+      <li>יום 25: תזכורת "הפיילוט נגמר בעוד 5 ימים"</li>
+      <li>יום 28: שיחת סגירה</li>
+      <li>יום 30: המרה למנוי או פרידה נעימה</li>
+      <li>בקשת המלצה (גם אם לא ממשיכים)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!-- 8. TIPS -->
+<!-- ============================== -->
+<h2 id="tips">8. 💡 טיפים וטעויות נפוצות</h2>
+
+<h3>✅ מה כן לעשות</h3>
+<div class="card card-accent">
+  <ul class="checklist">
+    <li><strong>לשאול לפני שמדברים</strong> — "איך אתה מנהל היום?"</li>
+    <li><strong>לגעת בכאב</strong> — "כמה עבודות נפלו לך החודש?"</li>
+    <li><strong>להראות, לא לספר</strong> — דמו חי של 5 דקות שווה 20 דקות הסברים</li>
+    <li><strong>ליצור דחיפות</strong> — "יש לי 5 מקומות, 2 כבר תפוסים"</li>
+    <li><strong>לבקש התחייבות קטנה</strong> — "שיחה של 15 דקות מחר?"</li>
+    <li><strong>תמיכה אישית 24/7</strong> — תענה להם בוואטסאפ מיד</li>
+    <li><strong>לתעד הכל</strong> — כל פידבק, כל בעיה, כל בקשה</li>
+  </ul>
+</div>
+
+<h3>❌ מה לא לעשות</h3>
+<div class="avoid">
+  ❌ <strong>לדבר על טכנולוגיה</strong> — "Next.js", "Firebase", "React" = סינית לבעל עסק<br>
+  ❌ <strong>לדבר על פיצ'רים</strong> — תדבר על תוצאות<br>
+  ❌ <strong>להתנצל</strong> — "זה עדיין בבנייה" → תגיד "בניתי את זה בדיוק בשבילך"<br>
+  ❌ <strong>לתת יותר מדי אופציות</strong> — "חודש חינם. כן או לא?"<br>
+  ❌ <strong>לגייס יותר מ-10 לפיילוט</strong> — לא תספיק לתמוך בכולם<br>
+  ❌ <strong>לדבר על מתחרים</strong> — אלא אם הם מעלים את זה
+</div>
+
+<!-- ============================== -->
+<!-- 9. FEATURES LIST -->
+<!-- ============================== -->
+<h2 id="features">9. 📦 רשימת פיצ'רים מלאה</h2>
+<p>להציג ללקוח כשהוא שואל "מה יש בפנים?"</p>
+
+<div class="grid2">
+  <div class="card">
+    <h3>📊 Dashboard</h3>
+    <p style="color:#e0e8ef">KPIs בזמן אמת · גרף הכנסות שבועי · לוח יומי · לידים חמים · עבודות באיחור · טכנאי מוביל · התראות</p>
+  </div>
+  <div class="card">
+    <h3>🔧 עבודות</h3>
+    <p style="color:#e0e8ef">CRUD מלא · 11 סטטוסים · סגירת עבודה עם חישוב רווח · שיתוף WhatsApp · פורטל לקוח · מעקב חלקים</p>
+  </div>
+  <div class="card">
+    <h3>📞 לידים / CRM</h3>
+    <p style="color:#e0e8ef">ניהול מלא · המרה לעבודה בלחיצה · תאריך מעקב · התראת איחור · פילטרים ומצבים</p>
+  </div>
+  <div class="card">
+    <h3>📄 הצעות מחיר</h3>
+    <p style="color:#e0e8ef">מחירון מוצרים · חישוב מע"מ · שליחה בוואטסאפ · פורטל לקוח · שינוי סטטוס</p>
+  </div>
+  <div class="card">
+    <h3>👷 טכנאים</h3>
+    <p style="color:#e0e8ef">ניהול צוות · הרשאות לפי תפקיד · Dashboard טכנאי · לוח שבועי · GPS · הצעות מחיר בשטח</p>
+  </div>
+  <div class="card">
+    <h3>📈 דוחות</h3>
+    <p style="color:#e0e8ef">הכנסה ורווח · לפי טכנאי · לפי מקור · לפי תקופה · גרפים</p>
+  </div>
+  <div class="card">
+    <h3>💰 Payroll</h3>
+    <p style="color:#e0e8ef">חישוב עמלות · תקופות שכר · סיכום לפי טכנאי · מרווח ורווחיות</p>
+  </div>
+  <div class="card">
+    <h3>🤖 AI Voice Bot</h3>
+    <p style="color:#e0e8ef">מענה 24/7 · פתיחת עבודות אוטומטית · הקלטות · סימולטור · Flows מותאמים · Follow-ups</p>
+  </div>
+  <div class="card">
+    <h3>🗺️ GPS Tracking</h3>
+    <p style="color:#e0e8ef">מיקום טכנאים · Check-in/Out · מפת צוות · היסטוריית מיקום</p>
+  </div>
+  <div class="card">
+    <h3>🔐 ניהול משתמשים</h3>
+    <p style="color:#e0e8ef">Owner / Manager / Dispatcher / Tech · הרשאות מותאמות · הזמנת משתמשים</p>
+  </div>
+  <div class="card">
+    <h3>🌐 רב-שפתי</h3>
+    <p style="color:#e0e8ef">עברית + אנגלית + ספרדית · RTL מלא · זיהוי מיקום אוטומטי</p>
+  </div>
+  <div class="card">
+    <h3>🔔 עוד</h3>
+    <p style="color:#e0e8ef">התראות · פורטל לקוח · הסכמים · Checkout / Billing · Onboarding Wizard · Admin Console · Chat AI</p>
+  </div>
+</div>
+
+<!-- STATS -->
+<hr>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0;text-align:center">
+  <div class="stat"><div class="stat-num">26</div><div class="stat-label">מסכים</div></div>
+  <div class="stat"><div class="stat-num">13</div><div class="stat-label">API Routes</div></div>
+  <div class="stat"><div class="stat-num">16K</div><div class="stat-label">שורות קוד</div></div>
+  <div class="stat"><div class="stat-num">100%</div><div class="stat-label">מוכן</div></div>
+</div>
+
+<div style="text-align:center;padding:24px;color:#5a7080;font-size:12px">
+  Zikkit — Pitch Kit v1.0 — מרץ 2026<br>
+  יאללה לגייס. 🚀
+</div>
+
+</div>
+
+<script>
+// Copy to clipboard on click
+document.querySelectorAll('.copybox').forEach(el => {
+  el.addEventListener('click', () => {
+    navigator.clipboard.writeText(el.innerText).then(() => {
+      const orig = el.style.borderColor;
+      el.style.borderColor = '#00e5b0';
+      setTimeout(() => el.style.borderColor = orig, 1000);
+    });
+  });
+});
+</script>
+</body>
+</html>

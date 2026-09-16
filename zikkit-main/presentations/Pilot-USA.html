@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZIKKIT — Pilot Program</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060a10;--card:#111827;--ac:#00E5B0;--bl:#3B82F6;--pr:#8B5CF6;--or:#F59E0B;--rd:#EF4444;--tx:#F0F4F8;--sb:#7A8BA0;--dm:#3A4A5C;--bd:rgba(255,255,255,0.06)}
+html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx)}
+.S{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:clamp(28px,4vw,64px);opacity:0;transform:translateX(40px);transition:all 0.5s cubic-bezier(0.4,0,0.2,1);pointer-events:none;overflow-y:auto}
+.S.on{opacity:1;transform:none;pointer-events:auto}.S.off{opacity:0;transform:translateX(-40px)}
+.S::before{content:'';position:absolute;inset:0;pointer-events:none}
+.gg::before{background:radial-gradient(ellipse 60% 50% at 30% 20%,rgba(0,229,176,0.06),transparent 70%)}
+.gr::before{background:radial-gradient(ellipse 60% 50% at 70% 30%,rgba(239,68,68,0.06),transparent 70%)}
+.gb::before{background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(59,130,246,0.05),transparent 70%)}
+.gc::before{background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(0,229,176,0.07),transparent 60%)}
+h1{font-family:'Syne',sans-serif;font-size:clamp(32px,5.5vw,56px);font-weight:800;line-height:1.08;letter-spacing:-1px}
+h2{font-family:'Syne',sans-serif;font-size:clamp(22px,3vw,36px);font-weight:800;letter-spacing:-0.5px;margin-bottom:14px}
+h3{font-family:'Syne',sans-serif;font-size:clamp(15px,1.8vw,20px);font-weight:700}
+.ac{color:var(--ac)}.rd{color:var(--rd)}.bl{color:var(--bl)}.pr{color:var(--pr)}.or{color:var(--or)}
+.sb{color:var(--sb);font-size:clamp(12px,1.4vw,15px);line-height:1.6}
+.mono{font-family:'Space Mono',monospace}
+.cd{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:clamp(12px,1.5vw,20px)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(8px,1.2vw,14px)}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:clamp(8px,1.2vw,14px)}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1vw,10px)}
+.st{text-align:center;padding:clamp(10px,1.2vw,16px)}
+.st .n{font-family:'Space Mono';font-size:clamp(22px,3vw,36px);font-weight:700;line-height:1}
+.st .l{font-size:clamp(9px,1vw,12px);color:var(--sb);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:clamp(10px,1vw,13px)}
+th{background:rgba(0,229,176,0.1);color:var(--ac);font-weight:700;padding:7px 10px}
+td{padding:6px 10px;border-bottom:1px solid var(--bd)}
+tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
+tr.hi td{background:rgba(0,229,176,0.05);font-weight:700;color:var(--ac)}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vo{border-radius:12px;padding:clamp(14px,1.8vw,22px);background:rgba(239,68,68,0.03);border:1px solid rgba(239,68,68,0.1)}
+.vn{border-radius:12px;padding:clamp(14px,1.8vw,22px);background:rgba(0,229,176,0.03);border:1px solid rgba(0,229,176,0.12)}
+.vs li{list-style:none;padding:4px 0;font-size:clamp(11px,1.1vw,13px);color:var(--sb);border-bottom:1px solid var(--bd)}
+.bar{display:flex;align-items:flex-end;gap:clamp(6px,1.2vw,16px);height:clamp(80px,12vh,150px)}
+.bc{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bb{width:100%;border-radius:5px 5px 0 0;min-height:3px}
+.ck li{list-style:none;padding:4px 0;font-size:clamp(11px,1.2vw,14px);color:var(--sb);display:flex;gap:7px}
+.ck li::before{content:'✓';color:var(--ac);font-weight:700}
+.tl{position:relative;padding-right:24px}
+.tl::before{content:'';position:absolute;right:8px;top:0;bottom:0;width:2px;background:var(--bd)}
+.tl-i{position:relative;margin-bottom:14px;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:10px}
+.tl-i::before{content:'';position:absolute;right:-20px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--ac);border:2px solid var(--bg)}
+.nav{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:100;background:rgba(6,10,16,0.85);backdrop-filter:blur(16px);padding:5px 12px;border-radius:99px;border:1px solid var(--bd)}
+.nd{width:7px;height:7px;border-radius:50%;background:var(--dm);cursor:pointer;transition:0.3s}
+.nd.on{background:var(--ac);box-shadow:0 0 6px var(--ac)}
+.sn{position:fixed;top:14px;left:16px;font-family:'Space Mono';font-size:10px;color:var(--dm);z-index:100}
+.lm{position:fixed;top:14px;right:16px;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--ac);z-index:100;opacity:0.4}
+.S.on .cd,.S.on .st,.S.on .tl-i{animation:fi 0.4s ease both}
+.S.on .cd:nth-child(2),.S.on .st:nth-child(2),.S.on .tl-i:nth-child(2){animation-delay:0.07s}
+.S.on .cd:nth-child(3),.S.on .st:nth-child(3),.S.on .tl-i:nth-child(3){animation-delay:0.14s}
+.S.on .cd:nth-child(4),.S.on .tl-i:nth-child(4){animation-delay:0.21s}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:768px){.g2,.g3,.g4,.vs{grid-template-columns:1fr}.bar{height:60px}}
+.sec-num{font-family:'Space Mono';font-size:clamp(48px,8vw,96px);font-weight:700;opacity:0.1;position:absolute;top:15%;right:8%}
+th:first-child{text-align:left}td:first-child{text-align:left}.tl{padding-left:24px;padding-right:0}.tl::before{left:8px;right:auto}.tl-i::before{left:-20px;right:auto}.sec-num{left:8%}</style>
+</head>
+<body>
+<div class="lm">ZIKKIT</div>
+<div class="sn" id="sn">1 / 9</div>
+<div class="S gg on">
+<div style="margin-bottom:16px"><span class="mono ac" style="font-size:12px;letter-spacing:2px">PILOT PROGRAM — MARCH 2026</span></div>
+<h1>Join Our<br><span class="ac">Pilot Program</span></h1>
+<p class="sb" style="max-width:500px;margin-top:14px">AI-powered field service platform replacing receptionist + software tools.<br>First month free. No commitment. 10 spots only.</p>
+</div>
+<div class="S gr"><h2>Your Pain — We Know It's Real</h2>
+<div class="g2">
+<div class="cd"><h3 class="rd" style="margin-bottom:8px">What's happening today</h3><ul class="ck">
+<li style="color:var(--rd)">Paying $2,400/mo for a receptionist — or missing calls</li><li>Leads lost in texts, voicemail, sticky notes</li><li>Managing jobs on Excel or paper calendars</li><li>Techs in the field without info — double trips</li><li>Manual billing — forget, mistakes, lost revenue</li><li>Paying for 4-5 separate tools that don't connect</li><li style="color:var(--rd)">End of month — no idea how much you actually made</li></ul></div>
+<div class="cd"><h3 style="margin-bottom:8px">What it costs you</h3>
+<table><tr><th style="text-align:left">Item</th><th>Monthly</th><th>Annual</th></tr>
+<tr><td style="text-align:left">Receptionist</td><td style="color:var(--rd)">$2,400</td><td>$28,800</td></tr>
+<tr><td style="text-align:left">Software</td><td>$300</td><td>$3,600</td></tr>
+<tr><td style="text-align:left">SMS</td><td>$150</td><td>$1,800</td></tr>
+<tr><td style="text-align:left">Payroll</td><td>$500</td><td>$6,000</td></tr>
+<tr><td style="text-align:left">Lost leads</td><td style="color:var(--rd)">$2,000</td><td>$24,000</td></tr>
+<tr class="hi"><td style="text-align:left">Total</td><td>$6,150</td><td>$73,800</td></tr></table></div></div></div>
+<div class="S gg"><h2>What ZIKKIT Does — And How It Changes Your Day</h2>
+<div class="g2">
+<div class="cd"><h3 class="ac">🤖 AI answers calls 24/7</h3><p class="sb" style="margin-top:6px">Customer calls at 11PM? Bot answers, collects info, books appointment, sends SMS. You sleep — the lead is already in the system.</p></div>
+<div class="cd"><h3 class="bl">👥 All leads in one place</h3><p class="sb" style="margin-top:6px">No more WhatsApp + Excel + sticky notes. One CRM, statuses, follow-up, convert to job in one click.</p></div>
+<div class="cd"><h3 class="pr">👷 Techs managed</h3><p class="sb" style="margin-top:6px">GPS, scheduling, auto commissions. Customer no answer? Auto SMS. Waiting for parts? Tracking with ETA.</p></div>
+<div class="cd"><h3 class="or">📄 Quotes + Payment</h3><p class="sb" style="margin-top:6px">Create from price list, send via SMS, digital signature. Customer approves from phone. No paper.</p></div>
+<div class="cd"><h3 class="bl">📊 Reports — finally know what you earned</h3><p class="sb" style="margin-top:6px">Revenue, profitability by tech, by job type. Visual charts. Excel export.</p></div>
+<div class="cd"><h3 class="pr">🌐 Customer doesn't call — sees everything</h3><p class="sb" style="margin-top:6px">Customer portal: job status, approve quote, pay, rate. Fewer phone calls.</p></div></div></div>
+<div class="S"><h2>How Your Day Changes With ZIKKIT</h2>
+<div class="vs">
+<div class="vo"><h3 class="rd" style="margin-bottom:10px">Today — Without ZIKKIT</h3><ul>
+<li>7AM — Wake up, check texts, 12 unanswered messages</li><li>8AM — Calls come in, can't answer — working</li><li>10AM — Trying to remember what you promised yesterday</li><li>12PM — Tech calls: "What's the address?"</li><li>3PM — Forgot to send that quote</li><li>6PM — 5 more missed calls</li><li>10PM — Trying to do billing in Excel</li><li style="font-weight:700;color:var(--rd)">No idea what you made this month</li></ul></div>
+<div class="vn"><h3 class="ac" style="margin-bottom:10px">Tomorrow — With ZIKKIT</h3><ul>
+<li>7AM — Wake up, 3 new leads already in system from last night</li><li>8AM — AI answers calls, you work</li><li>10AM — Assign tech in one tap, GPS shows who's closest</li><li>12PM — Tech sees everything in app</li><li>3PM — Quote was auto-sent via SMS</li><li>6PM — Every call answered. Zero lost leads.</li><li>10PM — Open Dashboard, see $4,200 revenue today</li><li style="font-weight:700;color:var(--ac)">Know exactly what you earned — and have time for family</li></ul></div></div></div>
+<div class="S"><h2>How Much You Save</h2>
+<div class="cd" style="text-align:center;background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.12);margin-bottom:10px">
+<p class="sb" style="margin-bottom:4px">Today you pay</p><p class="mono rd" style="font-size:clamp(28px,4vw,44px);font-weight:700">$6,150 / month</p>
+<p style="font-size:11px;color:var(--dm)">Receptionist + software + lost leads + errors</p></div>
+<div class="cd" style="text-align:center;background:rgba(0,229,176,0.04);border:1px solid rgba(0,229,176,0.15);margin-bottom:10px">
+<p class="sb" style="margin-bottom:4px">With ZIKKIT</p><p class="mono ac" style="font-size:clamp(28px,4vw,44px);font-weight:700">$699 / month</p>
+<p style="font-size:11px;color:var(--dm)">Everything included — AI Bot, CRM, techs, quotes, reports, portal</p></div>
+<div class="cd" style="text-align:center;background:rgba(0,229,176,0.08);border:1px solid rgba(0,229,176,0.2)">
+<p class="sb" style="margin-bottom:4px">Annual Savings</p><p class="mono ac" style="font-size:clamp(32px,5vw,52px);font-weight:700">$67,510</p></div></div>
+<div class="S"><h2>Where We Are Now</h2>
+<div class="g2">
+<div class="cd"><h3 class="ac" style="margin-bottom:8px">Product — Ready</h3><ul class="ck">
+<li>15+ working pages — Dashboard, Jobs, Leads, Quotes, AI Bot, Reports, GPS...</li><li>Real AI Voice Bot — advanced AI engine + Twilio</li><li>English + Spanish + Hebrew</li><li>Tech interface with "No Answer" + Parts tracking</li><li>Bot simulator for testing</li></ul></div>
+<div class="cd"><h3 class="bl" style="margin-bottom:8px">The Ideal Partner</h3><ul class="ck">
+<li><strong>10 field service businesses</strong> willing to try</li><li>HVAC, plumbing, electrical, cleaning, locksmith</li><li>2-15 employees</li><li>Currently paying for receptionist or missing calls</li><li>Willing to give honest feedback</li></ul></div></div></div>
+<div class="S gg"><h2>Pilot Terms</h2>
+<div class="tl">
+<div class="tl-i"><h3 class="ac">First month — completely free</h3><p class="sb">100% functionality. AI Bot, CRM, everything. No limits.</p></div>
+<div class="tl-i"><h3 class="ac">Setup + training — free</h3><p class="sb">We set up everything. Train you and your team. Direct support.</p></div>
+<div class="tl-i"><h3 class="ac">No commitment</h3><p class="sb">Not a fit? Walk away. No charges, no questions, no hassle.</p></div>
+<div class="tl-i"><h3 class="ac">After month — $699/mo or $6,290/yr</h3><p class="sb">If you're happy, continue. Save $67,510/year.</p></div></div>
+<div class="cd" style="margin-top:12px"><h3 style="margin-bottom:8px">What we need from you</h3><ul class="ck">
+<li>30 minutes for initial setup</li><li>Forward calls to ZIKKIT number (or call forwarding)</li><li>Use the system to manage your business</li><li>Honest feedback — what works, what doesn't</li><li>If happy — recommend to friends</li></ul></div></div>
+<div class="S"><h2>Timeline — What Happens When</h2>
+<div class="tl">
+<div class="tl-i"><h3 class="ac">Day 1 — Setup</h3><p class="sb">30 minutes. Configure business, services, price list, bot. Learn the interface.</p></div>
+<div class="tl-i"><h3 class="bl">Day 2-3 — Bot goes live</h3><p class="sb">Call forwarding from your phone to ZIKKIT number. Bot starts answering. Leads flow in.</p></div>
+<div class="tl-i"><h3 class="pr">Week 1 — Full usage</h3><p class="sb">Managing jobs, quotes, techs through the system. Seeing reports.</p></div>
+<div class="tl-i"><h3 class="or">Week 2-3 — Refinement</h3><p class="sb">Customize bot, add flows, verify everything works smoothly.</p></div>
+<div class="tl-i"><h3 class="ac">End of month — Decision</h3><p class="sb">See the savings in real numbers. Decide if you continue. No pressure.</p></div></div></div>
+<div class="S gc"><div style="text-align:center">
+<h1><span class="ac">ZIKKIT</span></h1>
+<p class="sb" style="margin:16px auto;max-width:460px">Replace the receptionist. Run the business. Save $67,000/year.</p>
+<div class="cd" style="max-width:380px;margin:24px auto;text-align:center;padding:24px;border-color:rgba(0,229,176,0.2)">
+<h3 class="ac" style="font-size:20px;margin-bottom:8px">Ready to try?</h3>
+<p style="font-size:15px;color:var(--sb)">ohanaliel@gmail.com</p>
+<p class="ac" style="font-size:13px;margin-top:8px">First month free. 10 spots only.</p></div></div></div>
+<div class="nav" id="nav"></div>
+<script>
+const sl=document.querySelectorAll('.S');let c=0;const t=sl.length;
+function bn(){const n=document.getElementById('nav');n.innerHTML='';for(let i=0;i<t;i++){const d=document.createElement('div');d.className='nd'+(i===c?' on':'');d.onclick=()=>go(i);n.appendChild(d);}}
+function go(n){if(n<0||n>=t||n===c)return;sl[c].className='S '+(sl[c].getAttribute('data-g')||'')+' '+(n>c?'off':'');sl[n].className='S '+(sl[n].getAttribute('data-g')||'')+' on';c=n;document.getElementById('sn').textContent=(c+1)+' / '+t;bn();}
+sl.forEach(s=>{const g=Array.from(s.classList).filter(x=>x.startsWith('g')).join(' ');s.setAttribute('data-g',g);});
+bn();
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' ')go(c+1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(c-1);});
+let tx=0;document.addEventListener('touchstart',e=>tx=e.touches[0].clientX);
+document.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(d>50)go(c-1);if(d<-50)go(c+1);});
+document.addEventListener('click',e=>{if(e.target.closest('.nav'))return;if(e.clientX>window.innerWidth*0.65)go(c+1);if(e.clientX<window.innerWidth*0.35)go(c-1);});
+</script>
+</body>
+</html>

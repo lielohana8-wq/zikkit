@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZIKKIT — Investor Deck</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060a10;--card:#111827;--ac:#00E5B0;--bl:#3B82F6;--pr:#8B5CF6;--or:#F59E0B;--rd:#EF4444;--tx:#F0F4F8;--sb:#7A8BA0;--dm:#3A4A5C;--bd:rgba(255,255,255,0.06)}
+html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx)}
+.S{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:clamp(28px,4vw,64px);opacity:0;transform:translateX(40px);transition:all 0.5s cubic-bezier(0.4,0,0.2,1);pointer-events:none;overflow-y:auto}
+.S.on{opacity:1;transform:none;pointer-events:auto}.S.off{opacity:0;transform:translateX(-40px)}
+.S::before{content:'';position:absolute;inset:0;pointer-events:none}
+.gg::before{background:radial-gradient(ellipse 60% 50% at 30% 20%,rgba(0,229,176,0.06),transparent 70%)}
+.gr::before{background:radial-gradient(ellipse 60% 50% at 70% 30%,rgba(239,68,68,0.06),transparent 70%)}
+.gb::before{background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(59,130,246,0.05),transparent 70%)}
+.gc::before{background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(0,229,176,0.07),transparent 60%)}
+h1{font-family:'Syne',sans-serif;font-size:clamp(32px,5.5vw,56px);font-weight:800;line-height:1.08;letter-spacing:-1px}
+h2{font-family:'Syne',sans-serif;font-size:clamp(22px,3vw,36px);font-weight:800;letter-spacing:-0.5px;margin-bottom:14px}
+h3{font-family:'Syne',sans-serif;font-size:clamp(15px,1.8vw,20px);font-weight:700}
+.ac{color:var(--ac)}.rd{color:var(--rd)}.bl{color:var(--bl)}.pr{color:var(--pr)}.or{color:var(--or)}
+.sb{color:var(--sb);font-size:clamp(12px,1.4vw,15px);line-height:1.6}
+.mono{font-family:'Space Mono',monospace}
+.cd{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:clamp(12px,1.5vw,20px)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(8px,1.2vw,14px)}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:clamp(8px,1.2vw,14px)}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1vw,10px)}
+.st{text-align:center;padding:clamp(10px,1.2vw,16px)}
+.st .n{font-family:'Space Mono';font-size:clamp(22px,3vw,36px);font-weight:700;line-height:1}
+.st .l{font-size:clamp(9px,1vw,12px);color:var(--sb);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:clamp(10px,1vw,13px)}
+th{background:rgba(0,229,176,0.1);color:var(--ac);font-weight:700;padding:7px 10px}
+td{padding:6px 10px;border-bottom:1px solid var(--bd)}
+tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
+tr.hi td{background:rgba(0,229,176,0.05);font-weight:700;color:var(--ac)}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vo{border-radius:12px;padding:clamp(14px,1.8vw,22px);background:rgba(239,68,68,0.03);border:1px solid rgba(239,68,68,0.1)}
+.vn{border-radius:12px;padding:clamp(14px,1.8vw,22px);background:rgba(0,229,176,0.03);border:1px solid rgba(0,229,176,0.12)}
+.vs li{list-style:none;padding:4px 0;font-size:clamp(11px,1.1vw,13px);color:var(--sb);border-bottom:1px solid var(--bd)}
+.bar{display:flex;align-items:flex-end;gap:clamp(6px,1.2vw,16px);height:clamp(80px,12vh,150px)}
+.bc{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bb{width:100%;border-radius:5px 5px 0 0;min-height:3px}
+.ck li{list-style:none;padding:4px 0;font-size:clamp(11px,1.2vw,14px);color:var(--sb);display:flex;gap:7px}
+.ck li::before{content:'✓';color:var(--ac);font-weight:700}
+.tl{position:relative;padding-right:24px}
+.tl::before{content:'';position:absolute;right:8px;top:0;bottom:0;width:2px;background:var(--bd)}
+.tl-i{position:relative;margin-bottom:14px;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:10px}
+.tl-i::before{content:'';position:absolute;right:-20px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--ac);border:2px solid var(--bg)}
+.nav{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:100;background:rgba(6,10,16,0.85);backdrop-filter:blur(16px);padding:5px 12px;border-radius:99px;border:1px solid var(--bd)}
+.nd{width:7px;height:7px;border-radius:50%;background:var(--dm);cursor:pointer;transition:0.3s}
+.nd.on{background:var(--ac);box-shadow:0 0 6px var(--ac)}
+.sn{position:fixed;top:14px;left:16px;font-family:'Space Mono';font-size:10px;color:var(--dm);z-index:100}
+.lm{position:fixed;top:14px;right:16px;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--ac);z-index:100;opacity:0.4}
+.S.on .cd,.S.on .st,.S.on .tl-i{animation:fi 0.4s ease both}
+.S.on .cd:nth-child(2),.S.on .st:nth-child(2),.S.on .tl-i:nth-child(2){animation-delay:0.07s}
+.S.on .cd:nth-child(3),.S.on .st:nth-child(3),.S.on .tl-i:nth-child(3){animation-delay:0.14s}
+.S.on .cd:nth-child(4),.S.on .tl-i:nth-child(4){animation-delay:0.21s}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:768px){.g2,.g3,.g4,.vs{grid-template-columns:1fr}.bar{height:60px}}
+.sec-num{font-family:'Space Mono';font-size:clamp(48px,8vw,96px);font-weight:700;opacity:0.1;position:absolute;top:15%;right:8%}
+th:first-child{text-align:left}td:first-child{text-align:left}.tl{padding-left:24px;padding-right:0}.tl::before{left:8px;right:auto}.tl-i::before{left:-20px;right:auto}.sec-num{left:8%}</style>
+</head>
+<body>
+<div class="lm">ZIKKIT</div>
+<div class="sn" id="sn">1 / 18</div>
+<div class="S gg on">
+<div style="margin-bottom:16px"><span class="mono ac" style="font-size:12px;letter-spacing:2px">INVESTOR DECK — MARCH 2026</span></div>
+<h1>Replace the receptionist.<br><span class="ac">Run field service with AI.</span></h1>
+<p class="sb" style="max-width:560px;margin-top:14px">SaaS platform replacing receptionist + 6 management tools with one AI-powered solution.<br>Target: 1.2M US field service businesses.</p>
+<div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap">
+<div class="cd st" style="min-width:120px"><div class="n ac">$6.8B</div><div class="l">Market Size</div></div>
+<div class="cd st" style="min-width:120px"><div class="n bl">90%</div><div class="l">Gross Margin</div></div>
+<div class="cd st" style="min-width:120px"><div class="n pr">96:1</div><div class="l">LTV:CAC</div></div>
+</div>
+<p style="color:var(--dm);font-size:10px;margin-top:28px">Confidential</p>
+</div>
+<div class="S gc">
+<div style="text-align:center">
+<h2 style="font-size:clamp(20px,2.5vw,28px);color:var(--sb);font-weight:500;margin-bottom:24px">One Liner</h2>
+<h1 style="max-width:800px;margin:0 auto"><span class="ac">ZIKKIT</span> gives small businesses enterprise-level power — with an AI receptionist that none of the competitors offer, at a price any business can afford.</h1>
+<p class="sb" style="margin-top:20px">$699/mo replaces $2,400 receptionist + $1,750 in software tools</p>
+</div>
+</div>
+<div class="S gr"><div class="sec-num rd">01</div><h2>The Problem</h2><p class="sb">Why field service businesses lose money — every single day</p><div style="width:50px;height:3px;background:var(--rd);border-radius:2px;margin-top:8px"></div></div>
+<div class="S gr">
+<h2>1.2 million US field service businesses share the same pain</h2>
+<div class="g2">
+<div class="cd">
+<h3 class="rd" style="margin-bottom:10px">Money burned</h3>
+<ul class="ck">
+<li style="color:var(--rd)">Receptionist — $2,400/mo ($28,800/yr)</li>
+<li>CRM software — $300/mo</li>
+<li>SMS & reminders — $150/mo</li>
+<li>Payroll service — $500/mo</li>
+<li style="color:var(--rd)">Total tools + receptionist: $3,350/mo</li>
+</ul>
+</div>
+<div class="cd">
+<h3 class="rd" style="margin-bottom:10px">Revenue lost</h3>
+<ul class="ck">
+<li style="color:var(--rd)">67% of calls unanswered after hours</li>
+<li>35% of leads lost (texts, voicemail, sticky notes)</li>
+<li>$2,000/mo in leads that never get a callback</li>
+<li>$800/mo in manual billing errors</li>
+<li style="color:var(--rd)">Total loss: $6,150/mo = $73,800/yr</li>
+</ul>
+</div>
+</div>
+<div class="cd" style="margin-top:12px;text-align:center;background:rgba(239,68,68,0.04);border-color:rgba(239,68,68,0.12)">
+<p class="sb">The average US field service business loses <span class="mono rd" style="font-size:clamp(24px,3vw,36px);font-weight:700">$73,800</span> per year — on a receptionist who doesn't work 24/7, software that doesn't talk to each other, and leads falling through the cracks.</p>
+</div>
+</div>
+<div class="S"><h2>The receptionist — expense #1 you can eliminate</h2>
+<div class="vs">
+<div class="vo"><h3 class="rd" style="margin-bottom:10px">Receptionist — $2,400/mo</h3><ul>
+<li>Works 8 hours/day, 5 days/week</li><li>67% of calls come after her hours</li><li>Vacations, sick days, training, turnover</li><li>Doesn't update CRM in real-time</li><li>Scheduling errors — callbacks, forgotten</li><li style="font-weight:700;color:var(--rd)">True cost: $2,400 + $2,800 lost leads = $5,200/mo</li></ul></div>
+<div class="vn"><h3 class="ac" style="margin-bottom:10px">ZIKKIT AI Voice Bot — $699/mo (all included)</h3><ul>
+<li>Answers 24/7/365 — weekends, holidays, 3AM</li><li>Books appointments automatically</li><li>Creates CRM lead instantly with full transcript</li><li>Sends automatic SMS to customer</li><li>Detects urgency — sends instant alert</li><li>3 languages: English, Spanish, Hebrew</li><li style="font-weight:700;color:var(--ac)">Savings: $4,501/mo = $54,012/yr — receptionist alone</li></ul></div>
+</div></div>
+<div class="S gg"><div class="sec-num ac">02</div><h2>The Solution</h2><p class="sb">How ZIKKIT solves the problem</p><div style="width:50px;height:3px;background:var(--ac);border-radius:2px;margin-top:8px"></div></div>
+<div class="S gg"><h2>How ZIKKIT works — from the business owner's perspective</h2>
+<div class="tl">
+<div class="tl-i"><h3 class="ac">📞 Customer calls</h3><p class="sb">AI Voice Bot answers instantly. Asks name, address, issue. Detects urgency.</p></div>
+<div class="tl-i"><h3 class="bl">📋 Lead created automatically</h3><p class="sb">CRM lead with full transcript. Auto SMS to customer. Alert to owner.</p></div>
+<div class="tl-i"><h3 class="pr">👷 Technician dispatched</h3><p class="sb">Owner sees lead, assigns tech. GPS shows who's closest.</p></div>
+<div class="tl-i"><h3 class="or">🔧 Execution + closure</h3><p class="sb">Tech updates status. Parts tracking. Job closure with auto profit calc.</p></div>
+<div class="tl-i"><h3 class="ac">💰 Billing + reports</h3><p class="sb">Quote → digital signature → payment. Revenue and profitability reports in real-time.</p></div>
+</div></div>
+<div class="S"><h2>Full platform — everything for $699/mo</h2>
+<div class="g3">
+<div class="cd"><h3 class="ac">🤖 AI Voice Bot</h3><p class="sb" style="margin-top:6px">Answers 24/7. Books appointments. 3 languages. Creates leads. Sends SMS. Detects urgency. Fully replaces receptionist.</p></div>
+<div class="cd"><h3 class="bl">👥 CRM & Leads</h3><p class="sb" style="margin-top:6px">Full tracking from first lead to closed job. Statuses, follow-up, convert to job, profit calculation.</p></div>
+<div class="cd"><h3 class="pr">👷 Technician Mgmt</h3><p class="sb" style="margin-top:6px">Real-time GPS. Smart scheduling. Auto commissions. No-answer → auto SMS. Parts tracking with ETA.</p></div>
+<div class="cd"><h3 class="or">📄 Quotes & Invoicing</h3><p class="sb" style="margin-top:6px">Quick create from price list. SMS delivery. Digital signature. Auto PDF. Convert to job in one click.</p></div>
+<div class="cd"><h3 class="bl">📊 Reports & BI</h3><p class="sb" style="margin-top:6px">Revenue, profitability, tech performance, conversion rates. Visual charts. Excel export.</p></div>
+<div class="cd"><h3 class="pr">🌐 Customer Portal</h3><p class="sb" style="margin-top:6px">Customer sees job status, approves quote, pays, rates service — without calling.</p></div>
+</div></div>
+<div class="S gb"><h2>Why now — and why AI</h2>
+<div class="g2">
+<div class="cd"><h3 class="ac" style="margin-bottom:8px">What changed in 2024-2026</h3><ul class="ck">
+<li>AI became good enough for real phone conversations</li><li>AI call cost dropped to $0.05/min — 50x cheaper than receptionist</li><li>Twilio API enables calls in any country</li><li>78% of SMBs prefer self-service over calling a rep</li><li>Post-COVID — business owners accept AI tools</li></ul></div>
+<div class="cd"><h3 class="bl" style="margin-bottom:8px">Why us, not others</h3><ul class="ck">
+<li><strong>AI-native from day one</strong> — not a bolted-on feature</li><li><strong>Full-stack FSM</strong> — not just a bot, a complete platform</li><li><strong>Actually replaces receptionist</strong> — no competitor does this</li><li><strong>SMB pricing</strong> — $699 vs ServiceTitan's $500+ (no AI)</li><li><strong>Multi-language</strong> — EN/ES/HE — huge Hispanic US market</li></ul></div>
+</div></div>
+<div class="S gb"><div class="sec-num bl">03</div><h2>Market & Competition</h2><p class="sb">A multi-billion dollar opportunity</p><div style="width:50px;height:3px;background:var(--bl);border-radius:2px;margin-top:8px"></div></div>
+<div class="S"><h2>Field Service Management Market</h2>
+<div class="g4">
+<div class="cd st"><div class="n ac">$6.8B</div><div class="l">Global 2024</div></div>
+<div class="cd st"><div class="n bl">14%</div><div class="l">CAGR to 2030</div></div>
+<div class="cd st"><div class="n pr">$18B</div><div class="l">Projected 2030</div></div>
+<div class="cd st"><div class="n or">1.2M</div><div class="l">US SMBs</div></div>
+</div>
+<div class="cd" style="margin-top:12px"><h3 class="ac" style="margin-bottom:8px">ZIKKIT Target — SMB Segment</h3>
+<table><tr><th style="text-align:left">Segment</th><th>Businesses</th><th>Primary Pain</th><th>Current Solution</th></tr>
+<tr><td style="text-align:left">HVAC</td><td>350,000</td><td>Missed calls</td><td>Receptionist / Jobber</td></tr>
+<tr><td style="text-align:left">Plumbing</td><td>180,000</td><td>Job tracking</td><td>Manual / Workiz</td></tr>
+<tr><td style="text-align:left">Electrical</td><td>150,000</td><td>Tech dispatch</td><td>Manual / Housecall</td></tr>
+<tr><td style="text-align:left">Cleaning</td><td>200,000</td><td>Lost leads</td><td>WhatsApp / notes</td></tr>
+<tr><td style="text-align:left">Locksmith + Pest + Other</td><td>320,000</td><td>Billing & reports</td><td>Excel / paper</td></tr>
+<tr class="hi"><td style="text-align:left">Total TAM</td><td>1,200,000</td><td></td><td></td></tr></table></div></div>
+<div class="S"><h2>Competitive Landscape — Why We Win</h2>
+<table><tr><th style="text-align:left"></th><th style="background:rgba(0,229,176,0.15)">ZIKKIT</th><th>ServiceTitan</th><th>Jobber</th><th>Workiz</th><th>Housecall</th></tr>
+<tr><td style="text-align:left"><strong>AI Voice Bot</strong></td><td class="ac" style="font-size:16px">✓</td><td class="rd" style="font-size:16px">✗</td><td class="rd" style="font-size:16px">✗</td><td class="rd" style="font-size:16px">✗</td><td class="rd" style="font-size:16px">✗</td></tr>
+<tr><td style="text-align:left">Replaces Receptionist</td><td class="ac" style="font-size:16px">✓</td><td class="rd" style="font-size:16px">✗</td><td class="rd" style="font-size:16px">✗</td><td class="rd" style="font-size:16px">✗</td><td class="rd" style="font-size:16px">✗</td></tr>
+<tr><td style="text-align:left">Payroll + Commissions</td><td class="ac" style="font-size:16px">✓</td><td class="ac" style="font-size:16px">✓</td><td class="rd" style="font-size:16px">✗</td><td class="rd" style="font-size:16px">✗</td><td class="rd" style="font-size:16px">✗</td></tr>
+<tr><td style="text-align:left">Price</td><td class="ac" style="font-weight:700">$699</td><td style="color:var(--sb)">$500+</td><td style="color:var(--sb)">$49+</td><td style="color:var(--sb)">$65+</td><td style="color:var(--sb)">$49+</td></tr>
+<tr><td style="text-align:left">Target</td><td class="ac">SMB</td><td style="color:var(--sb)">Enterprise</td><td style="color:var(--sb)">Micro</td><td style="color:var(--sb)">Small</td><td style="color:var(--sb)">Micro</td></tr>
+<tr><td style="text-align:left">Core Value</td><td class="ac">AI + Full FSM</td><td style="color:var(--sb)">Full ERP</td><td style="color:var(--sb)">Simplicity</td><td style="color:var(--sb)">SMS</td><td style="color:var(--sb)">Price</td></tr></table>
+<div class="cd" style="margin-top:12px;text-align:center;background:rgba(0,229,176,0.04);border-color:rgba(0,229,176,0.12)"><p class="sb"><strong>Our position:</strong> ZIKKIT at $699 replaces receptionist ($2,400) + software ($950) = saves $2,651/mo from day one</p></div></div>
+<div class="S gg"><div class="sec-num ac">04</div><h2>Business Model & Financials</h2><p class="sb">How we make money and grow</p><div style="width:50px;height:3px;background:var(--ac);border-radius:2px;margin-top:8px"></div></div>
+<div class="S"><h2>Revenue Streams</h2>
+<div class="g2"><div><div class="cd" style="margin-bottom:10px"><h3 class="ac" style="margin-bottom:8px">Recurring Revenue (SaaS)</h3>
+<table><tr><th style="text-align:left">Plan</th><th>Price</th><th>Margin</th></tr>
+<tr><td style="text-align:left">Business Monthly</td><td>$699/mo</td><td class="ac">90%</td></tr>
+<tr><td style="text-align:left">Business Annual</td><td>$6,290/yr</td><td class="ac">90%</td></tr></table></div></div>
+<div><div class="cd" style="margin-bottom:10px"><h3 class="bl" style="margin-bottom:8px">Usage-Based Revenue</h3>
+<table><tr><th style="text-align:left">Service</th><th>Price</th><th>Margin</th></tr>
+<tr><td style="text-align:left">AI Voice (per min)</td><td>$0.05</td><td class="ac">60%</td></tr>
+<tr><td style="text-align:left">SMS (per msg)</td><td>$0.02</td><td class="ac">60%</td></tr>
+<tr><td style="text-align:left">Phone Number</td><td>$1-6/mo</td><td class="ac">60%</td></tr></table></div></div></div>
+<div class="cd" style="text-align:center;background:rgba(0,229,176,0.04);border-color:rgba(0,229,176,0.12)"><p><span class="sb">Avg ARPU: </span><span class="mono ac" style="font-size:clamp(18px,2vw,24px);font-weight:700">$800/mo</span><span class="sb"> | Blended Margin: </span><span class="mono ac" style="font-size:clamp(18px,2vw,24px);font-weight:700">85%+</span></p></div></div>
+<div class="S"><h2>Unit Economics</h2>
+<div class="g3">
+<div class="cd st"><div class="n ac">$800</div><div class="l">ARPU / month</div></div>
+<div class="cd st"><div class="n or">$200</div><div class="l">CAC</div></div>
+<div class="cd st"><div class="n bl">$19,200</div><div class="l">LTV (24-mo avg)</div></div>
+<div class="cd st"><div class="n ac">96:1</div><div class="l">LTV : CAC</div></div>
+<div class="cd st"><div class="n pr">&lt;1 mo</div><div class="l">CAC Payback</div></div>
+<div class="cd st"><div class="n ac">90%</div><div class="l">Gross Margin</div></div></div>
+<div class="cd" style="margin-top:12px"><h3 style="margin-bottom:8px">Why CAC is so low</h3><ul class="ck">
+<li>Customer saves $67,510/yr — the ROI sells itself</li>
+<li>Facebook groups of field service owners — free exposure</li>
+<li>Partnerships with parts suppliers and accountants = referrals</li>
+<li>Word of mouth — small business owners talk to each other</li></ul></div></div>
+<div class="S gg"><h2>Where We Are Now</h2>
+<div class="g2">
+<div class="cd"><h3 class="ac" style="margin-bottom:10px">Product — Ready</h3><ul class="ck">
+<li>Full Next.js + Firebase platform — working</li><li>15+ pages: Dashboard, Jobs, Leads, Quotes, AI Bot, Reports, Payroll, GPS...</li><li>AI Voice Bot — advanced AI engine + Twilio</li><li>Customer portal — live</li><li>3 languages (EN/ES/HE) + RTL</li><li>Tech interface with No-Answer + Parts tracking</li></ul></div>
+<div class="cd"><h3 class="bl" style="margin-bottom:10px">Business — Pre-Revenue</h3><ul class="ck">
+<li>Founder + development team</li><li>Lean development — small agile team</li><li>Ready for pilot with 10 businesses</li><li>Geo-adaptive landing page (IL/US)</li><li>Twilio Trial configured and working</li><li>Paddle ready for payments</li></ul></div></div>
+<div class="cd" style="margin-top:12px;background:rgba(0,229,176,0.04);border-color:rgba(0,229,176,0.12)"><p class="sb" style="text-align:center"><strong>Status:</strong> Full product, working, ready for customers. Need: 10 pilot customers + $50K for initial marketing.</p></div></div>
+<div class="S"><h2>Financial Projections — 3 Years</h2>
+<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start">
+<div><table><tr><th style="text-align:left"></th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr>
+<tr><td style="text-align:left">Customers</td><td>50</td><td>300</td><td>1,200</td></tr>
+<tr><td style="text-align:left">ARR</td><td class="ac" style="font-weight:700">$500K</td><td class="ac" style="font-weight:700">$3M</td><td class="ac" style="font-weight:700">$12M</td></tr>
+<tr><td style="text-align:left">MRR (EOY)</td><td>$40K</td><td>$250K</td><td>$1M</td></tr>
+<tr><td style="text-align:left">Gross Margin</td><td>85%</td><td>88%</td><td>90%</td></tr>
+<tr><td style="text-align:left">Net Profit</td><td class="ac" style="font-weight:700">$265K</td><td class="ac" style="font-weight:700">$2.2M</td><td class="ac" style="font-weight:700">$9.7M</td></tr>
+<tr class="hi"><td style="text-align:left">Valuation Est.</td><td>$2.5M</td><td>$15M</td><td>$60M</td></tr></table>
+<div class="cd" style="margin-top:10px"><h3 style="margin-bottom:6px">GTM Strategy</h3><ul class="ck">
+<li>Q1-Q2: 10 pilots Israel + 10 US</li><li>Q3-Q4: Convert to paid, supplier partnerships</li><li>Year 2: Paid ads + content marketing</li><li>Year 3: Enterprise tier + channel partners</li></ul></div></div>
+<div><div class="bar" style="height:160px">
+<div class="bc"><div class="mono ac" style="font-size:12px;font-weight:700">$500K</div><div class="bb" style="height:12%;background:var(--ac)"></div><div style="font-size:10px;color:var(--sb)">Y1</div></div>
+<div class="bc"><div class="mono bl" style="font-size:12px;font-weight:700">$3M</div><div class="bb" style="height:45%;background:var(--bl)"></div><div style="font-size:10px;color:var(--sb)">Y2</div></div>
+<div class="bc"><div class="mono pr" style="font-size:12px;font-weight:700">$12M</div><div class="bb" style="height:100%;background:linear-gradient(to top,var(--ac),var(--bl))"></div><div style="font-size:10px;color:var(--sb)">Y3</div></div></div></div></div></div>
+<div class="S gc"><h2>What We're Looking For — A Partner, Not Just Capital</h2>
+<div class="g2">
+<div class="cd">
+<h3 class="ac" style="margin-bottom:10px">The Ideal Partner</h3>
+<ul class="ck">
+<li><strong>SaaS scaling experience</strong> — knows the path from 0 to $10M ARR</li>
+<li><strong>US market connections</strong> — field service, HVAC, plumbing networks</li>
+<li><strong>GTM guidance</strong> — pricing, channels, partnerships</li>
+<li><strong>Investor network</strong> — for the next round when we hit traction</li>
+<li><strong>Business acumen</strong> — to navigate this to massive success</li>
+<li><strong>Access to developers</strong> — engineering team for rapid scaling</li>
+<li><strong>Marketing budget</strong> — to reach first 1,000 customers</li>
+</ul>
+</div>
+<div class="cd">
+<h3 class="bl" style="margin-bottom:10px">What We Have — And What's Missing</h3>
+<ul class="ck">
+<li><strong style="color:var(--ac)">Have:</strong> Full product, working, ready for customers</li>
+<li><strong style="color:var(--ac)">Have:</strong> AI moat — Voice Bot no competitor offers</li>
+<li><strong style="color:var(--ac)">Have:</strong> Dream unit economics — 96:1 LTV:CAC</li>
+<li><strong style="color:var(--ac)">Have:</strong> Massive market — $6.8B, 1.2M businesses</li>
+<li><strong style="color:var(--or)">Need:</strong> A partner to navigate growth</li>
+<li><strong style="color:var(--or)">Need:</strong> US market connections</li>
+<li><strong style="color:var(--or)">Need:</strong> SaaS scaling experience</li>
+</ul>
+<div style="text-align:center;margin-top:14px;padding:12px;background:rgba(0,229,176,0.06);border-radius:8px">
+<p style="font-size:14px;font-weight:700;color:var(--ac)">ohanaliel@gmail.com</p>
+<p style="font-size:11px;color:var(--sb);margin-top:4px">The product is ready — we just need the right path forward</p>
+</div>
+</div></div></div>
+<div class="nav" id="nav"></div>
+<script>
+const sl=document.querySelectorAll('.S');let c=0;const t=sl.length;
+function bn(){const n=document.getElementById('nav');n.innerHTML='';for(let i=0;i<t;i++){const d=document.createElement('div');d.className='nd'+(i===c?' on':'');d.onclick=()=>go(i);n.appendChild(d);}}
+function go(n){if(n<0||n>=t||n===c)return;sl[c].className='S '+(sl[c].getAttribute('data-g')||'')+' '+(n>c?'off':'');sl[n].className='S '+(sl[n].getAttribute('data-g')||'')+' on';c=n;document.getElementById('sn').textContent=(c+1)+' / '+t;bn();}
+sl.forEach(s=>{const g=Array.from(s.classList).filter(x=>x.startsWith('g')).join(' ');s.setAttribute('data-g',g);});
+bn();
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' ')go(c+1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(c-1);});
+let tx=0;document.addEventListener('touchstart',e=>tx=e.touches[0].clientX);
+document.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(d>50)go(c-1);if(d<-50)go(c+1);});
+document.addEventListener('click',e=>{if(e.target.closest('.nav'))return;if(e.clientX>window.innerWidth*0.65)go(c+1);if(e.clientX<window.innerWidth*0.35)go(c-1);});
+</script>
+</body>
+</html>
