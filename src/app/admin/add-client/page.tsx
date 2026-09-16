@@ -54,8 +54,8 @@ export default function AdminAddClientPage() {
           plan: form.plan === 'trial' ? 'trial' : 'business',
           planStatus: form.plan === 'trial' ? 'trial' : 'active',
           planType: form.plan,
-          trialEnds: form.plan === 'trial' ? expiryDate : undefined,
-          subscriptionEnds: form.plan !== 'trial' ? expiryDate : undefined,
+          // Firestore rejects `undefined` — only include the relevant end date
+          ...(form.plan === 'trial' ? { trialEnds: expiryDate } : { subscriptionEnds: expiryDate }),
           setup_done: false,
         },
         db: {

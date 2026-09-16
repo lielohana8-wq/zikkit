@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { Box, Typography, Card, CardContent, TextField, InputAdornment, Button, Menu, MenuItem } from '@mui/material';
-import { getFirestoreDb, collection, getDocs, doc, setDoc } from '@/lib/firebase';
+import { getFirestoreDb, collection, getDocs, doc, updateDoc } from '@/lib/firebase';
 
 interface ClientBiz {
   id: string;
@@ -83,25 +83,36 @@ export default function AdminClientsPage() {
     return c;
   }, [clients]);
 
-  const handleExtend = async (client: ClientBiz, days: number) => {
+  /**
+   * Fix: these used to `setDoc(..., { cfg: { ...client.cfg } })` with no error handling —
+   * any failure (undefined values in cfg, permission, oversized document) threw silently
+   * and the UI just did nothing. Now: a targeted field update + a visible error.
+   */
+  const patchCfg = async (client: ClientBiz, patch: Record<string, unknown>) => {
     const db = getFirestoreDb();
+    const update: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(patch)) update[`cfg.${k}`] = v;
+    try {
+      await updateDoc(doc(db, 'businesses', client.id), update);
+      setClients((prev) => prev.map((c) => c.id === client.id ? { ...c, cfg: { ...c.cfg, ...patch } } : c));
+    } catch (e) {
+      const msg = (e as { code?: string; message?: string }).code || (e as Error).message || String(e);
+      console.error('[Admin] update failed:', e);
+      alert('השמירה נכשלה: ' + msg + '\n(אם זה permission-denied — החשבון שלך לא ב-super_admins, או ה-rules לא פרוסים)');
+    } finally {
+      setMenuAnchor(null); setMenuClient(null);
+    }
+  };
+
+  const handleExtend = async (client: ClientBiz, days: number) => {
     const end = client.cfg?.trialEnds || client.cfg?.subscriptionEnds || new Date().toISOString();
     const newEnd = new Date(Math.max(new Date(end).getTime(), Date.now()) + days * 86400000).toISOString();
     const field = client.cfg?.planStatus === 'trial' ? 'trialEnds' : 'subscriptionEnds';
-    await setDoc(doc(db, 'businesses', client.id), {
-      cfg: { ...client.cfg, [field]: newEnd },
-    }, { merge: true });
-    setClients((prev) => prev.map((c) => c.id === client.id ? { ...c, cfg: { ...c.cfg, [field]: newEnd } } : c));
-    setMenuAnchor(null); setMenuClient(null);
+    await patchCfg(client, { [field]: newEnd });
   };
 
   const handleChangeStatus = async (client: ClientBiz, status: string) => {
-    const db = getFirestoreDb();
-    await setDoc(doc(db, 'businesses', client.id), {
-      cfg: { ...client.cfg, planStatus: status },
-    }, { merge: true });
-    setClients((prev) => prev.map((c) => c.id === client.id ? { ...c, cfg: { ...c.cfg, planStatus: status } } : c));
-    setMenuAnchor(null); setMenuClient(null);
+    await patchCfg(client, { planStatus: status });
   };
 
   return (

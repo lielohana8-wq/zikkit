@@ -62,7 +62,11 @@ function loadLocalCfg(): BusinessConfig {
 
 function mirrorCfg(cfg: BusinessConfig) {
   if (typeof window === 'undefined') return;
-  try { localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify({ lang: cfg.lang, region: cfg.region, currency: cfg.currency, biz_name: cfg.biz_name })); } catch { /* quota — ignore */ }
+  try {
+    let prev: Record<string, unknown> = {};
+    try { prev = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || '{}'); } catch {}
+    localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify({ _langMigrated: prev._langMigrated, lang: cfg.lang, region: cfg.region, currency: cfg.currency, biz_name: cfg.biz_name }));
+  } catch { /* quota — ignore */ }
 }
 
 const BATCH_LIMIT = 400;

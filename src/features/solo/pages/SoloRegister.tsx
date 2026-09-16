@@ -15,6 +15,8 @@ export default function SoloRegister() {
 
   useEffect(() => { if (user) router.replace('/dashboard'); }, [user, router]);
 
+  if (user) return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text3, fontSize: 13 }}>Setting up your workspace…</Box>;
+
   const submit = async () => {
     clearError();
     if (!bizName.trim() || !email.includes('@') || password.length < 6) return;

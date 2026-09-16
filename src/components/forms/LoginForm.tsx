@@ -46,7 +46,11 @@ export function LoginForm() {
     }
   };
 
-  if (user) return null;
+  if (user) return (
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text3, fontSize: 13 }}>
+      {lang === 'he' ? 'מעביר אותך פנימה…' : 'Signing you in…'}
+    </Box>
+  );
 
   return (
     <Box

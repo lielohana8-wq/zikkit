@@ -52,8 +52,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // One-time migration: force Hebrew for existing users
+  // Legacy (IL edition only): one-time "force Hebrew" migration + a 3-second poll of localStorage.
+  // In the Solo edition this fought with the app (EN ↔ HE flicker) — it is skipped entirely there.
   useEffect(() => {
+    if (IS_SOLO_EDITION) return;
     try {
       const cfg = JSON.parse(localStorage.getItem('fp_config') || '{}');
       if (!cfg._langMigrated) {
@@ -65,8 +67,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
-  // Sync language from business config when it changes
+  // Sync language from business config when it changes (IL / US editions)
   useEffect(() => {
+    if (IS_SOLO_EDITION) { if (lang !== 'en') setLangState('en'); return; }
     const check = () => {
       try {
         const cfg = JSON.parse(localStorage.getItem('fp_config') || '{}');
@@ -78,7 +81,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       } catch {}
     };
     check();
-    // Re-check when storage changes (from DataProvider sync)
     window.addEventListener('storage', check);
     const timer = setInterval(check, 3000);
     return () => { window.removeEventListener('storage', check); clearInterval(timer); };

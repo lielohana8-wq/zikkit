@@ -1,4 +1,10 @@
 rules_version = '2';
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED-PROJECT rules: use this file when CA runs on the SAME Firebase project as IL.
+// Keeps every legacy path exactly as permissive as before (so the IL app / bot routes
+// keep working), and ADDS tenant-scoped access to the new per-record subcollections.
+// Deploy: copy over firestore.rules → firebase deploy --only firestore:rules,storage
+// ─────────────────────────────────────────────────────────────────────────────
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -14,31 +20,21 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/tech_lookup/$(emailKey())).data.bizId == bizId;
     }
 
-    // Per-user record
     match /users/{userId} {
       allow read, write: if signedIn() && request.auth.uid == userId;
     }
 
-    match /super_admins/{userId} {
-      allow read: if signedIn() && request.auth.uid == userId;
-    }
-
-    // Business = tenant. The owner's uid IS the business id.
-    // Previously: any signed-in user could read AND write any business. Now: owner, registered members, super admins.
+    // LEGACY (unchanged): the IL client still reads other businesses at tech login
     match /businesses/{bizId} {
-      allow read: if canAccess(bizId);
-      allow create: if isOwner(bizId);
-      allow update: if canAccess(bizId);
-      allow delete: if isOwner(bizId) || isSuperAdmin();
+      allow read: if signedIn();
+      allow write: if signedIn();
 
-      // Membership — a technician registers themself once tech_lookup points at this business
+      // NEW: membership + per-record subcollections are tenant-scoped
       match /members/{uid} {
         allow read: if canAccess(bizId);
         allow create, update: if signedIn() && request.auth.uid == uid && (isOwner(bizId) || lookupPointsHere(bizId));
         allow delete: if isOwner(bizId) || isSuperAdmin() || request.auth.uid == uid;
       }
-
-      // Every data collection (jobs, quotes, customers, receipts, closings, counters, presence, backups, …)
       match /{sub}/{docId} {
         allow read: if canAccess(bizId);
         allow write: if canAccess(bizId) && sub != 'members';
@@ -48,28 +44,26 @@ service cloud.firestore {
       }
     }
 
-    // Email → business lookup for team members (owner writes when inviting; techs read at login)
     match /tech_lookup/{lookupKey} {
-      allow read: if signedIn();
-      allow create, update: if signedIn() && (request.resource.data.bizId == request.auth.uid || isSuperAdmin());
-      allow delete: if signedIn() && (resource.data.bizId == request.auth.uid || isSuperAdmin());
+      allow read, write: if signedIn();
     }
 
-    // Customer-facing snapshots (quotes / receipts). World-readable by unguessable token; written by the business.
+    match /super_admins/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+    }
+
     match /public_portals/{token} {
-      allow read: if true;
-      allow create, update: if signedIn();
-      allow delete: if signedIn();
-    }
-
-    match /phone_lookup/{phoneNumber} {
       allow read: if true;
       allow write: if signedIn();
     }
 
-    // Server-side only (voice/SMS routes use the admin SDK). Was "read, write: if true" — closed.
+    // LEGACY (unchanged): voice/SMS routes still hit these without auth
     match /bot_conversations/{callId} {
-      allow read, write: if false;
+      allow read, write: if true;
+    }
+    match /phone_lookup/{phoneNumber} {
+      allow read: if true;
+      allow write: if signedIn();
     }
 
     match /agreements/{agreementId} {
