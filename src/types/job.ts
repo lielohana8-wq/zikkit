@@ -9,7 +9,8 @@ export type JobStatus =
   | 'cancelled'
   | 'no_answer'
   | 'callback'
-  | 'dispute';
+  | 'dispute'
+  | 'on_way';
 
 export interface Job {
   id: number;
@@ -50,6 +51,15 @@ export interface Job {
   quoteTotal?: number;
   quoteSentAt?: string;
   quoteSignedAt?: string;
+  // Solo edition fields
+  techUid?: string;       // Firebase uid of the assigned technician (rules scope on this)
+  customerId?: number;
+  jobType?: string;
+  quoteId?: number;
+  closingId?: number;
+  createdBy?: string;
+  completedAt?: string;
+  startedAt?: string;
 }
 
 export interface FollowUp {

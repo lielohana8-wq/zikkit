@@ -1,8 +1,8 @@
 rules_version = '2';
 // ─────────────────────────────────────────────────────────────────────────────
-// SHARED-PROJECT rules: use this file when CA runs on the SAME Firebase project as IL.
-// Keeps every legacy path exactly as permissive as before (so the IL app / bot routes
-// keep working), and ADDS tenant-scoped access to the new per-record subcollections.
+// SHARED-PROJECT rules: CA runs on the SAME Firebase project as IL.
+// Legacy top-level paths stay exactly as permissive as before (so the IL app and
+// its bot routes keep working); the new per-record subcollections are role-scoped.
 // Deploy: copy over firestore.rules → firebase deploy --only firestore:rules,storage
 // ─────────────────────────────────────────────────────────────────────────────
 service cloud.firestore {
@@ -12,13 +12,21 @@ service cloud.firestore {
     function emailKey() { return request.auth.token.email.lower().replace('[@.]', '_'); }
     function isOwner(bizId) { return signedIn() && request.auth.uid == bizId; }
     function isSuperAdmin() { return signedIn() && exists(/databases/$(database)/documents/super_admins/$(request.auth.uid)); }
+    function memberDoc(bizId) { return get(/databases/$(database)/documents/businesses/$(bizId)/members/$(request.auth.uid)); }
     function isMember(bizId) { return signedIn() && exists(/databases/$(database)/documents/businesses/$(bizId)/members/$(request.auth.uid)); }
-    function canAccess(bizId) { return isOwner(bizId) || isMember(bizId) || isSuperAdmin(); }
+    function memberRole(bizId) { return memberDoc(bizId).data.role; }
+    // Staff = owner, partner, dispatcher (and legacy manager). Technicians are scoped to their own records.
+    function isStaff(bizId) { return isOwner(bizId) || isSuperAdmin() || (isMember(bizId) && memberRole(bizId) in ['partner', 'dispatcher', 'manager']); }
+    function isTech(bizId) { return isMember(bizId) && memberRole(bizId) in ['technician', 'tech']; }
+    function canAccess(bizId) { return isStaff(bizId) || isTech(bizId); }
+    function lookup() { return get(/databases/$(database)/documents/tech_lookup/$(emailKey())); }
     function lookupPointsHere(bizId) {
       return signedIn() && request.auth.token.email != null
         && exists(/databases/$(database)/documents/tech_lookup/$(emailKey()))
-        && get(/databases/$(database)/documents/tech_lookup/$(emailKey())).data.bizId == bizId;
+        && lookup().data.bizId == bizId && lookup().data.active != false;
     }
+    function ownsRecord() { return resource.data.techUid == request.auth.uid; }
+    function writesOwnRecord() { return request.resource.data.techUid == request.auth.uid; }
 
     match /users/{userId} {
       allow read, write: if signedIn() && request.auth.uid == userId;
@@ -29,23 +37,54 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if signedIn();
 
-      // NEW: membership + per-record subcollections are tenant-scoped
+      // Membership — a team member registers themself once tech_lookup points at this business.
+      // The role stored here MUST equal the role the owner set in tech_lookup (no self-promotion).
       match /members/{uid} {
         allow read: if canAccess(bizId);
-        allow create, update: if signedIn() && request.auth.uid == uid && (isOwner(bizId) || lookupPointsHere(bizId));
+        allow create, update: if signedIn() && request.auth.uid == uid
+          && (isOwner(bizId) || (lookupPointsHere(bizId) && request.resource.data.role == lookup().data.role));
         allow delete: if isOwner(bizId) || isSuperAdmin() || request.auth.uid == uid;
       }
-      match /{sub}/{docId} {
+
+      // Jobs: staff see everything; technicians only jobs assigned to them (query must filter techUid == uid)
+      match /jobs/{docId} {
+        allow read: if isStaff(bizId) || (isTech(bizId) && ownsRecord());
+        allow create, delete: if isStaff(bizId);
+        allow update: if isStaff(bizId) || (isTech(bizId) && ownsRecord() && writesOwnRecord());
+      }
+
+      // Closings: technicians may create/update only their own
+      match /closings/{docId} {
+        allow read: if isStaff(bizId) || (isTech(bizId) && ownsRecord());
+        allow create: if isStaff(bizId) || (isTech(bizId) && writesOwnRecord());
+        allow update: if isStaff(bizId) || (isTech(bizId) && ownsRecord() && writesOwnRecord());
+        allow delete: if isStaff(bizId);
+      }
+
+      // Presence (GPS): each member writes their own tiny doc
+      match /presence/{uid} {
         allow read: if canAccess(bizId);
-        allow write: if canAccess(bizId) && sub != 'members';
+        allow write: if canAccess(bizId) && request.auth.uid == uid;
+      }
+
+      // Everything else (customers, quotes, receipts, products, users, counters, backups, …): staff only
+      match /{sub}/{docId} {
+        allow read, write: if isStaff(bizId) && sub != 'members' && sub != 'jobs' && sub != 'closings' && sub != 'presence';
       }
       match /{sub}/{docId}/{rest=**} {
-        allow read, write: if canAccess(bizId) && sub != 'members';
+        allow read, write: if isStaff(bizId) && sub != 'members';
       }
     }
 
     match /tech_lookup/{lookupKey} {
       allow read, write: if signedIn();
+    }
+
+    match /invites/{token} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.bizId == request.auth.uid;
+      allow delete: if signedIn() && resource.data.bizId == request.auth.uid;
+      allow update: if signedIn() && (resource.data.bizId == request.auth.uid || request.auth.token.email.lower() == resource.data.email);
     }
 
     match /super_admins/{userId} {

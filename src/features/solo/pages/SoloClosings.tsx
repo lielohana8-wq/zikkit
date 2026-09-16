@@ -21,7 +21,10 @@ interface Draft { id?: number; date: string; customer: CustomerPickerValue; jobT
 const DEFAULT_JOB_TYPES = ['Chimney sweep', 'Chimney repair', 'Chimney cap / liner', 'Garage door spring', 'Garage door opener', 'Garage door install', 'Inspection', 'Service call', 'Other'];
 
 export default function SoloClosings() {
-  const { closings, customers, currency, saveClosing, deleteItem, ensureCustomer } = useSolo();
+  const { closings: allClosings, customers, currency, saveClosing, deleteItem, ensureCustomer, role, uid, technicians } = useSolo();
+  const isTech = role === 'technician';
+  const [techFilter, setTechFilter] = useState<string>('');
+  const closings = useMemo(() => techFilter ? allClosings.filter((x) => x.techUid === techFilter) : allClosings, [allClosings, techFilter]);
   const { toast } = useToast();
   const [anchor, setAnchor] = useState<Date>(() => new Date());
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -58,11 +61,13 @@ export default function SoloClosings() {
       const cust = await ensureCustomer(draft.customer.name, draft.customer.phone, draft.customer.email, draft.customer.address);
       const amount = round2(Number(draft.amount) || 0); const deposit = round2(Number(draft.deposit) || 0);
       const balance = round2(Math.max(0, amount - deposit));
+      const prev = draft.id != null ? allClosings.find((c0) => c0.id === draft.id) : undefined;
       const x: Closing = {
+        ...(prev || {}),
         id: draft.id ?? newId(), date: draft.date, customerId: cust?.id, client: draft.customer.name.trim(), phone: cust?.phone || draft.customer.phone, address: draft.customer.address,
         jobType: draft.jobType.trim() || 'Job', amount, deposit, depositPaidTo: draft.depositPaidTo, balance, balancePaidTo: draft.balancePaidTo,
         paymentMethod: draft.paymentMethod || undefined, materials: round2(Number(draft.materials) || 0), notes: draft.notes,
-        quoteId: draft.quoteId, receiptId: draft.receiptId, status: draft.balancePaidTo === 'none' && balance > 0 ? 'open' : 'done', created: draft.created || new Date().toISOString(),
+        quoteId: draft.quoteId, receiptId: draft.receiptId, techUid: prev?.techUid || uid || undefined, techName: prev?.techName, createdBy: prev?.createdBy || uid || undefined, status: draft.balancePaidTo === 'none' && balance > 0 ? 'open' : 'done', created: draft.created || new Date().toISOString(),
       };
       await saveClosing(x); setDraft(null); toast('Closing saved');
     } catch { /* provider toasts */ }
@@ -82,13 +87,19 @@ export default function SoloClosings() {
 
   return (
     <Box className="zk-fade-up">
-      <SectionHeader title="Closings" subtitle="Closed deals and where the money went. Week runs Monday → Sunday." actions={<><Button startIcon={<Download />} onClick={exportCsv} disabled={list.length === 0}>CSV</Button><Button variant="contained" startIcon={<Add />} onClick={() => setDraft(newDraft())}>Log closing</Button></>} />
+      <SectionHeader title={isTech ? 'My closings' : 'Closings'} subtitle={isTech ? 'Jobs you closed. Week runs Monday → Sunday.' : 'Closed deals and where the money went. Week runs Monday → Sunday.'} actions={isTech ? undefined : <><Button startIcon={<Download />} onClick={exportCsv} disabled={list.length === 0}>CSV</Button><Button variant="contained" startIcon={<Add />} onClick={() => setDraft(newDraft())}>Log closing</Button></>} />
 
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2, flexWrap: 'wrap' }}>
         <Chip label="This week" onClick={() => { setView('week'); setAnchor(new Date()); }} color={view === 'week' ? 'primary' : 'default'} variant={view === 'week' ? 'filled' : 'outlined'} size="small" />
         <Chip label="All" onClick={() => setView('all')} color={view === 'all' ? 'primary' : 'default'} variant={view === 'all' ? 'filled' : 'outlined'} size="small" />
         {view === 'week' && <><IconButton size="small" onClick={() => shift(-7)}><ChevronLeft /></IconButton><Typography sx={{ fontWeight: 700, fontSize: 13 }}>{weekLabel}</Typography><IconButton size="small" onClick={() => shift(7)}><ChevronRight /></IconButton></>}
       </Stack>
+      {!isTech && technicians.length > 0 && (
+        <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
+          <Chip label="Everyone" size="small" onClick={() => setTechFilter('')} color={!techFilter ? 'primary' : 'default'} variant={!techFilter ? 'filled' : 'outlined'} />
+          {technicians.filter((t) => t.uid).map((t) => <Chip key={t.uid} label={`👷 ${t.name}`} size="small" onClick={() => setTechFilter(t.uid as string)} color={techFilter === t.uid ? 'primary' : 'default'} variant={techFilter === t.uid ? 'filled' : 'outlined'} />)}
+        </Stack>
+      )}
 
       {view === 'week' && (
         <Stack direction="row" spacing={1.5} sx={{ mb: 2.5, flexWrap: 'wrap', gap: 1.5 }}>
@@ -102,20 +113,20 @@ export default function SoloClosings() {
       )}
 
       {list.length === 0 ? (
-        <EmptyState icon="✅" title={view === 'week' ? 'Nothing closed this week yet' : 'No closings yet'} subtitle="Log a deal the moment you close it — takes 20 seconds." actionLabel="Log closing" onAction={() => setDraft(newDraft())} />
+        <EmptyState icon="✅" title={view === 'week' ? 'Nothing closed this week yet' : 'No closings yet'} subtitle={isTech ? 'Close a job from "My jobs" and it shows up here.' : 'Log a deal the moment you close it — takes 20 seconds.'} actionLabel={isTech ? undefined : 'Log closing'} onAction={isTech ? undefined : () => setDraft(newDraft())} />
       ) : (
         <Stack spacing={1}>
           {list.map((x) => (
             <Paper key={x.id} sx={{ p: 1.75, borderRadius: 3, border: `1px solid ${c.border}` }}>
               <Stack direction="row" alignItems="center" spacing={1.5}>
-                <Box sx={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => setDraft(fromClosing(x))}>
+                <Box sx={{ flex: 1, minWidth: 0, cursor: isTech ? 'default' : 'pointer' }} onClick={() => !isTech && setDraft(fromClosing(x))}>
                   <Stack direction="row" spacing={1} alignItems="center"><Typography sx={{ fontWeight: 800, fontSize: 14 }}>{x.client}</Typography><Chip size="small" label={x.jobType} sx={{ height: 20, fontSize: 10 }} />{x.status === 'open' && <Chip size="small" label="Balance open" color="warning" sx={{ height: 20, fontSize: 10 }} />}</Stack>
-                  <Typography sx={{ fontSize: 12, color: c.text3 }}>{formatDateLocal(x.date)} · Deposit {formatMoney(x.deposit || 0, currency)} → {paidToLabel(x.depositPaidTo)} · Balance {formatMoney(x.balance || 0, currency)} → {paidToLabel(x.balancePaidTo)}{x.paymentMethod ? ` · ${paymentLabel(x.paymentMethod)}` : ''}</Typography>
+                  <Typography sx={{ fontSize: 12, color: c.text3 }}>{formatDateLocal(x.date)}{!isTech && x.techName ? ` · 👷 ${x.techName}` : ''} · Deposit {formatMoney(x.deposit || 0, currency)} → {paidToLabel(x.depositPaidTo)} · Balance {formatMoney(x.balance || 0, currency)} → {paidToLabel(x.balancePaidTo)}{x.paymentMethod ? ` · ${paymentLabel(x.paymentMethod)}` : ''}</Typography>
                   {x.notes && <Typography sx={{ fontSize: 12, color: c.text2, mt: 0.3 }}>{x.notes}</Typography>}
                 </Box>
                 <Typography sx={{ fontWeight: 900, fontSize: 16, whiteSpace: 'nowrap' }}>{formatMoney(x.amount, currency)}</Typography>
-                <IconButton size="small" onClick={() => setDraft(fromClosing(x))}><Edit fontSize="small" /></IconButton>
-                <IconButton size="small" color="error" onClick={() => { if (confirm('Delete this closing?')) deleteItem('closings', x.id); }}><Delete fontSize="small" /></IconButton>
+                {!isTech && <IconButton size="small" onClick={() => setDraft(fromClosing(x))}><Edit fontSize="small" /></IconButton>}
+                {!isTech && <IconButton size="small" color="error" onClick={() => { if (confirm('Delete this closing?')) deleteItem('closings', x.id); }}><Delete fontSize="small" /></IconButton>}
               </Stack>
             </Paper>
           ))}

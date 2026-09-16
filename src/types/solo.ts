@@ -70,6 +70,26 @@ export interface Closing {
   notes?: string;
   quoteId?: number;
   receiptId?: number;
+  jobId?: number;
+  techUid?: string;       // who closed it (rules scope on this)
+  techName?: string;
+  photos?: string[];
+  createdBy?: string;
   status?: 'open' | 'done';
   created: string;
+}
+
+export type SoloRole = 'owner' | 'partner' | 'dispatcher' | 'technician';
+
+export interface Invite {
+  token: string;
+  bizId: string;
+  bizName: string;
+  email: string;
+  name: string;
+  role: SoloRole;
+  created: string;
+  status: 'pending' | 'accepted' | 'revoked';
+  acceptedUid?: string;
+  acceptedAt?: string;
 }

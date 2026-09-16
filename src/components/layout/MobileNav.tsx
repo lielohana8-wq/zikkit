@@ -6,6 +6,7 @@ import { zikkitColors as c } from '@/styles/theme';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { IS_SOLO_EDITION } from '@/lib/region';
+import { ROLE_NAV, soloRoleOf } from '@/features/solo/roles';
 
 const OWNER_MAIN = [
   { icon: '📊', he: 'ראשי', href: '/dashboard' },
@@ -53,8 +54,12 @@ export function MobileNav() {
   const perms = useRolePermissions(user?.role, user?.customPermissions);
   const [moreOpen, setMoreOpen] = useState(false);
   const isTech = perms.isTechnician;
-  const items = IS_SOLO_EDITION ? SOLO_MAIN : (isTech ? TECH_MAIN : OWNER_MAIN);
-  const moreItems = IS_SOLO_EDITION ? SOLO_MORE : OWNER_MORE;
+  const soloRole = soloRoleOf(user);
+  const roleNav = IS_SOLO_EDITION && soloRole ? ROLE_NAV[soloRole].map((n) => ({ icon: n.icon, he: n.label, href: n.href })) : null;
+  const soloMain = roleNav ? (roleNav.length > 5 ? [...roleNav.slice(0, 4), { icon: '☰', he: 'More', href: '#more' }] : roleNav) : SOLO_MAIN;
+  const soloMore = roleNav ? (roleNav.length > 5 ? roleNav.slice(4) : []) : SOLO_MORE;
+  const items = IS_SOLO_EDITION ? soloMain : (isTech ? TECH_MAIN : OWNER_MAIN);
+  const moreItems = IS_SOLO_EDITION ? soloMore : OWNER_MORE;
 
   const handleNav = (href: string) => {
     if (href === '#more') { setMoreOpen(true); return; }

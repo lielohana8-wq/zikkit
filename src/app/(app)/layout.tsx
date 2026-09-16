@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import { AppShell } from '@/components/layout/AppShell';
 import { AuthGuard } from '@/features/auth/AuthGuard';
 import { useData } from '@/hooks/useFirestore';
@@ -13,6 +13,7 @@ import { GpsTracker } from '@/components/ui/GpsTracker';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/useLanguage';
 import { IS_SOLO_EDITION } from '@/lib/region';
+import { ROLE_ROUTES, soloRoleOf } from '@/features/solo/roles';
 import dynamic from 'next/dynamic';
 const SetupWizard = dynamic(() => import('@/components/onboarding/SetupWizard'), { ssr: false });
 
@@ -26,7 +27,7 @@ const SetupWizard = dynamic(() => import('@/components/onboarding/SetupWizard'),
  */
 function AppContent({ children }: { children: React.ReactNode }) {
   const { cfg, saveCfg, db, ready, bizId } = useData();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { lang, setLang } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
@@ -49,20 +50,38 @@ function AppContent({ children }: { children: React.ReactNode }) {
     if (!cfg || Object.keys(cfg).length === 0) return;
     checkedRef.current = true;
     if (IS_SOLO_EDITION) {
-      if (!cfg.solo_setup_done && !cfg.setup_done && pathname !== '/settings') router.replace('/settings?setup=1');
+      if (soloRoleOf(user) === 'owner' && !cfg.solo_setup_done && !cfg.setup_done && pathname !== '/settings') router.replace('/settings?setup=1');
       return;
     }
     if (cfg.setup_done === true) return;
     if (typeof window !== 'undefined' && sessionStorage.getItem('zk_wizard_done')) return;
     if ((db.jobs || []).length > 0) return;
     setShowWizard(true);
-  }, [cfg, db, ready, pathname, router]);
+  }, [cfg, db, ready, pathname, router, user]);
 
   const handleWizardComplete = async () => {
     await saveCfg({ setup_done: true });
     sessionStorage.setItem('zk_wizard_done', '1');
     setShowWizard(false);
   };
+
+  const soloRole = IS_SOLO_EDITION ? soloRoleOf(user) : null;
+  useEffect(() => {
+    if (!IS_SOLO_EDITION || !soloRole || !pathname) return;
+    const base = '/' + pathname.split('/')[1];
+    if (!ROLE_ROUTES[soloRole].includes(base)) router.replace('/dashboard');
+  }, [soloRole, pathname, router]);
+
+  if (IS_SOLO_EDITION && user && !soloRole) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, p: 3, textAlign: 'center' }}>
+        <Typography sx={{ fontSize: 40 }}>🔒</Typography>
+        <Typography sx={{ fontWeight: 900, fontSize: 18 }}>This account isn't linked to a business</Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', maxWidth: 380 }}>If you were invited, open the invite link you received and sign in with the invited email ({user.email}). Otherwise ask the business owner for a new invite.</Typography>
+        <Button onClick={logout} sx={{ mt: 1 }}>Sign out</Button>
+      </Box>
+    );
+  }
 
   if (bizId && !ready && String(user?.role) !== 'pending') {
     return (

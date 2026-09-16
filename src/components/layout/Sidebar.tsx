@@ -7,6 +7,7 @@ import { zikkitColors as c } from '@/styles/theme';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { IS_SOLO_EDITION } from '@/lib/region';
+import { ROLE_NAV, soloRoleOf } from '@/features/solo/roles';
 
 interface NavItem { key: string; icon: string; label: string; href: string; badge?: number }
 
@@ -47,7 +48,8 @@ export function Sidebar() {
   const { user, logout } = useAuth();
   const perms = useRolePermissions(user?.role, user?.customPermissions);
   const isTechPath = pathname.startsWith('/tech/') || pathname === '/tech';
-  const navItems = IS_SOLO_EDITION ? SOLO_NAV : ((isTechPath || perms.isTechnician) ? TECH_NAV : OWNER_NAV);
+  const soloRole = soloRoleOf(user);
+  const navItems = IS_SOLO_EDITION ? (soloRole ? ROLE_NAV[soloRole] : SOLO_NAV.slice(0, 1)) : ((isTechPath || perms.isTechnician) ? TECH_NAV : OWNER_NAV);
   const initials = (user?.name || 'U').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const expanded = hovered;
 
@@ -84,7 +86,7 @@ export function Sidebar() {
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             }}>Zikkit</Typography>
             <Typography sx={{ fontSize: 9, color: c.text3 }}>
-              {IS_SOLO_EDITION ? 'Solo' : ((isTechPath || perms.isTechnician) ? 'טכנאי' : 'עסק')}
+              {IS_SOLO_EDITION ? (soloRole ? soloRole.charAt(0).toUpperCase() + soloRole.slice(1) : 'Solo') : ((isTechPath || perms.isTechnician) ? 'טכנאי' : 'עסק')}
             </Typography>
           </Box>
         )}

@@ -1,4 +1,6 @@
 'use client';
+import { IS_SOLO_EDITION } from '@/lib/region';
+import SoloJobs from '@/features/solo/pages/SoloJobs';
 
 import { useL } from '@/hooks/useL';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -28,7 +30,7 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string; dot: strin
   low: { label: 'נמוך', he: 'נמוך', color: '#78716C', dot: '⚪' },
 };
 
-export default function JobsPage() {
+function LegacyJobsPage() {
   const { db, saveData, cfg } = useData();
   const L = useL();
   const { lang } = useLanguage();
@@ -799,4 +801,9 @@ export default function JobsPage() {
       </ModalBase>
     </Box>
   );
+}
+
+
+export default function JobsPageRouter() {
+  return IS_SOLO_EDITION ? <SoloJobs /> : <LegacyJobsPage />;
 }

@@ -1,4 +1,4 @@
-export type UserRole = 'owner' | 'manager' | 'dispatcher' | 'technician' | 'tech' | 'super_admin' | 'custom';
+export type UserRole = 'owner' | 'partner' | 'manager' | 'dispatcher' | 'technician' | 'tech' | 'super_admin' | 'custom' | 'pending';
 
 export interface User {
   id: number | string;
@@ -20,6 +20,11 @@ export interface User {
   password?: string;
   mustChangePassword?: boolean;
   passwordChangedAt?: string;
+  // Solo edition team fields
+  active?: boolean;
+  inviteToken?: string;
+  invitedAt?: string;
+  uid?: string;
 }
 
 export interface RolePermissions {

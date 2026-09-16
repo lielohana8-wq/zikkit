@@ -7,7 +7,8 @@ import { useData } from '@/hooks/useFirestore';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { newId } from '@/lib/data/collections';
 import { REGION_DEFAULTS, getBaseUrl, normalizePhone } from '@/lib/region';
-import type { Customer, Receipt, Closing, Quote, QuoteItem, ReceiptItem, BusinessConfig } from '@/types';
+import type { Customer, Receipt, Closing, Quote, QuoteItem, ReceiptItem, BusinessConfig, Job, User } from '@/types';
+import { soloRoleOf } from './roles';
 
 export type DocKind = 'quote' | 'receipt';
 
@@ -50,13 +51,19 @@ export function docNumber(cfg: BusinessConfig, kind: DocKind, n: number): string
 
 export function useSolo() {
   const data = useData();
-  const { bizId } = useAuth();
+  const { bizId, user, firebaseUser } = useAuth();
   const { db, cfg, saveItem, deleteItem, nextNumber } = data;
+  const role = soloRoleOf(user);
+  const uid = firebaseUser?.uid || null;
 
   const customers = useMemo(() => ((db.customers || []) as Customer[]).slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')), [db.customers]);
   const quotes = useMemo(() => ((db.quotes || []) as Quote[]).slice().sort((a, b) => (b.created || '').localeCompare(a.created || '')), [db.quotes]);
   const receipts = useMemo(() => ((db.receipts || []) as Receipt[]).slice().sort((a, b) => (b.created || '').localeCompare(a.created || '')), [db.receipts]);
   const closings = useMemo(() => ((db.closings || []) as Closing[]).slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.created || '').localeCompare(a.created || '')), [db.closings]);
+  const jobs = useMemo(() => ((db.jobs || []) as Job[]).slice().sort((a, b) => `${a.scheduledDate || ''} ${a.scheduledTime || ''}`.localeCompare(`${b.scheduledDate || ''} ${b.scheduledTime || ''}`)), [db.jobs]);
+  /** Team members (everyone in `users` except the owner). Technicians never see this (scoped provider). */
+  const team = useMemo(() => ((db.users || []) as User[]).filter((u) => u.role !== 'owner' && u.role !== 'super_admin'), [db.users]);
+  const technicians = useMemo(() => team.filter((u) => (u.role === 'technician' || u.role === 'tech') && u.active !== false), [team]);
 
   const currency = cfg.currency || REGION_DEFAULTS.currency;
   const taxRate = cfg.tax_rate ?? REGION_DEFAULTS.taxRate;
@@ -91,6 +98,8 @@ export function useSolo() {
   const saveQuote = useCallback(async (q: Quote) => saveItem('quotes', q as unknown as Record<string, unknown>), [saveItem]);
   const saveReceipt = useCallback(async (r: Receipt) => saveItem('receipts', r as unknown as Record<string, unknown>), [saveItem]);
   const saveClosing = useCallback(async (c: Closing) => saveItem('closings', c as unknown as Record<string, unknown>), [saveItem]);
+  const saveJob = useCallback(async (j: Job) => saveItem('jobs', j as unknown as Record<string, unknown>), [saveItem]);
+  const saveMember = useCallback(async (u: User) => saveItem('users', u as unknown as Record<string, unknown>), [saveItem]);
 
   /** Publish a customer-facing snapshot to public_portals and return the link. Re-uses the token on re-send. */
   const publish = useCallback(async (kind: DocKind, record: Quote | Receipt): Promise<{ token: string; url: string }> => {
@@ -134,7 +143,7 @@ export function useSolo() {
   }, [taxRate, taxLabel, currency]);
 
   return {
-    ...data, bizId, customers, quotes, receipts, closings, currency, taxRate, taxLabel,
+    ...data, bizId, user, uid, role, customers, quotes, receipts, closings, jobs, team, technicians, saveJob, saveMember, currency, taxRate, taxLabel,
     customerById, upsertCustomer, ensureCustomer, saveQuote, saveReceipt, saveClosing, deleteItem,
     publish, nextDocNumber, receiptFromQuote,
   };

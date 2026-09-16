@@ -21,7 +21,7 @@ import {
   signInWithPopup,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { getFirebaseAuth, getFirestoreDb, doc, getDoc, setDoc, collection, getDocs } from '@/lib/firebase';
+import { getFirebaseAuth, getFirestoreDb, doc, getDoc, setDoc, collection, getDocs, query, where } from '@/lib/firebase';
 import { STORAGE_KEYS, MAX_LOGIN_ATTEMPTS, LOCKOUT_DURATION_MS } from '@/lib/constants';
 import type { User } from '@/types';
 import { REGION, REGION_DEFAULTS } from '@/lib/region';
@@ -153,19 +153,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const lookupKey = email.toLowerCase().replace(/[@.]/g, '_');
           const lookupSnap = await getDoc(doc(db, 'tech_lookup', lookupKey));
           if (lookupSnap.exists()) {
-            const bizId = lookupSnap.data().bizId;
-            // Membership doc — Firestore rules grant business access through it (self-create allowed when tech_lookup matches)
-            try { await setDoc(doc(db, 'businesses', bizId, 'members', uid), { email: email.toLowerCase(), uid, joined: new Date().toISOString() }, { merge: true }); } catch (mErr) { console.warn('[Auth] member registration failed:', mErr); }
+            const lookup = lookupSnap.data() as { bizId: string; role?: string; name?: string; phone?: string; active?: boolean };
+            const bizId = lookup.bizId;
+            if (lookup.active === false) {
+              setState({ firebaseUser: fbUser, user: { id: uid, name: lookup.name || email, role: 'pending' as User['role'], email }, bizId: uid, loading: false, error: null, mustChangePassword: false });
+              return;
+            }
+            const memberRole = (lookup.role || 'technician') as User['role'];
+            // Membership doc — Firestore rules grant business access through it (self-create allowed when tech_lookup matches; role is validated against tech_lookup)
+            try { await setDoc(doc(db, 'businesses', bizId, 'members', uid), { email: email.toLowerCase(), uid, role: memberRole, name: lookup.name || '', joined: new Date().toISOString() }, { merge: true }); } catch (mErr) { console.warn('[Auth] member registration failed:', mErr); }
+            // Mark the invite accepted (best effort — invitee may update their own invite)
+            try {
+              const invSnap = await getDocs(query(collection(db, 'invites'), where('email', '==', email.toLowerCase()), where('bizId', '==', bizId)));
+              for (const inv of invSnap.docs) if (inv.data().status !== 'accepted') await setDoc(inv.ref, { status: 'accepted', acceptedUid: uid, acceptedAt: new Date().toISOString() }, { merge: true });
+            } catch {}
             const bizSnap = await getDoc(doc(db, 'businesses', bizId));
             if (bizSnap.exists()) {
               let subUsers: User[] = [];
               try { const us = await getDocs(collection(db, 'businesses', bizId, 'users')); subUsers = us.docs.map((d) => d.data() as User); } catch {}
               const bizData = { users: [...subUsers, ...((bizSnap.data().db?.users as User[]) || [])] };
-              const tech = bizData?.users?.find(
-                (u: User) =>
-                  u.email?.toLowerCase() === email.toLowerCase() &&
-                  u.role !== 'owner'
-              );
+              const found = bizData.users.find((u: User) => u.email?.toLowerCase() === email.toLowerCase() && u.role !== 'owner');
+              const tech: User = found
+                ? { ...found, uid, firebaseUid: uid }
+                : { id: uid, uid, firebaseUid: uid, name: lookup.name || email.split('@')[0], role: memberRole, email: email.toLowerCase(), phone: lookup.phone || '' };
               if (tech) {
                 if (typeof window !== 'undefined') {
                   localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(bizSnap.data().cfg || {}));
@@ -417,6 +427,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdUser = await createUserWithEmailAndPassword(auth, cleanEmail, password);
         const uid = createdUser.user.uid;
 
+        // Invited team member? (tech_lookup is written by the business owner) → no business of their own.
+        try {
+          const lookup = await getDoc(doc(db, 'tech_lookup', cleanEmail.replace(/[@.]/g, '_')));
+          if (lookup.exists()) {
+            clearLockout();
+            return; // onAuthStateChanged routes them into the inviting business
+          }
+        } catch {}
+
         const newDb = {
           users: [{ id: 1, name: bizName + ' Owner', username: email, email, role: 'owner', phone: '', zip: '', commission: 0 }],
           leads: [], jobs: [], quotes: [],
@@ -492,7 +511,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }));
       }
     },
-    []
+    [clearLockout]
   );
 
   const logout = useCallback(async () => {

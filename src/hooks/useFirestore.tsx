@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
-import { onSnapshot, doc, collection, writeBatch, setDoc, updateDoc, arrayUnion, runTransaction } from 'firebase/firestore';
+import { onSnapshot, doc, collection, writeBatch, setDoc, updateDoc, arrayUnion, runTransaction, query, where, type Query, type DocumentData } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase';
 import { STORAGE_KEYS } from '@/lib/constants';
 import { useToast } from '@/hooks/useToast';
@@ -9,7 +9,11 @@ import { KNOWN_COLLECTIONS, sanitize, sortById, docIdFor, isValidCollectionKey, 
 import { diffCollection } from '@/lib/data/diff';
 import { offloadDataUrls, containsDataUrl } from '@/lib/data/offload';
 import { drainInbox, backupLegacyBlob } from '@/lib/data/inbox';
-import type { BusinessDatabase, BusinessConfig } from '@/types';
+import type { BusinessDatabase, BusinessConfig, SoloRole } from '@/types';
+
+export interface DataScope { role: SoloRole | null; uid: string | null }
+/** Collections a technician may read (filtered by techUid). Everything else stays out of their client entirely. */
+const TECH_COLLECTIONS = ['jobs', 'closings'] as const;
 
 /**
  * DataProvider v2 — same public API as before (db / cfg / saveData / saveCfg),
@@ -42,6 +46,9 @@ interface DataContextValue {
   deleteItem: (key: string, id: string | number) => Promise<void>;
   /** Atomic sequential number, e.g. nextNumber('quote', 1000) → 1001, 1002, … */
   nextNumber: (name: string, start?: number) => Promise<number>;
+  /** Who is using this provider — technicians get a filtered, read-mostly view. */
+  setScope: (scope: DataScope) => void;
+  scope: DataScope;
 }
 
 const defaultDb = (): BusinessDatabase => ({ users: [], leads: [], jobs: [], quotes: [], products: [], botLog: [], expenses: [] } as unknown as BusinessDatabase);
@@ -52,6 +59,7 @@ const DataContext = createContext<DataContextValue>({
   saveData: async () => {}, saveCfg: async () => defaultCfg,
   syncFromCloud: async () => {}, loading: true, ready: false,
   saveItem: async () => {}, deleteItem: async () => {}, nextNumber: async () => 0,
+  setScope: () => {}, scope: { role: null, uid: null },
 });
 
 function loadLocalCfg(): BusinessConfig {
@@ -76,6 +84,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [cfg, setCfg] = useState<BusinessConfig>(loadLocalCfg);
   const [bizId, setBizIdState] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [scope, setScopeState] = useState<DataScope>({ role: null, uid: null });
+  const scopeRef = useRef<DataScope>(scope);
   const { toast } = useToast();
 
   const dbRef = useRef<BusinessDatabase>(db);
@@ -90,6 +100,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => { dbRef.current = db; }, [db]);
   useEffect(() => { cfgRef.current = cfg; }, [cfg]);
 
+  const setScope = useCallback((next: DataScope) => {
+    if (scopeRef.current.role === next.role && scopeRef.current.uid === next.uid) return;
+    scopeRef.current = next; setScopeState(next);
+  }, []);
+
   const setBizId = useCallback((id: string | null) => {
     if (bizIdRef.current === id) return;
     setBizIdState(id);
@@ -100,11 +115,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ---- subscribe to one collection ------------------------------------------------
-  const subscribe = useCallback((id: string, key: string) => {
+  const subscribe = useCallback((id: string, key: string, techUid?: string) => {
     if (listenersRef.current.has(key)) return;
     const firestore = getFirestoreDb();
     pendingFirst.current.add(key);
-    const unsub = onSnapshot(collection(doc(firestore, 'businesses', id), key), (snap) => {
+    const base = collection(doc(firestore, 'businesses', id), key);
+    const source: Query<DocumentData> = techUid ? query(base, where('techUid', '==', techUid)) : base;
+    const unsub = onSnapshot(source, (snap) => {
       const items = sortById(snap.docs.map((d) => d.data() as DataItem));
       setDb((prev) => { const next = { ...prev, [key]: items } as BusinessDatabase; dbRef.current = next; return next; });
       if (pendingFirst.current.delete(key) && pendingFirst.current.size === 0) setReady(true);
@@ -116,18 +133,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ---- business document: cfg + inbox + registered collections ------------------
+  const isTech = scope.role === 'technician';
+  const techUid = isTech ? scope.uid : null;
+
   useEffect(() => {
     if (!bizId) return;
+    if (isTech && !techUid) return; // wait for the uid
     const firestore = getFirestoreDb();
     const id = bizId;
     setReady(false);
     pendingFirst.current = new Set();
-    for (const key of KNOWN_COLLECTIONS) subscribe(id, key);
+    setDb(defaultDb()); dbRef.current = defaultDb();
+    if (isTech) { for (const key of TECH_COLLECTIONS) subscribe(id, key, techUid || undefined); }
+    else { for (const key of KNOWN_COLLECTIONS) subscribe(id, key); subscribe(id, 'members'); /* read-only: who has joined (never written through saveData) */ }
 
     const unsubBiz = onSnapshot(doc(firestore, 'businesses', id), async (snap) => {
       const data = (snap.data() || {}) as Record<string, unknown>;
       const nextCfg = (data.cfg as BusinessConfig) || {};
       setCfg(nextCfg); cfgRef.current = nextCfg; mirrorCfg(nextCfg);
+      if (isTech) return; // technicians: config only — no extra collections, no migration
 
       const registered = (data.dataCollections as string[]) || [];
       for (const key of registered) if (isValidCollectionKey(key)) { extraKeysRef.current.add(key); subscribe(id, key); }
@@ -154,7 +178,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       for (const unsub of listenersRef.current.values()) unsub();
       listenersRef.current.clear();
     };
-  }, [bizId, subscribe, toast]);
+  }, [bizId, isTech, techUid, subscribe, toast]);
 
   // ---- writes ----------------------------------------------------------------------
   const commitUpserts = useCallback(async (id: string, key: string, upserts: DataItem[], deletes: string[]) => {
@@ -180,9 +204,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const nextState: BusinessDatabase = { ...prev };
     const work: Array<{ key: string; upserts: DataItem[]; deletes: string[] }> = [];
 
+    const techOnly = scopeRef.current.role === 'technician';
     for (const [key, value] of Object.entries(data || {})) {
       if (!Array.isArray(value)) continue;
       if (!isValidCollectionKey(key)) { console.warn('[Zikkit] ignoring invalid collection key', key); continue; }
+      if (techOnly && !(TECH_COLLECTIONS as readonly string[]).includes(key)) continue;
       const { diff, next } = diffCollection(prev[key] as DataItem[] | undefined, value as DataItem[]);
       nextState[key] = next;
       if (diff.upserts.length || diff.deletes.length) work.push({ key, ...diff });
@@ -255,7 +281,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const syncFromCloud = useCallback(async () => { /* live via onSnapshot */ }, []);
 
   return (
-    <DataContext.Provider value={{ db, cfg, bizId, setBizId, saveData, saveCfg, syncFromCloud, loading: !ready, ready, saveItem, deleteItem, nextNumber }}>
+    <DataContext.Provider value={{ db, cfg, bizId, setBizId, saveData, saveCfg, syncFromCloud, loading: !ready, ready, saveItem, deleteItem, nextNumber, setScope, scope }}>
       {children}
     </DataContext.Provider>
   );

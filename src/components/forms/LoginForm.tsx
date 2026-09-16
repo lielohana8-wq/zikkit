@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useLanguage } from '@/hooks/useLanguage';
 import { getDefaultRoute } from '@/lib/permissions';
+import { IS_SOLO_EDITION } from '@/lib/region';
 import { zikkitColors as c } from '@/styles/theme';
 
 export function LoginForm() {
@@ -21,7 +22,7 @@ export function LoginForm() {
 
   useEffect(() => {
     if (user) {
-      router.replace(getDefaultRoute(user.role));
+      router.replace(IS_SOLO_EDITION ? '/dashboard' : getDefaultRoute(user.role));
     }
   }, [user, router]);
 
