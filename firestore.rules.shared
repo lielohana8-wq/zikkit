@@ -1,0 +1,77 @@
+rules_version = '2';
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED-PROJECT rules: use this file when CA runs on the SAME Firebase project as IL.
+// Keeps every legacy path exactly as permissive as before (so the IL app / bot routes
+// keep working), and ADDS tenant-scoped access to the new per-record subcollections.
+// Deploy: copy over firestore.rules → firebase deploy --only firestore:rules,storage
+// ─────────────────────────────────────────────────────────────────────────────
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function emailKey() { return request.auth.token.email.lower().replace('[@.]', '_'); }
+    function isOwner(bizId) { return signedIn() && request.auth.uid == bizId; }
+    function isSuperAdmin() { return signedIn() && exists(/databases/$(database)/documents/super_admins/$(request.auth.uid)); }
+    function isMember(bizId) { return signedIn() && exists(/databases/$(database)/documents/businesses/$(bizId)/members/$(request.auth.uid)); }
+    function canAccess(bizId) { return isOwner(bizId) || isMember(bizId) || isSuperAdmin(); }
+    function lookupPointsHere(bizId) {
+      return signedIn() && request.auth.token.email != null
+        && exists(/databases/$(database)/documents/tech_lookup/$(emailKey()))
+        && get(/databases/$(database)/documents/tech_lookup/$(emailKey())).data.bizId == bizId;
+    }
+
+    match /users/{userId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+    // LEGACY (unchanged): the IL client still reads other businesses at tech login
+    match /businesses/{bizId} {
+      allow read: if signedIn();
+      allow write: if signedIn();
+
+      // NEW: membership + per-record subcollections are tenant-scoped
+      match /members/{uid} {
+        allow read: if canAccess(bizId);
+        allow create, update: if signedIn() && request.auth.uid == uid && (isOwner(bizId) || lookupPointsHere(bizId));
+        allow delete: if isOwner(bizId) || isSuperAdmin() || request.auth.uid == uid;
+      }
+      match /{sub}/{docId} {
+        allow read: if canAccess(bizId);
+        allow write: if canAccess(bizId) && sub != 'members';
+      }
+      match /{sub}/{docId}/{rest=**} {
+        allow read, write: if canAccess(bizId) && sub != 'members';
+      }
+    }
+
+    match /tech_lookup/{lookupKey} {
+      allow read, write: if signedIn();
+    }
+
+    match /super_admins/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /public_portals/{token} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+
+    // LEGACY (unchanged): voice/SMS routes still hit these without auth
+    match /bot_conversations/{callId} {
+      allow read, write: if true;
+    }
+    match /phone_lookup/{phoneNumber} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+
+    match /agreements/{agreementId} {
+      allow read, write: if signedIn();
+    }
+
+    match /licenses/{licenseId} {
+      allow read: if signedIn();
+    }
+  }
+}

@@ -73,15 +73,59 @@ npm install
 npm run dev
 ```
 
-לחבר ל-Git (פעם אחת):
+## Git — branch נפרד `ca` באותו ריפו (מומלץ)
+
+קוד אחד, שני deployments: IL מ-`main`, CA מ-`ca`. **לא למזג `ca` ל-`main`** עד שלב 2 (ראוטי הבוט + rules + ENV של Firebase ב-Vercel של IL).
+
 ```cmd
-git init
-git add .
-git commit -m "Zikkit CA Solo V1"
-git branch -M main
-git remote add origin https://github.com/<user>/zikkit-ca.git
-git push -u origin main
+:: 1. Git for Windows: https://git-scm.com  (פעם אחת)
+git config --global user.name "Liel"
+git config --global user.email "you@email.com"
+
+:: 2. שכפל את הריפו הקיים (שומר היסטוריה) וצור branch
+cd C:\
+git clone https://github.com/<USER>/zikkit.git
+cd zikkit
+git checkout -b ca
+
+:: 3. חלץ את ZIKKIT-CA-SOLO-V1-FULL.zip *על* התיקייה הזאת (לדרוס), ואז נקה:
+del users.json temp.json curl 2>nul
+rmdir /S /Q src\src 2>nul
+del src\App.jsx ZIKKIT-*.tar.gz FIX-ROUTES.bat INSTALL.bat 2>nul
+
+:: 4. commit + push
+git add -A
+git commit -m "CA Solo edition + data layer v2 (per-record docs, inbox migration, rules)"
+git push -u origin ca
 ```
+בפעם הראשונה GitHub יפתח חלון התחברות בדפדפן (Git Credential Manager).
+
+אין ריפו קיים / רוצה ריפו נפרד: `git init` בתוך `C:\zikkit` → `git add -A` → `git commit -m "..."` → `git branch -M main` → `git remote add origin https://github.com/<USER>/zikkit-ca.git` → `git push -u origin main` (ואז ב-Vercel ה-Production Branch הוא `main`).
+
+**Vercel:** Add New Project → Import אותו ריפו → שם `zikkit-ca` → Settings → Git → **Production Branch = `ca`** → Environment Variables (כל `.env.local`) → Deploy. ה-project של IL ממשיך לחיות מ-`main` בלי שינוי.
+
+---
+
+## אפשרות מהירה: אותו פרויקט Firebase כמו IL (בלי מפתחות חדשים)
+
+לא חובה פרויקט חדש. הקוד לא מייצר מפתחות — הוא רק **קורא** אותם מ-ENV. אם רוצים לרוץ על הפרויקט הקיים:
+
+1. Firebase Console → הפרויקט שבו יושבים הנתונים של Zikkit FSM (ודא: יש בו אוסף `businesses` עם הנתונים) → ⚙️ Project settings → General → Your apps → SDK setup and configuration → העתק `apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId` ל-`.env.local` (אלה ה-`NEXT_PUBLIC_FIREBASE_*`).
+   או: Vercel → הפרויקט הקיים → Settings → Environment Variables → העתק. (Vercel לא משתף ENV בין פרויקטים — לפרויקט `zikkit-ca` צריך להדביק אותם שוב.)
+2. `FIREBASE_SERVICE_ACCOUNT_KEY` — כבר קיים ב-Vercel של IL (ראוטי Dana משתמשים בו). אותו ערך.
+3. **Rules**: הקובץ `firestore.rules` הרגיל מהדק את IL (סוגר `bot_conversations`, מגביל כתיבה ל-`businesses`). לפרויקט משותף השתמש ב-**`firestore.rules.shared`** — משאיר את IL בדיוק כמו שהיה ומוסיף גישה לתת-האוספים החדשים:
+   ```cmd
+   copy /Y firestore.rules.shared firestore.rules
+   firebase use <project-id>
+   firebase deploy --only firestore:rules,storage
+   ```
+   בלי זה — הדפים החדשים יקבלו `permission-denied` (ה-rules הישנים לא מכירים תת-אוספים).
+4. Authentication → Sign-in method: Email/Password + Google כבר פעילים. Storage: אם לא הופעל — Get started (צריך ללוגו/תמונות).
+5. חשבון: הירשם באימייל **אחר** מהעסק הישראלי (חשבון = עסק = tenant). אותו אימייל = תראה את הנתונים העבריים בתוך ה-UI האנגלי.
+
+מה חדש בכל מקרה (לא "מפתחות"): `NEXT_PUBLIC_ZIKKIT_REGION=CA`, `NEXT_PUBLIC_APP_URL`, פרויקט Vercel שני, ומספר Twilio קנדי אם רוצים SMS.
+
+**מתי כן פרויקט חדש:** נתונים בטורונטו (residency), הפרדה מלאה מ-IL (rules/מכסות/חיוב), ובלי סיכון ש-deploy של rules ישפיע על IL. אפשר להתחיל על הקיים ולפצל אחר כך — הנתונים של עסק אחד קטנים.
 
 ---
 

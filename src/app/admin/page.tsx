@@ -55,14 +55,15 @@ export default function AdminDashboardPage() {
     });
 
     const ilClients = clients.filter((c) => c.cfg?.region === 'IL');
-    const usClients = clients.filter((c) => c.cfg?.region !== 'IL');
+    const usClients = clients.filter((c) => c.cfg?.region !== 'IL' && c.cfg?.region !== 'CA');
+    const caClients = clients.filter((c) => c.cfg?.region === 'CA');
     const mrrIL = active.filter((c) => c.cfg?.region === 'IL').length * 499;
     const mrrUS = active.filter((c) => c.cfg?.region !== 'IL').length * 699;
 
     const totalJobs = clients.reduce((s, c) => s + ((c.db?.jobs as unknown[]) || []).length, 0);
     const totalLeads = clients.reduce((s, c) => s + ((c.db?.leads as unknown[]) || []).length, 0);
 
-    return { total: clients.length, trial, active, expired, expiringSoon, ilClients, usClients, mrrIL, mrrUS, totalJobs, totalLeads };
+    return { total: clients.length, trial, active, expired, expiringSoon, ilClients, usClients, caClients, mrrIL, mrrUS, totalJobs, totalLeads };
   }, [clients]);
 
   const KPI = ({ label, value, color, sub }: { label: string; value: string | number; color: string; sub?: string }) => (
@@ -108,6 +109,7 @@ export default function AdminDashboardPage() {
             <KPI label={"ARR משוער"} value={'$' + ((stats.mrrIL + stats.mrrUS) * 12).toLocaleString()} color="#4f8fff" />
             <KPI label={"🇮🇱 ישראל"} value={stats.ilClients.length} color="#4f8fff" sub={`₪${stats.mrrIL.toLocaleString()}/חודש`} />
             <KPI label={"🇺🇸 ארה״ב"} value={stats.usClients.length} color="#a78bfa" sub={`$${stats.mrrUS.toLocaleString()}/mo`} />
+            <KPI label={"🇨🇦 קנדה"} value={stats.caClients.length} color="#f59e0b" sub="Solo · early access" />
           </Box>
 
           {/* KPI Row 3 — Activity */}

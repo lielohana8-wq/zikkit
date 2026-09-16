@@ -44,12 +44,13 @@ export default function AdminAddClientPage() {
       const cred = await createUserWithEmailAndPassword(auth, form.email, form.password);
       const uid = cred.user.uid;
       const db = getFirestoreDb();
-      const currency = form.region === 'IL' ? 'ILS' : 'USD';
+      const currency = form.region === 'IL' ? 'ILS' : form.region === 'CA' ? 'CAD' : 'USD';
+      const regionExtras = form.region === 'CA' ? { lang: 'en', tax_rate: 13, tax_label: 'HST', timezone: 'America/Toronto' } : form.region === 'US' ? { lang: 'en' } : { lang: 'he' };
 
       await setDoc(doc(db, 'businesses', uid), {
         cfg: {
           biz_name: form.biz_name, biz_type: form.biz_type, biz_phone: form.biz_phone,
-          region: form.region, currency, biz_email: form.email,
+          region: form.region, currency, biz_email: form.email, ...regionExtras,
           plan: form.plan === 'trial' ? 'trial' : 'business',
           planStatus: form.plan === 'trial' ? 'trial' : 'active',
           planType: form.plan,
@@ -166,6 +167,7 @@ export default function AdminAddClientPage() {
               sx={{ bgcolor: '#FAF7F4', borderRadius: '10px', fontSize: 13 }}>
               <MenuItem value="IL">🇮🇱 ישראל</MenuItem>
               <MenuItem value="US">🇺🇸 ארה״ב</MenuItem>
+              <MenuItem value="CA">🇨🇦 קנדה</MenuItem>
             </Select>
           </Box>
 
