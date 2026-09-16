@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { Box, Typography, Button, Paper, Dialog, DialogTitle, DialogContent, DialogActions, Stack, TextField, Chip, IconButton, Divider } from '@mui/material';
-import { Add, ContentCopy, WhatsApp, Delete, Link as LinkIcon } from '@mui/icons-material';
+import { Add, ContentCopy, WhatsApp, Delete, Link as LinkIcon, Email } from '@mui/icons-material';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase';
 import { SectionHeader } from '@/components/layout/SectionHeader';
@@ -25,6 +25,7 @@ export default function SoloTeam() {
   const [draft, setDraft] = useState<{ id?: number; name: string; email: string; phone: string; role: SoloRole; color?: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [showLink, setShowLink] = useState<User | null>(null);
+  const [sending, setSending] = useState(false);
 
   const members = useMemo(() => ((db.members || []) as Array<{ uid: string; email?: string; role?: string; joined?: string }>), [db.members]);
   const joinedByEmail = useMemo(() => new Map(members.map((m) => [String(m.email || '').toLowerCase(), m])), [members]);
@@ -70,6 +71,16 @@ export default function SoloTeam() {
       await deleteItem('users', u.id);
       toast('Access removed');
     } catch (e) { toast('Could not remove: ' + ((e as Error)?.message || ''), '#ff4d6d'); }
+  };
+
+  const emailInvite = async (u: User) => {
+    setSending(true);
+    try {
+      const res = await fetch('/api/team/invite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: u.email, name: u.name, bizName: cfg.biz_name || 'our team', role: ROLE_LABELS[(u.role as SoloRole) || 'technician'], url: inviteUrl(u), replyTo: cfg.biz_email }) });
+      const data = await res.json();
+      if (!res.ok || data.error) toast('Email failed: ' + (data.error || res.statusText), '#ff4d6d'); else toast(`Invite emailed to ${u.email}`);
+    } catch { toast('Network error', '#ff4d6d'); }
+    finally { setSending(false); }
   };
 
   const copy = async (text: string) => { try { await navigator.clipboard.writeText(text); toast('Copied'); } catch { toast('Copy failed', '#ff4d6d'); } };
@@ -138,9 +149,10 @@ export default function SoloTeam() {
               <TextField value={inviteUrl(showLink)} fullWidth size="small" InputProps={{ readOnly: true, endAdornment: <IconButton size="small" onClick={() => copy(inviteUrl(showLink))}><ContentCopy fontSize="small" /></IconButton> }} />
               <Divider sx={{ my: 2 }} />
               <Stack direction="row" spacing={1}>
+                <Button fullWidth variant="contained" startIcon={<Email />} onClick={() => emailInvite(showLink)} disabled={sending}>{sending ? 'Sending…' : 'Email invite'}</Button>
                 <Button fullWidth variant="outlined" startIcon={<WhatsApp />} href={`https://wa.me/${(showLink.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(inviteText(showLink))}`} target="_blank" rel="noreferrer" disabled={!showLink.phone}>WhatsApp</Button>
-                <Button fullWidth variant="outlined" onClick={() => copy(inviteText(showLink))}>Copy message</Button>
               </Stack>
+              <Button fullWidth size="small" onClick={() => copy(inviteText(showLink))} sx={{ mt: 1 }}>Copy message</Button>
             </DialogContent>
             <DialogActions><Button onClick={() => setShowLink(null)}>Done</Button></DialogActions>
           </>

@@ -10,6 +10,7 @@ import { NotificationProvider } from '@/features/notifications/NotificationProvi
 import { Paywall, TrialBanner } from '@/features/billing/Paywall';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { GpsTracker } from '@/components/ui/GpsTracker';
+import { PWAInstall } from '@/components/ui/PWAInstall';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/useLanguage';
 import { IS_SOLO_EDITION } from '@/lib/region';
@@ -108,6 +109,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
       </AppShell>
       <MobileNav />
       <GpsTracker />
+      <PWAInstall />
     </>
   );
 }

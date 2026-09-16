@@ -8,7 +8,6 @@ import { ToastProvider } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { DataBridge } from '@/features/auth/DataBridge';
 import './globals.css';
-import { PWAInstall } from '@/components/ui/PWAInstall';
 import { REGION_DEFAULTS, IS_SOLO_EDITION } from '@/lib/region';
 
 export const metadata: Metadata = {
@@ -44,7 +43,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <LanguageProvider>
                   {children}
                   <ToastContainer />
-                  <PWAInstall />
                 </LanguageProvider>
               </DataBridge>
             </AuthProvider>

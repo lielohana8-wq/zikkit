@@ -67,7 +67,7 @@ export default function SoloSchedule() {
   // ---- drag & resize -------------------------------------------------------------
   const onPointerDown = (e: React.PointerEvent, job: Job, kind: 'move' | 'resize') => {
     if (e.button !== 0) return;
-    if (isTech && job.techUid !== uid) return;
+    if (isTech) return;
     e.preventDefault(); e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const grid = gridRef.current; if (grid) colWidthRef.current = grid.getBoundingClientRect().width / days.length;
@@ -167,7 +167,7 @@ export default function SoloSchedule() {
                     const dur = isDragging && drag.kind === 'resize' ? drag.curDur : (j.duration || 60);
                     const dayShift = isDragging && drag.kind === 'move' ? drag.curDay - di : 0;
                     const color = colorOf(j); const done = j.status === 'completed';
-                    const canDrag = !done && (!isTech || j.techUid === uid);
+                    const canDrag = !done && !isTech; // technicians: read-only calendar
                     return (
                       <Box key={j.id} onPointerDown={(e) => canDrag ? onPointerDown(e, j, 'move') : undefined} onClick={(e) => { e.stopPropagation(); if (draggedRef.current) { draggedRef.current = false; return; } setSelected(j); }}
                         sx={{ position: 'absolute', left: 3, right: 3, top: ((startMin - DAY_START * 60) / 60) * HOUR_H, height: Math.max(22, (dur / 60) * HOUR_H - 2), zIndex: isDragging ? 10 : 2,
@@ -188,7 +188,7 @@ export default function SoloSchedule() {
           </Box>
         </Box>
       </Paper>
-      {!isTech && <Typography sx={{ fontSize: 11, color: c.text3, mt: 1 }}>Drag a job to move it. Pull its bottom edge to change the duration. Click an empty slot to schedule a new job.</Typography>}
+      <Typography sx={{ fontSize: 11, color: c.text3, mt: 1 }}>{isTech ? 'Tap a job to see the customer details and close it. Times are set by the office.' : 'Drag a job to move it. Pull its bottom edge to change the duration. Click an empty slot to schedule a new job.'}</Typography>
 
       {/* Job popover */}
       <Dialog open={!!selected && !editing && !closing} onClose={() => setSelected(null)} fullWidth maxWidth="xs">
@@ -204,7 +204,7 @@ export default function SoloSchedule() {
               <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
                 {selected.phone && <Button size="small" variant="outlined" startIcon={<Phone />} href={`tel:${selected.phone}`}>Call</Button>}
                 {selected.address && <Button size="small" variant="outlined" startIcon={<Navigation />} href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selected.address)}`} target="_blank">Navigate</Button>}
-                {(!isTech || selected.techUid === uid) && <Button size="small" variant="outlined" startIcon={<Edit />} onClick={() => setEditing({ job: selected })}>Edit</Button>}
+                {!isTech && <Button size="small" variant="outlined" startIcon={<Edit />} onClick={() => setEditing({ job: selected })}>Edit</Button>}
                 {selected.status !== 'completed' && <Button size="small" variant="contained" startIcon={<CheckCircle />} onClick={() => setClosing(selected)}>Close job</Button>}
               </Stack>
             </DialogContent>
