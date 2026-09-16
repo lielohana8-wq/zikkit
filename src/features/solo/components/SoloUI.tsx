@@ -121,7 +121,7 @@ export function LineItemsEditor({ items, onChange, currency, catalog }: { items:
 // ---------------------------------------------------------------------------
 // Share dialog — link, WhatsApp, SMS, Email
 // ---------------------------------------------------------------------------
-export function ShareDialog({ open, onClose, url, kind, number, to, bizName, token }: { open: boolean; onClose: () => void; url: string; kind: 'quote' | 'receipt'; number: string; to: { phone?: string; email?: string; name: string }; bizName: string; token: string }) {
+export function ShareDialog({ open, onClose, url, kind, number, to, bizName, token, replyTo }: { open: boolean; onClose: () => void; url: string; kind: 'quote' | 'receipt'; number: string; to: { phone?: string; email?: string; name: string }; bizName: string; token: string; replyTo?: string }) {
   const { toast } = useToast();
   const [phone, setPhone] = useState(to.phone || '');
   const [email, setEmail] = useState(to.email || '');
@@ -133,7 +133,7 @@ export function ShareDialog({ open, onClose, url, kind, number, to, bizName, tok
   const send = async (channel: 'sms' | 'email') => {
     setBusy(channel);
     try {
-      const res = await fetch('/api/docs/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, channel, to: channel === 'sms' ? phone : email, kind, number, url, bizName, customerName: to.name }) });
+      const res = await fetch('/api/docs/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, channel, to: channel === 'sms' ? phone : email, kind, number, url, bizName, customerName: to.name, replyTo }) });
       const data = await res.json();
       if (!res.ok || data.error) toast('Send failed: ' + (data.error || res.statusText), '#ff4d6d');
       else toast(channel === 'sms' ? 'SMS sent' : 'Email sent');

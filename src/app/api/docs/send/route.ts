@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
  */
 export async function POST(req: NextRequest) {
   try {
-    const { channel, to, kind, number, url, bizName, customerName } = await req.json();
+    const { channel, to, kind, number, url, bizName, customerName, replyTo } = await req.json();
     if (!to || !url || !kind) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     if (typeof url !== 'string' || !/^https?:\/\//.test(url)) return NextResponse.json({ error: 'Invalid link' }, { status: 400 });
     const label = kind === 'quote' ? 'quote' : 'receipt';
@@ -46,10 +46,10 @@ export async function POST(req: NextRequest) {
       </div>`;
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: process.env.RESEND_FROM_EMAIL || 'Zikkit <noreply@zikkit.com>', to, subject, html }),
+        body: JSON.stringify({ from: process.env.RESEND_FROM_EMAIL || 'Zikkit <noreply@zikkit.com>', to, subject, html, ...(replyTo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(replyTo)) ? { reply_to: replyTo } : {}) }),
       });
       const data = await res.json();
-      if (!res.ok) return NextResponse.json({ error: data.message || data.error || 'Resend error' }, { status: 502 });
+      if (!res.ok) return NextResponse.json({ error: (data.message || data.error || 'Resend error') + (String(data.message || '').includes('domain') ? ' — RESEND_FROM_EMAIL must use a domain verified in Resend (resend.com/domains), or onboarding@resend.dev for testing.' : '') }, { status: 502 });
       return NextResponse.json({ ok: true, id: data.id });
     }
 

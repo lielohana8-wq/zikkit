@@ -177,7 +177,7 @@ export default function SoloQuotes() {
         </DialogActions>
       </Dialog>
 
-      {share && <ShareDialog open onClose={() => setShare(null)} url={share.url} token={share.token} kind="quote" number={share.q.number || `Q-${share.q.id}`} to={{ phone: share.q.phone, email: share.q.email, name: share.q.client }} bizName={cfg.biz_name || 'us'} />}
+      {share && <ShareDialog open onClose={() => setShare(null)} url={share.url} token={share.token} kind="quote" number={share.q.number || `Q-${share.q.id}`} to={{ phone: share.q.phone, email: share.q.email, name: share.q.client }} bizName={cfg.biz_name || 'us'} replyTo={cfg.biz_email} />}
     </Box>
   );
 }

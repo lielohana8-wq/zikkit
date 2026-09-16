@@ -165,7 +165,7 @@ export default function SoloReceipts() {
         </DialogActions>
       </Dialog>
 
-      {share && <ShareDialog open onClose={() => setShare(null)} url={share.url} token={share.token} kind="receipt" number={share.r.number} to={{ phone: share.r.phone, email: share.r.email, name: share.r.client }} bizName={cfg.biz_name || 'us'} />}
+      {share && <ShareDialog open onClose={() => setShare(null)} url={share.url} token={share.token} kind="receipt" number={share.r.number} to={{ phone: share.r.phone, email: share.r.email, name: share.r.client }} bizName={cfg.biz_name || 'us'} replyTo={cfg.biz_email} />}
     </Box>
   );
 }
