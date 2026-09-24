@@ -30,7 +30,7 @@ export function DispatchDialog({ onClose, date }: { onClose: () => void; date?: 
     for (const j of dayJobs) { const k = j.techUid || ''; if (!byUid.has(k)) byUid.set(k, []); byUid.get(k)!.push(j); }
     for (const list of byUid.values()) list.sort((a, b) => (a.scheduledTime || '').localeCompare(b.scheduledTime || ''));
     return Array.from(byUid.entries())
-      .map(([uid, list]) => ({ uid, person: assignees.find((a) => a.uid === uid), jobs: list }))
+      .map(([key, list]) => ({ uid: key, person: assignees.find((a) => a.key === key || (a.uid && a.uid === key)), jobs: list }))
       .sort((a, b) => (a.person?.name || 'zz').localeCompare(b.person?.name || 'zz'));
   }, [jobs, day, assignees]);
 

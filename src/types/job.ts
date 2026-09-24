@@ -55,6 +55,8 @@ export interface Job {
   techUid?: string;       // Firebase uid of the assigned technician (rules scope on this)
   /** Who is doing it: the owner, a partner, or a technician. Jobs done by the owner or a partner belong to the company. */
   assigneeRole?: 'owner' | 'partner' | 'dispatcher' | 'technician';
+  /** Team row id — kept so a job scheduled before someone accepts their invite finds them afterwards. */
+  assigneeId?: number;
   // `source` above doubles as the company this job was pulled from ('' = our own)
   sharePercent?: number;        // what we keep, in percent — carried into the closing
   materialsBeforeSplit?: boolean;

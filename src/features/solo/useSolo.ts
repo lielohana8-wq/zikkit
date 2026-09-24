@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase';
 import { useData } from '@/hooks/useFirestore';
@@ -15,7 +15,13 @@ export type DocKind = 'quote' | 'receipt';
 
 /** Someone a job can be assigned to. */
 export interface Assignee {
+  /** Stable handle used on the job: the person's Firebase uid once they sign in, otherwise `member:<id>`. */
+  key: string;
+  /** Firebase uid — empty until they accept their invite. */
   uid: string;
+  /** Row id in the team list (absent for the owner). */
+  memberId?: number;
+  pending?: boolean;
   name: string;
   role: 'owner' | 'partner' | 'dispatcher' | 'technician';
   color?: string;
@@ -86,24 +92,38 @@ export function useSolo() {
    */
   const assignees = useMemo(() => {
     const ownerRecord = ((db.users || []) as User[]).find((u) => u.role === 'owner' || u.role === 'super_admin');
+    /**
+     * Signing in writes `businesses/{bizId}/members/{uid}`, but the team row in
+     * `users` keeps no uid of its own — so the link between "Barak on the team"
+     * and "the account Barak logged in with" is made here, by email.
+     */
+    const memberDocs = ((db.members || []) as Array<{ uid?: string; email?: string }>);
+    const uidByEmail = new Map<string, string>();
+    for (const m of memberDocs) if (m.uid && m.email) uidByEmail.set(String(m.email).toLowerCase(), m.uid);
     const out: Assignee[] = [];
     if (bizId) {
       const mine = uid === bizId;
       out.push({
-        uid: bizId, role: 'owner', isMe: mine,
-        name: (mine && user?.name) || ownerRecord?.name || cfg.biz_name || 'Owner',
+        key: bizId, uid: bizId, role: 'owner', isMe: mine,
+        name: ownerRecord?.name || (mine && user?.name) || cfg.biz_name || 'Owner',
         phone: ownerRecord?.phone || cfg.biz_phone, email: ownerRecord?.email || cfg.biz_email,
       });
     }
     for (const t of team) {
-      if (!t.uid || t.active === false) continue;
+      if (t.active === false) continue;
       const r = t.role === 'partner' ? 'partner' : t.role === 'dispatcher' ? 'dispatcher' : 'technician';
-      out.push({ uid: t.uid, role: r, name: t.name, color: t.color, phone: t.phone, email: t.email, isMe: t.uid === uid });
+      const memberUid = t.uid || uidByEmail.get((t.email || '').toLowerCase()) || '';
+      // Someone who hasn't signed in yet is still schedulable — the job holds
+      // `member:<id>` until they do, then it is swapped for their uid.
+      out.push({
+        key: memberUid || `member:${t.id}`, uid: memberUid, memberId: Number(t.id), pending: !memberUid,
+        role: r, name: t.name, color: t.color, phone: t.phone, email: t.email, isMe: Boolean(memberUid) && memberUid === uid,
+      });
     }
     return out;
-  }, [team, db.users, bizId, uid, user?.name, cfg.biz_name, cfg.biz_phone, cfg.biz_email]);
+  }, [team, db.users, db.members, bizId, uid, user?.name, cfg.biz_name, cfg.biz_phone, cfg.biz_email]);
 
-  const assigneeOf = useCallback((assigneeUid?: string | null) => (assigneeUid ? assignees.find((a) => a.uid === assigneeUid) : undefined), [assignees]);
+  const assigneeOf = useCallback((key?: string | null) => (key ? assignees.find((a) => a.key === key || (a.uid && a.uid === key)) : undefined), [assignees]);
   const products = useMemo(() => ((db.products || []) as Product[]).slice().sort((a, b) => (a.category || '').localeCompare(b.category || '') || (a.name || '').localeCompare(b.name || '')), [db.products]);
   const leads = useMemo(() => ((db.leads || []) as Lead[]).slice().sort((a, b) => (b.created || '').localeCompare(a.created || '')), [db.leads]);
   const reviews = useMemo(() => ((db.reviews || []) as ReviewRequest[]).slice().sort((a, b) => (b.sentAt || '').localeCompare(a.sentAt || '')), [db.reviews]);
@@ -157,6 +177,29 @@ export function useSolo() {
   const saveReceipt = useCallback(async (r: Receipt) => saveItem('receipts', r as unknown as Record<string, unknown>), [saveItem]);
   const saveClosing = useCallback(async (c: Closing) => saveItem('closings', c as unknown as Record<string, unknown>), [saveItem]);
   const saveJob = useCallback(async (j: Job) => saveItem('jobs', j as unknown as Record<string, unknown>), [saveItem]);
+
+  /**
+   * A job scheduled before its person accepted the invite holds `member:<id>`.
+   * Once they sign in they get a real uid — swap it in so the job reaches their
+   * phone (their view is scoped to `techUid == uid`). Runs on staff clients only.
+   */
+  const backfilling = useRef(false);
+  useEffect(() => {
+    if (backfilling.current || role === 'technician' || role === 'partner') return;
+    const pending = jobs.filter((j) => typeof j.techUid === 'string' && j.techUid.startsWith('member:'));
+    if (pending.length === 0) return;
+    const fixes = pending
+      .map((j) => ({ job: j, who: assignees.find((a) => a.key === j.techUid || (a.memberId != null && `member:${a.memberId}` === j.techUid)) }))
+      .filter((x) => x.who?.uid);
+    if (fixes.length === 0) return;
+    backfilling.current = true;
+    (async () => {
+      try {
+        for (const { job, who } of fixes) await saveItem('jobs', { ...job, techUid: who!.uid, tech: who!.name, assigneeId: who!.memberId } as unknown as Record<string, unknown>);
+      } catch { /* retried on the next load */ }
+      finally { backfilling.current = false; }
+    })();
+  }, [jobs, assignees, role, saveItem]);
   const saveMember = useCallback(async (u: User) => saveItem('users', u as unknown as Record<string, unknown>), [saveItem]);
   const saveProduct = useCallback(async (p: Product) => saveItem('products', p as unknown as Record<string, unknown>), [saveItem]);
   const saveLead = useCallback(async (l: Lead) => saveItem('leads', l as unknown as Record<string, unknown>), [saveItem]);

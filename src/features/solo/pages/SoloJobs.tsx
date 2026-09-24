@@ -60,9 +60,9 @@ export default function SoloJobs() {
     if (status === 'in_progress') patch.startedAt = new Date().toISOString();
     await saveJob({ ...j, ...patch }); toast(STATUS_LABEL[status] || status);
   };
-  const assign = async (j: Job, techUid: string) => {
-    const t = assigneeOf(techUid);
-    await saveJob({ ...j, techUid: techUid || undefined, tech: t?.name || undefined, assigneeRole: t?.role });
+  const assign = async (j: Job, key: string) => {
+    const t = assigneeOf(key);
+    await saveJob({ ...j, techUid: key || undefined, tech: t?.name || undefined, assigneeRole: t?.role, assigneeId: t?.memberId });
     toast(t ? `Assigned to ${t.name}` : 'Unassigned');
   };
 
@@ -125,7 +125,7 @@ export default function SoloJobs() {
         {menu && [
           <MenuItem key="edit" onClick={() => { setEditing({ job: menu.j }); setMenu(null); }}><Edit fontSize="small" sx={{ mr: 1 }} />Edit</MenuItem>,
           <Divider key="d0" />,
-          ...assignees.map((t) => <MenuItem key={t.uid} onClick={() => { assign(menu.j, t.uid); setMenu(null); }}>{t.role === 'owner' ? '👑' : t.role === 'partner' ? '🤝' : '👷'} {t.name}{t.isMe ? ' (me)' : ''}{menu.j.techUid === t.uid ? ' ✓' : ''}</MenuItem>),
+          ...assignees.map((t) => <MenuItem key={t.key} onClick={() => { assign(menu.j, t.key); setMenu(null); }}>{t.role === 'owner' ? '👑' : t.role === 'partner' ? '🤝' : '👷'} {t.isMe ? 'Me' : t.name}{t.pending ? ' (invite pending)' : ''}{menu.j.techUid === t.key ? ' ✓' : ''}</MenuItem>),
           <MenuItem key="unassign" onClick={() => { assign(menu.j, ''); setMenu(null); }}>Unassign</MenuItem>,
           <Divider key="d1" />,
           <MenuItem key="cancel" onClick={() => { setStatus(menu.j, 'cancelled'); setMenu(null); }}><Cancel fontSize="small" sx={{ mr: 1 }} />Cancel job</MenuItem>,

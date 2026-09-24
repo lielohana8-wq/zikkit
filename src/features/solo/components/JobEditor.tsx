@@ -52,13 +52,13 @@ export function JobEditorDialog({ job, preset, onClose, onSaved }: { job?: Job; 
     setSaving(true);
     try {
       const cust = await ensureCustomer(draft.customer.name, draft.customer.phone, draft.customer.email, draft.customer.address);
-      const who = joined.find((t) => t.uid === draft.techUid);
+      const who = joined.find((t) => t.key === draft.techUid);
       const next: Job = {
         ...(job || {}),
         id: job?.id ?? newId(), client: draft.customer.name.trim(), phone: cust?.phone || draft.customer.phone, email: draft.customer.email, address: draft.customer.address,
         customerId: cust?.id, jobType: draft.jobType.trim() || 'Job', desc: draft.jobType.trim() || 'Job', status: draft.status,
-        scheduledDate: draft.date, scheduledTime: draft.time, duration: draft.duration, techUid: draft.techUid || undefined, tech: who?.name || undefined,
-        assigneeRole: who?.role,
+        scheduledDate: draft.date, scheduledTime: draft.time, duration: draft.duration,
+        techUid: draft.techUid || undefined, tech: who?.name || undefined, assigneeRole: who?.role, assigneeId: who?.memberId,
         notes: draft.notes, quoteId: draft.quoteId, quoteTotal: draft.quoteTotal, createdBy: job?.createdBy || uid || undefined, created: job?.created || new Date().toISOString(),
         source: draft.split.source === OWN_SOURCE ? '' : draft.split.source, sharePercent: draft.split.sharePercent, materialsBeforeSplit: draft.split.materialsBeforeSplit,
       };
@@ -82,8 +82,12 @@ export function JobEditorDialog({ job, preset, onClose, onSaved }: { job?: Job; 
             <TextField type="time" label="Time" value={draft.time} onChange={(e) => setDraft({ ...draft, time: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ width: 140 }} />
             <TextField type="number" label="Minutes" value={draft.duration} onChange={(e) => setDraft({ ...draft, duration: Number(e.target.value) })} sx={{ width: 110 }} />
           </Stack>
-          <SelectField label="Technician" value={draft.techUid} onChange={(v) => setDraft({ ...draft, techUid: v })} options={[{ value: '', label: 'Unassigned' }, ...joined.map((t) => ({ value: t.uid as string, label: t.name }))]} />
-          {technicians.some((t) => !t.uid) && <Typography sx={{ fontSize: 11, color: c.text3, mt: -1 }}>Technicians who haven't accepted their invite yet can't be assigned.</Typography>}
+          <SelectField label="Assigned to" value={draft.techUid} onChange={(v) => setDraft({ ...draft, techUid: v })}
+            options={[{ value: '', label: 'Unassigned' }, ...joined.map((t) => ({
+              value: t.key,
+              label: `${t.isMe ? 'Me' : t.name}${t.role === 'owner' ? ' — owner' : t.role === 'partner' ? ' — partner' : t.role === 'dispatcher' ? ' — office' : ''}${t.pending ? ' (invite pending)' : ''}`,
+            }))]} />
+          {joined.some((t) => t.pending) && <Typography sx={{ fontSize: 11, color: c.text3, mt: -1 }}>People who haven&apos;t accepted their invite yet can be scheduled — the job moves to their phone the moment they sign in.</Typography>}
           {job && <SelectField label="Status" value={draft.status} onChange={(v) => setDraft({ ...draft, status: v })} options={JOB_STATUSES} />}
           {seesSplit && <SplitEditor value={draft.split} onChange={(split) => setDraft({ ...draft, split })} rates={sourceRates} />}
           <TextField label="Notes for the technician" value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} multiline minRows={2} fullWidth />
