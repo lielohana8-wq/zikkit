@@ -186,7 +186,19 @@ export function useSolo() {
   const backfilling = useRef(false);
   useEffect(() => {
     if (backfilling.current || role === 'technician' || role === 'partner') return;
+    // Jobs saved before the office role existed have no `ownWork` flag; without it
+    // the office query cannot see them at all, so fill it in from the source.
+    const missingFlag = jobs.filter((j) => j.ownWork === undefined);
     const pending = jobs.filter((j) => typeof j.techUid === 'string' && j.techUid.startsWith('member:'));
+    if (missingFlag.length > 0) {
+      backfilling.current = true;
+      (async () => {
+        try { for (const j of missingFlag) await saveItem('jobs', { ...j, ownWork: !j.source } as unknown as Record<string, unknown>); }
+        catch { /* retried on the next load */ }
+        finally { backfilling.current = false; }
+      })();
+      return;
+    }
     if (pending.length === 0) return;
     const fixes = pending
       .map((j) => ({ job: j, who: assignees.find((a) => a.key === j.techUid || (a.memberId != null && `member:${a.memberId}` === j.techUid)) }))

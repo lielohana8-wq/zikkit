@@ -9,7 +9,7 @@ import { zikkitColors as c } from '@/styles/theme';
 import { formatMoney, formatDateLocal } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { useSolo, toDateKey } from '../useSolo';
-import { isFieldRole } from '../roles';
+import { isFieldRole, isOffice } from '../roles';
 import { CloseJobDialog } from '../components/CloseJobDialog';
 import { JobEditorDialog, JOB_STATUS_LABEL as STATUS_LABEL, type JobPreset } from '../components/JobEditor';
 import type { Job, JobStatus } from '@/types';
@@ -24,6 +24,7 @@ export default function SoloJobs() {
   const { jobs, quotes, technicians, assignees, assigneeOf, currency, role, uid, saveJob, deleteItem } = useSolo();
   const { toast } = useToast();
   const isTech = isFieldRole(role);
+  const hideMoney = isOffice(role);
   const params = useSearchParams();
   const [view, setView] = useState<'upcoming' | 'today' | 'done' | 'all'>('upcoming');
   const [onlyMine, setOnlyMine] = useState(false);
@@ -76,7 +77,7 @@ export default function SoloJobs() {
         {!isTech && assignees.length > 1 && <Chip label="Only mine" size="small" onClick={() => setOnlyMine(!onlyMine)} color={onlyMine ? 'primary' : 'default'} variant={onlyMine ? 'filled' : 'outlined'} />}
       </Stack>
 
-      {!isTech && acceptedQuotes.length > 0 && view !== 'done' && (
+      {!isTech && !hideMoney && acceptedQuotes.length > 0 && view !== 'done' && (
         <Paper sx={{ p: 1.5, borderRadius: 3, border: `1px solid ${c.border}`, mb: 2, bgcolor: 'rgba(16,185,129,0.06)' }}>
           <Typography sx={{ fontWeight: 800, fontSize: 12, mb: 0.5 }}>Accepted quotes waiting to be scheduled</Typography>
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
@@ -99,7 +100,7 @@ export default function SoloJobs() {
                     <Typography sx={{ fontSize: 10, color: c.text3 }}>{j.duration ? `${j.duration}m` : ''}</Typography>
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }} onClick={() => !isTech && setEditing({ job: j })} style={{ cursor: isTech ? 'default' : 'pointer' }}>
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap' }}><Typography sx={{ fontWeight: 800, fontSize: 14 }}>{j.client}</Typography><Chip size="small" label={STATUS_LABEL[j.status] || j.status} sx={{ height: 20, fontSize: 10 }} color={j.status === 'completed' ? 'success' : j.status === 'in_progress' || j.status === 'on_way' ? 'primary' : 'default'} />{j.quoteTotal ? <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{formatMoney(j.quoteTotal, currency)}</Typography> : null}</Stack>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap' }}><Typography sx={{ fontWeight: 800, fontSize: 14 }}>{j.client}</Typography><Chip size="small" label={STATUS_LABEL[j.status] || j.status} sx={{ height: 20, fontSize: 10 }} color={j.status === 'completed' ? 'success' : j.status === 'in_progress' || j.status === 'on_way' ? 'primary' : 'default'} />{j.quoteTotal && !hideMoney ? <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{formatMoney(j.quoteTotal, currency)}</Typography> : null}</Stack>
                     <Typography sx={{ fontSize: 13, color: c.text2 }}>{j.jobType || j.desc}{j.address ? ` · ${j.address}` : ''}</Typography>
                     <Typography sx={{ fontSize: 11, color: c.text3 }}>{!isTech ? (j.tech ? `👷 ${j.tech}` : '⚠️ Unassigned') : ''}{j.notes ? ` · ${j.notes}` : ''}</Typography>
                   </Box>
@@ -111,7 +112,7 @@ export default function SoloJobs() {
                   <Stack direction="row" spacing={1} sx={{ mt: 1.25, flexWrap: 'wrap', gap: 1 }}>
                     {j.status === 'scheduled' && <Button size="small" variant="outlined" startIcon={<DirectionsCar />} onClick={() => setStatus(j, 'on_way')}>On my way</Button>}
                     {(j.status === 'scheduled' || j.status === 'on_way') && <Button size="small" variant="outlined" startIcon={<PlayArrow />} onClick={() => setStatus(j, 'in_progress')}>Start</Button>}
-                    <Button size="small" variant="contained" startIcon={<CheckCircle />} onClick={() => setClosing(j)}>Close job</Button>
+                    {!hideMoney && <Button size="small" variant="contained" startIcon={<CheckCircle />} onClick={() => setClosing(j)}>Close job</Button>}
                   </Stack>
                 )}
               </Paper>

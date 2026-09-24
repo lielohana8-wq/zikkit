@@ -15,7 +15,7 @@ export const ROLE_LABELS: Record<SoloRole, string> = { owner: 'Owner', partner: 
 export const ROLE_DESCRIPTIONS: Record<SoloRole, string> = {
   owner: 'Everything, including team and settings',
   partner: 'Only their own jobs and closings — jobs they run belong to the company',
-  dispatcher: 'Leads only — takes the calls and writes them down. No jobs, customers, prices or money.',
+  dispatcher: 'Our own work only — leads, customers and the jobs that are 100% ours. Never sees work pulled from another company, and never sees money.',
   technician: 'Only their own jobs and their own closings',
 };
 
@@ -34,7 +34,7 @@ export const roleHome = (r: SoloRole | null) => (r === 'dispatcher' ? '/leads' :
 export const ROLE_ROUTES: Record<SoloRole, string[]> = {
   owner: ['/dashboard', '/schedule', '/jobs', '/leads', '/customers', '/quotes', '/receipts', '/closings', '/reports', '/products', '/photos', '/reviews', '/gps-tracking', '/team', '/settings'],
   partner: ['/dashboard', '/schedule', '/jobs', '/closings', '/photos'],
-  dispatcher: ['/leads'],
+  dispatcher: ['/leads', '/schedule', '/jobs', '/customers'],
   technician: ['/dashboard', '/schedule', '/jobs', '/closings', '/photos'],
 };
 
@@ -66,6 +66,9 @@ export const ROLE_NAV: Record<SoloRole, NavEntry[]> = {
   ],
   dispatcher: [
     { key: 'leads', icon: '📞', label: 'Leads', href: '/leads' },
+    { key: 'schedule', icon: '📅', label: 'Schedule', href: '/schedule' },
+    { key: 'jobs', icon: '🔧', label: 'Jobs', href: '/jobs' },
+    { key: 'customers', icon: '🧑', label: 'Customers', href: '/customers' },
   ],
   technician: [
     { key: 'dashboard', icon: '🏠', label: 'Today', href: '/dashboard' },

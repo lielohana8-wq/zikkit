@@ -14,8 +14,12 @@ import type { BusinessDatabase, BusinessConfig, SoloRole } from '@/types';
 export interface DataScope { role: SoloRole | null; uid: string | null }
 /** Collections a field user (technician or partner) may read — filtered by techUid. Everything else stays out of their client entirely. */
 const TECH_COLLECTIONS = ['jobs', 'closings'] as const;
-/** The office role handles incoming calls and nothing else. */
-const OFFICE_COLLECTIONS = ['leads'] as const;
+/**
+ * The office role works the phone: leads, the people behind them, and the jobs
+ * that are ours end to end. Work pulled from another company never reaches it —
+ * the jobs listener filters on `ownWork`, and the rules enforce the same thing.
+ */
+const OFFICE_COLLECTIONS = ['leads', 'customers'] as const;
 
 /**
  * DataProvider v2 — same public API as before (db / cfg / saveData / saveCfg),
@@ -117,12 +121,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ---- subscribe to one collection ------------------------------------------------
-  const subscribe = useCallback((id: string, key: string, techUid?: string) => {
+  const subscribe = useCallback((id: string, key: string, opts?: { techUid?: string; ownWorkOnly?: boolean }) => {
     if (listenersRef.current.has(key)) return;
     const firestore = getFirestoreDb();
     pendingFirst.current.add(key);
     const base = collection(doc(firestore, 'businesses', id), key);
-    const source: Query<DocumentData> = techUid ? query(base, where('techUid', '==', techUid)) : base;
+    const source: Query<DocumentData> = opts?.techUid
+      ? query(base, where('techUid', '==', opts.techUid))
+      : opts?.ownWorkOnly
+        ? query(base, where('ownWork', '==', true))
+        : base;
     const unsub = onSnapshot(source, (snap) => {
       const items = sortById(snap.docs.map((d) => d.data() as DataItem));
       setDb((prev) => { const next = { ...prev, [key]: items } as BusinessDatabase; dbRef.current = next; return next; });
@@ -147,8 +155,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setReady(false);
     pendingFirst.current = new Set();
     setDb(defaultDb()); dbRef.current = defaultDb();
-    if (isTech) { for (const key of TECH_COLLECTIONS) subscribe(id, key, techUid || undefined); }
-    else if (isOffice) { for (const key of OFFICE_COLLECTIONS) subscribe(id, key); }
+    if (isTech) { for (const key of TECH_COLLECTIONS) subscribe(id, key, { techUid: techUid || undefined }); }
+    else if (isOffice) { for (const key of OFFICE_COLLECTIONS) subscribe(id, key); subscribe(id, 'jobs', { ownWorkOnly: true }); }
     else { for (const key of KNOWN_COLLECTIONS) subscribe(id, key); subscribe(id, 'members'); subscribe(id, 'presence'); /* read-only: who has joined, and where they are (never written through saveData) */ }
 
     const unsubBiz = onSnapshot(doc(firestore, 'businesses', id), async (snap) => {
@@ -214,8 +222,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (!Array.isArray(value)) continue;
       if (!isValidCollectionKey(key)) { console.warn('[Zikkit] ignoring invalid collection key', key); continue; }
       if (techOnly && !(TECH_COLLECTIONS as readonly string[]).includes(key)) continue;
-      if (officeOnly && !(OFFICE_COLLECTIONS as readonly string[]).includes(key)) continue;
-      const { diff, next } = diffCollection(prev[key] as DataItem[] | undefined, value as DataItem[]);
+      if (officeOnly && !(OFFICE_COLLECTIONS as readonly string[]).includes(key) && key !== 'jobs') continue;
+      // The office may only ever create OUR OWN work — never a pulled job.
+      const rows = officeOnly && key === 'jobs'
+        ? (value as DataItem[]).map((it) => ({ ...it, ownWork: true, source: '' }))
+        : (value as DataItem[]);
+      const { diff, next } = diffCollection(prev[key] as DataItem[] | undefined, rows);
       nextState[key] = next;
       if (diff.upserts.length || diff.deletes.length) work.push({ key, ...diff });
     }

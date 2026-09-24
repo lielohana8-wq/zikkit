@@ -49,16 +49,24 @@ service cloud.firestore {
         allow delete: if isOwner(bizId) || isSuperAdmin() || request.auth.uid == uid;
       }
 
-      // Leads: the office writes these; nobody else in the field sees them
+      // Leads and the people behind them: the owner and the office.
       match /leads/{docId} {
+        allow read, write: if isStaff(bizId) || isOffice(bizId);
+      }
+      match /customers/{docId} {
         allow read, write: if isStaff(bizId) || isOffice(bizId);
       }
 
       // Jobs: staff see everything; technicians only jobs assigned to them (query must filter techUid == uid)
+      // Jobs: the owner sees everything; a technician only their own; the office
+      // only work that is 100% ours — never a job pulled from another company.
       match /jobs/{docId} {
-        allow read: if isStaff(bizId) || (isTech(bizId) && ownsRecord());
-        allow create, delete: if isStaff(bizId);
-        allow update: if isStaff(bizId) || (isTech(bizId) && ownsRecord() && writesOwnRecord());
+        allow read: if isStaff(bizId) || (isTech(bizId) && ownsRecord()) || (isOffice(bizId) && resource.data.ownWork == true);
+        allow create: if isStaff(bizId) || (isOffice(bizId) && request.resource.data.ownWork == true && request.resource.data.source == '');
+        allow update: if isStaff(bizId)
+          || (isTech(bizId) && ownsRecord() && writesOwnRecord())
+          || (isOffice(bizId) && resource.data.ownWork == true && request.resource.data.ownWork == true && request.resource.data.source == '');
+        allow delete: if isStaff(bizId) || (isOffice(bizId) && resource.data.ownWork == true);
       }
 
       // Closings: technicians may create/update only their own
@@ -77,7 +85,7 @@ service cloud.firestore {
 
       // Everything else (customers, quotes, receipts, products, users, counters, backups, …): staff only
       match /{sub}/{docId} {
-        allow read, write: if isStaff(bizId) && sub != 'members' && sub != 'jobs' && sub != 'closings' && sub != 'presence' && sub != 'leads';
+        allow read, write: if isStaff(bizId) && sub != 'members' && sub != 'jobs' && sub != 'closings' && sub != 'presence' && sub != 'leads' && sub != 'customers';
       }
       match /{sub}/{docId}/{rest=**} {
         allow read, write: if isStaff(bizId) && sub != 'members';

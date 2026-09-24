@@ -8,13 +8,16 @@ import { zikkitColors as c } from '@/styles/theme';
 import { formatMoney, formatDateLocal, REGION_DEFAULTS } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { useSolo } from '../useSolo';
+import { isOffice } from '../roles';
 import { StatusChip } from '../components/SoloUI';
 import type { Customer } from '@/types';
 
 const empty = (): Partial<Customer> => ({ name: '', phone: '', email: '', address: '', city: '', province: 'ON', postal: '', notes: '', tags: [] });
 
 export default function SoloCustomers() {
-  const { customers, quotes, receipts, closings, currency, upsertCustomer, deleteItem } = useSolo();
+  const { customers, quotes, receipts, closings, currency, role, upsertCustomer, deleteItem } = useSolo();
+  /** The office books work; it never sees what anything was worth. */
+  const hideMoney = isOffice(role);
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Partial<Customer> | null>(null);
@@ -74,10 +77,12 @@ export default function SoloCustomers() {
                     <Typography sx={{ fontSize: 12, color: c.text3 }}>{cust.phone || '—'}{cust.email ? ` · ${cust.email}` : ''}</Typography>
                     {(cust.address || cust.city) && <Typography sx={{ fontSize: 12, color: c.text3 }}>{[cust.address, cust.city].filter(Boolean).join(', ')}</Typography>}
                   </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography sx={{ fontWeight: 800, fontSize: 14 }}>{formatMoney(st?.spent || 0, currency)}</Typography>
-                    <Typography sx={{ fontSize: 11, color: c.text3 }}>{st?.closings || 0} closing{(st?.closings || 0) === 1 ? '' : 's'}</Typography>
-                  </Box>
+                  {!hideMoney && (
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography sx={{ fontWeight: 800, fontSize: 14 }}>{formatMoney(st?.spent || 0, currency)}</Typography>
+                      <Typography sx={{ fontSize: 11, color: c.text3 }}>{st?.closings || 0} closing{(st?.closings || 0) === 1 ? '' : 's'}</Typography>
+                    </Box>
+                  )}
                 </Stack>
                 {cust.tags && cust.tags.length > 0 && <Stack direction="row" spacing={0.5} sx={{ mt: 1, flexWrap: 'wrap' }}>{cust.tags.map((t) => <Chip key={t} label={t} size="small" />)}</Stack>}
               </Paper>
@@ -106,13 +111,13 @@ export default function SoloCustomers() {
                 {(selected.address || selected.city) && <Stack direction="row" spacing={1} alignItems="center"><LocationOn fontSize="small" /><Typography sx={{ fontSize: 14 }}>{[selected.address, selected.city, selected.province, selected.postal].filter(Boolean).join(', ')}</Typography></Stack>}
                 {selected.notes && <Typography sx={{ fontSize: 13, color: c.text2, whiteSpace: 'pre-wrap', mt: 1 }}>{selected.notes}</Typography>}
               </Stack>
-              <Divider sx={{ my: 1.5 }} />
-              <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.5 }}>Closings ({selClosings.length}) · {formatMoney(selClosings.reduce((s, x) => s + (Number(x.amount) || 0), 0), currency)}</Typography>
-              {selClosings.slice(0, 8).map((x) => <Row key={x.id} left={`${formatDateLocal(x.date)} · ${x.jobType}`} right={formatMoney(x.amount, currency)} />)}
-              <Typography sx={{ fontWeight: 700, fontSize: 13, mt: 1.5, mb: 0.5 }}>Quotes ({selQuotes.length})</Typography>
-              {selQuotes.slice(0, 8).map((q) => <Row key={q.id} left={`${q.number || 'Q-' + q.id} · ${formatDateLocal(q.created)}`} right={<><StatusChip status={q.status} /> <b>{formatMoney(q.total, currency)}</b></>} />)}
-              <Typography sx={{ fontWeight: 700, fontSize: 13, mt: 1.5, mb: 0.5 }}>Receipts ({selReceipts.length})</Typography>
-              {selReceipts.slice(0, 8).map((r) => <Row key={r.id} left={`${r.number} · ${formatDateLocal(r.created)}`} right={<><StatusChip status={r.status} /> <b>{formatMoney(r.total, currency)}</b></>} />)}
+              {!hideMoney && <Divider sx={{ my: 1.5 }} />}
+              {!hideMoney && <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.5 }}>Closings ({selClosings.length}) · {formatMoney(selClosings.reduce((s, x) => s + (Number(x.amount) || 0), 0), currency)}</Typography>}
+              {!hideMoney && selClosings.slice(0, 8).map((x) => <Row key={x.id} left={`${formatDateLocal(x.date)} · ${x.jobType}`} right={formatMoney(x.amount, currency)} />)}
+              {!hideMoney && <Typography sx={{ fontWeight: 700, fontSize: 13, mt: 1.5, mb: 0.5 }}>Quotes ({selQuotes.length})</Typography>}
+              {!hideMoney && selQuotes.slice(0, 8).map((q) => <Row key={q.id} left={`${q.number || 'Q-' + q.id} · ${formatDateLocal(q.created)}`} right={<><StatusChip status={q.status} /> <b>{formatMoney(q.total, currency)}</b></>} />)}
+              {!hideMoney && <Typography sx={{ fontWeight: 700, fontSize: 13, mt: 1.5, mb: 0.5 }}>Receipts ({selReceipts.length})</Typography>}
+              {!hideMoney && selReceipts.slice(0, 8).map((r) => <Row key={r.id} left={`${r.number} · ${formatDateLocal(r.created)}`} right={<><StatusChip status={r.status} /> <b>{formatMoney(r.total, currency)}</b></>} />)}
             </DialogContent>
             <DialogActions><Button onClick={() => setSelected(null)}>Close</Button></DialogActions>
           </>

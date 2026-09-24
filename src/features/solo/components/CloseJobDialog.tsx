@@ -6,7 +6,7 @@ import { formatMoney } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { newId } from '@/lib/data/collections';
 import { useSolo, round2, toDateKey } from '../useSolo';
-import { isFieldRole } from '../roles';
+import { isStaff } from '../roles';
 import { SelectField, PAYMENT_METHODS, PAID_TO } from './SoloUI';
 import { SplitEditor, SplitBreakdown, type SplitValue } from './SplitFields';
 import { computeSplit, OWN_SOURCE } from '../split';
@@ -18,7 +18,7 @@ import type { Job, Closing, PaidTo, PaymentMethod } from '@/types';
  */
 export function CloseJobDialog({ job, onClose, onClosed }: { job: Job; onClose: () => void; onClosed?: (closing: Closing) => void }) {
   const { currency, saveClosing, saveJob, uid, user, role, assignees, assigneeOf, sources, sourceRates, defaults } = useSolo();
-  const seesSplit = !isFieldRole(role);
+  const seesSplit = isStaff(role); // percentages are the owner's business
   const { toast } = useToast();
   const [amount, setAmount] = useState<number>(job.quoteTotal || job.revenue || 0);
   const [deposit, setDeposit] = useState<number>(0);

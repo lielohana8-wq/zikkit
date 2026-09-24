@@ -57,6 +57,12 @@ export interface Job {
   assigneeRole?: 'owner' | 'partner' | 'dispatcher' | 'technician';
   /** Team row id — kept so a job scheduled before someone accepts their invite finds them afterwards. */
   assigneeId?: number;
+  /**
+   * True when the job is ours end to end (100% to us), false when it was pulled
+   * from another company. Written on every save because the office role's query
+   * filters on it — a missing field would hide the job from them.
+   */
+  ownWork?: boolean;
   // `source` above doubles as the company this job was pulled from ('' = our own)
   sharePercent?: number;        // what we keep, in percent — carried into the closing
   materialsBeforeSplit?: boolean;

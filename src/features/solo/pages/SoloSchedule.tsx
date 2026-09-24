@@ -6,7 +6,7 @@ import { zikkitColors as c } from '@/styles/theme';
 import { formatMoney } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { useSolo, weekRange, toDateKey } from '../useSolo';
-import { colorForUid, isFieldRole } from '../roles';
+import { colorForUid, isFieldRole, isOffice } from '../roles';
 import { JobEditorDialog, JOB_STATUS_LABEL, type JobPreset } from '../components/JobEditor';
 import { DispatchDialog } from '../components/DispatchDialog';
 import { CloseJobDialog } from '../components/CloseJobDialog';
@@ -64,6 +64,7 @@ export default function SoloSchedule() {
   const { jobs, technicians, team, assignees, assigneeOf, role, uid, currency, saveJob, cfg } = useSolo();
   const { toast } = useToast();
   const isTech = isFieldRole(role);
+  const hideMoney = isOffice(role);
   const isMobile = useMediaQuery('(max-width:700px)');
   const [view, setView] = useState<'week' | 'day'>(isMobile ? 'day' : 'week');
   const [anchor, setAnchor] = useState<Date>(() => new Date());
@@ -235,7 +236,7 @@ export default function SoloSchedule() {
           <>
             <DialogTitle sx={{ borderLeft: `6px solid ${colorOf(selected)}`, pb: 1 }}>{selected.client}<Typography sx={{ fontSize: 12, color: c.text3 }}>{dayLabel(new Date((selected.scheduledDate || todayKey) + 'T12:00:00'))} · {selected.scheduledTime} · {selected.duration || 60} min · {JOB_STATUS_LABEL[selected.status] || selected.status}</Typography></DialogTitle>
             <DialogContent>
-              <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{selected.jobType || selected.desc}{selected.quoteTotal ? ` · ${formatMoney(selected.quoteTotal, currency)}` : ''}</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{selected.jobType || selected.desc}{selected.quoteTotal && !hideMoney ? ` · ${formatMoney(selected.quoteTotal, currency)}` : ''}</Typography>
               {selected.address && <Typography sx={{ fontSize: 13, color: c.text2 }}>{selected.address}</Typography>}
               {!isTech && <Typography sx={{ fontSize: 13, color: c.text2 }}>{selected.tech ? `👷 ${selected.tech}` : '⚠️ Unassigned'}</Typography>}
               {selected.notes && <Typography sx={{ fontSize: 13, color: c.text2, mt: 1, whiteSpace: 'pre-wrap' }}>{selected.notes}</Typography>}
@@ -244,7 +245,7 @@ export default function SoloSchedule() {
                 {selected.phone && <Button size="small" variant="outlined" startIcon={<Phone />} href={`tel:${selected.phone}`}>Call</Button>}
                 {selected.address && <Button size="small" variant="outlined" startIcon={<Navigation />} href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selected.address)}`} target="_blank">Navigate</Button>}
                 {!isTech && <Button size="small" variant="outlined" startIcon={<Edit />} onClick={() => setEditing({ job: selected })}>Edit</Button>}
-                {selected.status !== 'completed' && <Button size="small" variant="contained" startIcon={<CheckCircle />} onClick={() => setClosing(selected)}>Close job</Button>}
+                {selected.status !== 'completed' && !hideMoney && <Button size="small" variant="contained" startIcon={<CheckCircle />} onClick={() => setClosing(selected)}>Close job</Button>}
               </Stack>
             </DialogContent>
             <DialogActions><Button onClick={() => setSelected(null)}>Close</Button></DialogActions>
