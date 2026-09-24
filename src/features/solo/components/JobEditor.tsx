@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/useToast';
 import { newId } from '@/lib/data/collections';
 import { useSolo, toDateKey } from '../useSolo';
 import { CustomerPicker, SelectField, type CustomerPickerValue } from './SoloUI';
+import { SplitEditor, type SplitValue } from './SplitFields';
+import { OWN_SOURCE } from '../split';
 import type { Job, JobStatus } from '@/types';
 
 export const JOB_STATUSES: Array<{ value: JobStatus; label: string }> = [
@@ -16,19 +18,22 @@ export const JOB_STATUSES: Array<{ value: JobStatus; label: string }> = [
 export const JOB_STATUS_LABEL: Record<string, string> = Object.fromEntries(JOB_STATUSES.map((s) => [s.value, s.label]));
 const DEFAULT_JOB_TYPES = ['Chimney sweep', 'Chimney repair', 'Chimney cap / liner', 'Garage door spring', 'Garage door opener', 'Garage door install', 'Inspection', 'Service call', 'Other'];
 
-export interface JobPreset { date?: string; time?: string; techUid?: string; quoteId?: number }
-interface Draft { customer: CustomerPickerValue; jobType: string; date: string; time: string; duration: number; techUid: string; notes: string; quoteId?: number; quoteTotal?: number; status: JobStatus }
+export interface JobPreset { date?: string; time?: string; techUid?: string; quoteId?: number; customerId?: number }
+interface Draft { customer: CustomerPickerValue; jobType: string; date: string; time: string; duration: number; techUid: string; notes: string; quoteId?: number; quoteTotal?: number; status: JobStatus; split: SplitValue }
 
 /** Create / edit a job. Shared by the Jobs list and the Schedule. */
 export function JobEditorDialog({ job, preset, onClose, onSaved }: { job?: Job; preset?: JobPreset; onClose: () => void; onSaved?: (job: Job) => void }) {
-  const { jobs, customers, quotes, technicians, currency, uid, saveJob, ensureCustomer, saveQuote } = useSolo();
+  const { jobs, customers, quotes, technicians, currency, uid, role, sources, defaults, saveJob, ensureCustomer, saveQuote } = useSolo();
+  const seesSplit = role !== 'technician';
   const { toast } = useToast();
   const today = toDateKey(new Date());
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<Draft>(() => {
-    if (job) return { customer: { customerId: job.customerId, name: job.client, phone: job.phone, email: job.email, address: job.address }, jobType: job.jobType || job.desc || '', date: job.scheduledDate || today, time: job.scheduledTime || '09:00', duration: job.duration || 60, techUid: job.techUid || '', notes: job.notes || '', quoteId: job.quoteId, quoteTotal: job.quoteTotal, status: job.status };
+    const baseSplit: SplitValue = { source: job?.source || OWN_SOURCE, sharePercent: job?.sharePercent ?? defaults.sharePercent, materialsBeforeSplit: job?.materialsBeforeSplit ?? defaults.materialsBeforeSplit };
+    if (job) return { customer: { customerId: job.customerId, name: job.client, phone: job.phone, email: job.email, address: job.address }, jobType: job.jobType || job.desc || '', date: job.scheduledDate || today, time: job.scheduledTime || '09:00', duration: job.duration || 60, techUid: job.techUid || '', notes: job.notes || '', quoteId: job.quoteId, quoteTotal: job.quoteTotal, status: job.status, split: baseSplit };
     const q = preset?.quoteId ? quotes.find((x) => x.id === preset.quoteId) : undefined;
-    return { customer: q ? { customerId: q.customerId, name: q.client, phone: q.phone, email: q.email, address: q.address } : { name: '' }, jobType: q?.items?.[0]?.name || '', date: preset?.date || today, time: preset?.time || '09:00', duration: 60, techUid: preset?.techUid || '', notes: q?.notes || '', quoteId: q?.id, quoteTotal: q?.total, status: 'scheduled' };
+    const preCust = preset?.customerId != null ? customers.find((x) => x.id === preset.customerId) : undefined;
+    return { customer: q ? { customerId: q.customerId, name: q.client, phone: q.phone, email: q.email, address: q.address } : (preCust ? { customerId: preCust.id, name: preCust.name, phone: preCust.phone, email: preCust.email, address: [preCust.address, preCust.city].filter(Boolean).join(', ') } : { name: '' }), jobType: q?.items?.[0]?.name || '', date: preset?.date || today, time: preset?.time || '09:00', duration: 60, techUid: preset?.techUid || '', notes: q?.notes || '', quoteId: q?.id, quoteTotal: q?.total, status: 'scheduled', split: baseSplit };
   });
 
   const jobTypes = useMemo(() => Array.from(new Set([...jobs.map((x) => x.jobType || '').filter(Boolean), ...DEFAULT_JOB_TYPES])), [jobs]);
@@ -53,6 +58,7 @@ export function JobEditorDialog({ job, preset, onClose, onSaved }: { job?: Job; 
         customerId: cust?.id, jobType: draft.jobType.trim() || 'Job', desc: draft.jobType.trim() || 'Job', status: draft.status,
         scheduledDate: draft.date, scheduledTime: draft.time, duration: draft.duration, techUid: draft.techUid || undefined, tech: tech?.name || undefined,
         notes: draft.notes, quoteId: draft.quoteId, quoteTotal: draft.quoteTotal, createdBy: job?.createdBy || uid || undefined, created: job?.created || new Date().toISOString(),
+        source: draft.split.source === OWN_SOURCE ? '' : draft.split.source, sharePercent: draft.split.sharePercent, materialsBeforeSplit: draft.split.materialsBeforeSplit,
       };
       await saveJob(next);
       if (draft.quoteId && !job) { const q = quotes.find((x) => x.id === draft.quoteId); if (q) await saveQuote({ ...q, jobId: next.id }); }
@@ -77,6 +83,7 @@ export function JobEditorDialog({ job, preset, onClose, onSaved }: { job?: Job; 
           <SelectField label="Technician" value={draft.techUid} onChange={(v) => setDraft({ ...draft, techUid: v })} options={[{ value: '', label: 'Unassigned' }, ...joined.map((t) => ({ value: t.uid as string, label: t.name }))]} />
           {technicians.some((t) => !t.uid) && <Typography sx={{ fontSize: 11, color: c.text3, mt: -1 }}>Technicians who haven't accepted their invite yet can't be assigned.</Typography>}
           {job && <SelectField label="Status" value={draft.status} onChange={(v) => setDraft({ ...draft, status: v })} options={JOB_STATUSES} />}
+          {seesSplit && <SplitEditor value={draft.split} onChange={(split) => setDraft({ ...draft, split })} sources={sources} />}
           <TextField label="Notes for the technician" value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} multiline minRows={2} fullWidth />
         </Stack>
       </DialogContent>

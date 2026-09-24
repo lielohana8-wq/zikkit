@@ -145,7 +145,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     pendingFirst.current = new Set();
     setDb(defaultDb()); dbRef.current = defaultDb();
     if (isTech) { for (const key of TECH_COLLECTIONS) subscribe(id, key, techUid || undefined); }
-    else { for (const key of KNOWN_COLLECTIONS) subscribe(id, key); subscribe(id, 'members'); /* read-only: who has joined (never written through saveData) */ }
+    else { for (const key of KNOWN_COLLECTIONS) subscribe(id, key); subscribe(id, 'members'); subscribe(id, 'presence'); /* read-only: who has joined, and where they are (never written through saveData) */ }
 
     const unsubBiz = onSnapshot(doc(firestore, 'businesses', id), async (snap) => {
       const data = (snap.data() || {}) as Record<string, unknown>;

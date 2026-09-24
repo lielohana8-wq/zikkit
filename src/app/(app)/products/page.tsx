@@ -1,4 +1,6 @@
 'use client';
+import { IS_SOLO_EDITION } from '@/lib/region';
+import SoloProducts from '@/features/solo/pages/SoloProducts';
 
 import { useL } from '@/hooks/useL';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -29,7 +31,7 @@ const CAT_BADGE: Record<string, 'new' | 'open' | 'warm' | 'purple' | 'grey'> = {
   service: 'new', part: 'open', labor: 'warm', material: 'purple', other: 'grey',
 };
 
-export default function ProductsPage() {
+function LegacyProductsPage() {
   const { db, saveData, cfg } = useData();
   const L = useL();
   const { lang } = useLanguage();
@@ -321,4 +323,9 @@ export default function ProductsPage() {
       </ModalBase>
     </Box>
   );
+}
+
+
+export default function ProductsPageRouter() {
+  return IS_SOLO_EDITION ? <SoloProducts /> : <LegacyProductsPage />;
 }

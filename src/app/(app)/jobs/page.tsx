@@ -1,5 +1,6 @@
 'use client';
 import { IS_SOLO_EDITION } from '@/lib/region';
+import { Suspense } from 'react';
 import SoloJobs from '@/features/solo/pages/SoloJobs';
 
 import { useL } from '@/hooks/useL';
@@ -805,5 +806,5 @@ function LegacyJobsPage() {
 
 
 export default function JobsPageRouter() {
-  return IS_SOLO_EDITION ? <SoloJobs /> : <LegacyJobsPage />;
+  return IS_SOLO_EDITION ? <Suspense fallback={null}><SoloJobs /></Suspense> : <LegacyJobsPage />;
 }

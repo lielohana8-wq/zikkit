@@ -1,8 +1,8 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, Typography, Button, Paper, Dialog, DialogTitle, DialogContent, DialogActions, Stack, TextField, Chip, IconButton, Menu, MenuItem, Divider, Switch, FormControlLabel, InputAdornment } from '@mui/material';
 import { Add, MoreVert, Send, ContentCopy, Receipt as ReceiptIcon, Delete, Edit, CheckCircle, Cancel } from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { zikkitColors as c } from '@/styles/theme';
@@ -22,6 +22,7 @@ export default function SoloQuotes() {
   const { quotes, customers, currency, taxRate, taxLabel, cfg, db, saveQuote, deleteItem, ensureCustomer, publish, nextDocNumber, receiptFromQuote, saveReceipt } = solo;
   const { toast } = useToast();
   const router = useRouter();
+  const params = useSearchParams();
   const [filter, setFilter] = useState<Filter>('all');
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
@@ -42,6 +43,15 @@ export default function SoloQuotes() {
 
   const newDraft = (): Draft => ({ customer: { name: '' }, items: [{ id: Date.now(), name: '', qty: 1, price: 0 }], discount: 0, taxOn: taxRate > 0, taxRate, notes: '', validDays: 30 });
   const fromQuote = (q: Quote): Draft => ({ id: q.id, number: q.number, customer: { customerId: q.customerId, name: q.client, phone: q.phone, email: q.email, address: q.address }, items: (q.items || []).map((it) => ({ id: it.id, name: it.name, qty: it.qty, price: it.price })), discount: q.discount || 0, taxOn: (q.taxRate ?? 0) > 0, taxRate: q.taxRate ?? taxRate, notes: q.notes || '', validDays: 30, status: q.status, portalToken: q.portalToken, created: q.created });
+
+  // Deep link from Leads: /quotes?newFor=<customerId>
+  useEffect(() => {
+    const newFor = params?.get('newFor');
+    if (!newFor || draft) return;
+    const cust = customers.find((x) => x.id === Number(newFor));
+    if (!cust) return;
+    setDraft({ ...newDraft(), customer: { customerId: cust.id, name: cust.name, phone: cust.phone, email: cust.email, address: [cust.address, cust.city].filter(Boolean).join(', ') } });
+  }, [params, customers]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const totals = draft ? computeTotals(draft.items, draft.discount, draft.taxOn ? draft.taxRate : 0) : null;
 

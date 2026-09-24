@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/useToast';
 import { newId } from '@/lib/data/collections';
 import { useSolo, round2, toDateKey } from '../useSolo';
 import { SelectField, PAYMENT_METHODS, PAID_TO } from './SoloUI';
+import { SplitEditor, SplitBreakdown, type SplitValue } from './SplitFields';
+import { computeSplit, OWN_SOURCE } from '../split';
 import type { Job, Closing, PaidTo, PaymentMethod } from '@/types';
 
 /**
@@ -14,7 +16,8 @@ import type { Job, Closing, PaidTo, PaymentMethod } from '@/types';
  * marks the job completed. Used by technicians (their own jobs) and by staff.
  */
 export function CloseJobDialog({ job, onClose, onClosed }: { job: Job; onClose: () => void; onClosed?: (closing: Closing) => void }) {
-  const { currency, saveClosing, saveJob, uid, user, role, technicians } = useSolo();
+  const { currency, saveClosing, saveJob, uid, user, role, technicians, sources, defaults } = useSolo();
+  const seesSplit = role !== 'technician';
   const { toast } = useToast();
   const [amount, setAmount] = useState<number>(job.quoteTotal || job.revenue || 0);
   const [deposit, setDeposit] = useState<number>(0);
@@ -25,6 +28,12 @@ export function CloseJobDialog({ job, onClose, onClosed }: { job: Job; onClose: 
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  // The split follows the job; settings only supply the default for jobs that never set one.
+  const [split, setSplit] = useState<SplitValue>(() => ({
+    source: job.source || OWN_SOURCE,
+    sharePercent: job.sharePercent ?? defaults.sharePercent,
+    materialsBeforeSplit: job.materialsBeforeSplit ?? defaults.materialsBeforeSplit,
+  }));
 
   const balance = round2(Math.max(0, (amount || 0) - (deposit || 0)));
 
@@ -53,10 +62,13 @@ export function CloseJobDialog({ job, onClose, onClosed }: { job: Job; onClose: 
     try {
       const techUid = role === 'technician' ? (uid || undefined) : (job.techUid || uid || undefined);
       const techName = role === 'technician' ? (user?.name || '') : (job.tech || technicians.find((t) => t.uid === job.techUid)?.name || user?.name || '');
+      const s = computeSplit({ amount, materials, sharePercent: split.sharePercent, materialsBeforeSplit: split.materialsBeforeSplit });
       const closing: Closing = {
         id: newId(), date: toDateKey(new Date()), customerId: job.customerId, client: job.client, phone: job.phone, address: job.address,
         jobType: job.jobType || job.desc || 'Job', amount: round2(amount), deposit: round2(deposit || 0), depositPaidTo, balance, balancePaidTo,
         paymentMethod: paymentMethod || undefined, materials: round2(materials || 0), notes, jobId: job.id, quoteId: job.quoteId,
+        source: split.source === OWN_SOURCE ? '' : split.source, sharePercent: s.sharePercent, materialsBeforeSplit: split.materialsBeforeSplit,
+        ourShare: s.ourShare, companyShare: s.companyShare,
         techUid, techName, photos, createdBy: uid || undefined, status: balancePaidTo === 'none' && balance > 0 ? 'open' : 'done', created: new Date().toISOString(),
       };
       await saveClosing(closing);
@@ -88,6 +100,12 @@ export function CloseJobDialog({ job, onClose, onClosed }: { job: Job; onClose: 
               <SelectField label="Method" value={paymentMethod} onChange={setPaymentMethod} options={PAYMENT_METHODS} />
             </Stack>
           </Paper>
+          {seesSplit && (
+            <Stack spacing={1.25}>
+              <SplitEditor value={split} onChange={setSplit} sources={sources} compact />
+              <SplitBreakdown amount={amount} materials={materials} split={split} currency={currency} dense />
+            </Stack>
+          )}
           <TextField label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} multiline minRows={2} fullWidth placeholder="What was done, anything to remember" />
           <Box>
             <Button component="label" variant="outlined" size="small">📷 Add photos<input hidden type="file" accept="image/*" multiple capture="environment" onChange={addPhoto} /></Button>

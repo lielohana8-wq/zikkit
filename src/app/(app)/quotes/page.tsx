@@ -1,5 +1,6 @@
 'use client';
 import { IS_SOLO_EDITION } from '@/lib/region';
+import { Suspense } from 'react';
 import SoloQuotes from '@/features/solo/pages/SoloQuotes';
 
 import { useL } from '@/hooks/useL';
@@ -557,5 +558,5 @@ function LegacyQuotesPage() {
 
 
 export default function QuotesPageRouter() {
-  return IS_SOLO_EDITION ? <SoloQuotes /> : <LegacyQuotesPage />;
+  return IS_SOLO_EDITION ? <Suspense fallback={null}><SoloQuotes /></Suspense> : <LegacyQuotesPage />;
 }

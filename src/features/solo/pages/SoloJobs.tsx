@@ -1,7 +1,8 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, Typography, Button, Paper, Stack, Chip, IconButton, Menu, MenuItem, Divider } from '@mui/material';
 import { Add, MoreVert, Delete, Edit, CheckCircle, Cancel, Navigation, Phone, PlayArrow, DirectionsCar } from '@mui/icons-material';
+import { useSearchParams } from 'next/navigation';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { zikkitColors as c } from '@/styles/theme';
@@ -22,6 +23,7 @@ export default function SoloJobs() {
   const { jobs, quotes, technicians, currency, role, uid, saveJob, deleteItem } = useSolo();
   const { toast } = useToast();
   const isTech = role === 'technician';
+  const params = useSearchParams();
   const [view, setView] = useState<'upcoming' | 'today' | 'done' | 'all'>('upcoming');
   const [editing, setEditing] = useState<{ job?: Job; preset?: JobPreset } | null>(null);
   const [closing, setClosing] = useState<Job | null>(null);
@@ -41,6 +43,12 @@ export default function SoloJobs() {
     for (const j of list) { const k = j.scheduledDate || 'unscheduled'; if (!m.has(k)) m.set(k, []); m.get(k)!.push(j); }
     return Array.from(m.entries()).sort((a, b) => (view === 'done' ? b[0].localeCompare(a[0]) : a[0].localeCompare(b[0])));
   }, [list, view]);
+
+  // Deep link from Leads: /jobs?newFor=<customerId>
+  useEffect(() => {
+    const newFor = params?.get('newFor');
+    if (newFor && !editing) setEditing({ preset: { customerId: Number(newFor) } });
+  }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const acceptedQuotes = useMemo(() => quotes.filter((q) => (q.status === 'accepted' || q.status === 'approved') && !jobs.some((j) => j.quoteId === q.id)), [quotes, jobs]);
 

@@ -1,4 +1,6 @@
 'use client';
+import { IS_SOLO_EDITION } from '@/lib/region';
+import SoloReports from '@/features/solo/pages/SoloReports';
 
 import { useL } from '@/hooks/useL';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -45,7 +47,7 @@ function Label({ text }: { text: string }) {
   return <Box component="label" sx={{ fontSize: 10, fontWeight: 700, color: '#78716C', mb: '7px', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>{text}</Box>;
 }
 
-export default function ReportsPage() {
+function LegacyReportsPage() {
   const { db, saveData, cfg } = useData();
   const L = useL();
   const { lang } = useLanguage();
@@ -559,4 +561,9 @@ export default function ReportsPage() {
       </ModalBase>
     </Box>
   );
+}
+
+
+export default function ReportsPageRouter() {
+  return IS_SOLO_EDITION ? <SoloReports /> : <LegacyReportsPage />;
 }

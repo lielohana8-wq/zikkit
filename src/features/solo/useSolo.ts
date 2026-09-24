@@ -6,9 +6,10 @@ import { getFirestoreDb } from '@/lib/firebase';
 import { useData } from '@/hooks/useFirestore';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { newId } from '@/lib/data/collections';
-import { REGION_DEFAULTS, getBaseUrl, normalizePhone } from '@/lib/region';
-import type { Customer, Receipt, Closing, Quote, QuoteItem, ReceiptItem, BusinessConfig, Job, User } from '@/types';
+import { REGION, REGION_DEFAULTS, getBaseUrl, normalizePhone } from '@/lib/region';
+import type { Customer, Receipt, Closing, Quote, QuoteItem, ReceiptItem, BusinessConfig, Job, User, Product, Lead, ReviewRequest } from '@/types';
 import { soloRoleOf } from './roles';
+import { splitDefaults, sourcesFrom } from './split';
 
 export type DocKind = 'quote' | 'receipt';
 
@@ -64,12 +65,29 @@ export function useSolo() {
   /** Team members (everyone in `users` except the owner). Technicians never see this (scoped provider). */
   const team = useMemo(() => ((db.users || []) as User[]).filter((u) => u.role !== 'owner' && u.role !== 'super_admin'), [db.users]);
   const technicians = useMemo(() => team.filter((u) => (u.role === 'technician' || u.role === 'tech') && u.active !== false), [team]);
+  const products = useMemo(() => ((db.products || []) as Product[]).slice().sort((a, b) => (a.category || '').localeCompare(b.category || '') || (a.name || '').localeCompare(b.name || '')), [db.products]);
+  const leads = useMemo(() => ((db.leads || []) as Lead[]).slice().sort((a, b) => (b.created || '').localeCompare(a.created || '')), [db.leads]);
+  const reviews = useMemo(() => ((db.reviews || []) as ReviewRequest[]).slice().sort((a, b) => (b.sentAt || '').localeCompare(a.sentAt || '')), [db.reviews]);
+  const presence = useMemo(() => ((db.presence || []) as Array<{ uid: string; name?: string; email?: string; isActive?: boolean; updated?: string; lastGps?: { lat: number; lng: number; ts: string; accuracy?: number } }>), [db.presence]);
 
-  const currency = cfg.currency || REGION_DEFAULTS.currency;
-  const taxRate = cfg.tax_rate ?? REGION_DEFAULTS.taxRate;
-  const taxLabel = cfg.tax_label || REGION_DEFAULTS.taxLabel;
+  /**
+   * Money/tax follow THIS deployment's region, not a config left over from
+   * another one. An account created in the Israeli app carries ILS + Israeli
+   * VAT; opening it in the Canadian app must never price work in ₪.
+   * Only a config that explicitly belongs to this region is trusted.
+   */
+  const cfgMatchesRegion = cfg.region === REGION;
+  const currency = (cfgMatchesRegion && cfg.currency) || REGION_DEFAULTS.currency;
+  const taxRate = cfgMatchesRegion && cfg.tax_rate != null ? cfg.tax_rate : REGION_DEFAULTS.taxRate;
+  const taxLabel = (cfgMatchesRegion && cfg.tax_label) || REGION_DEFAULTS.taxLabel;
+  /** True when this business was set up for a different region — Settings shows a fix-it banner. */
+  const regionMismatch = Boolean(cfg.region) && !cfgMatchesRegion;
 
   const customerById = useCallback((id?: number) => (id == null ? undefined : customers.find((c) => c.id === id)), [customers]);
+
+  /** Revenue-split defaults and the list of companies we take work from. */
+  const defaults = useMemo(() => splitDefaults(cfg), [cfg]);
+  const sources = useMemo(() => sourcesFrom(cfg, closings, jobs), [cfg, closings, jobs]);
 
   const upsertCustomer = useCallback(async (c: Partial<Customer> & { name: string }): Promise<Customer> => {
     const now = new Date().toISOString();
@@ -100,6 +118,9 @@ export function useSolo() {
   const saveClosing = useCallback(async (c: Closing) => saveItem('closings', c as unknown as Record<string, unknown>), [saveItem]);
   const saveJob = useCallback(async (j: Job) => saveItem('jobs', j as unknown as Record<string, unknown>), [saveItem]);
   const saveMember = useCallback(async (u: User) => saveItem('users', u as unknown as Record<string, unknown>), [saveItem]);
+  const saveProduct = useCallback(async (p: Product) => saveItem('products', p as unknown as Record<string, unknown>), [saveItem]);
+  const saveLead = useCallback(async (l: Lead) => saveItem('leads', l as unknown as Record<string, unknown>), [saveItem]);
+  const saveReview = useCallback(async (r: ReviewRequest) => saveItem('reviews', r as unknown as Record<string, unknown>), [saveItem]);
 
   /** Publish a customer-facing snapshot to public_portals and return the link. Re-uses the token on re-send. */
   const publish = useCallback(async (kind: DocKind, record: Quote | Receipt): Promise<{ token: string; url: string }> => {
@@ -144,7 +165,9 @@ export function useSolo() {
   }, [taxRate, taxLabel, currency]);
 
   return {
-    ...data, bizId, user, uid, role, customers, quotes, receipts, closings, jobs, team, technicians, saveJob, saveMember, currency, taxRate, taxLabel,
+    ...data, bizId, user, uid, role, customers, quotes, receipts, closings, jobs, team, technicians,
+    products, leads, reviews, presence, sources, defaults,
+    saveJob, saveMember, saveProduct, saveLead, saveReview, currency, taxRate, taxLabel, regionMismatch,
     customerById, upsertCustomer, ensureCustomer, saveQuote, saveReceipt, saveClosing, deleteItem,
     publish, nextDocNumber, receiptFromQuote,
   };

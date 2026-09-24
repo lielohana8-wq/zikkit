@@ -1,4 +1,6 @@
 'use client';
+import { IS_SOLO_EDITION } from '@/lib/region';
+import SoloGps from '@/features/solo/pages/SoloGps';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Box, Typography, Chip, Avatar, Button } from '@mui/material';
 import { PageTabs } from '@/components/ui/PageTabs';
@@ -12,7 +14,7 @@ import type { Job } from '@/types/job';
 const TECH_COLORS = ['#4F46E5','#059669','#D97706','#7C3AED','#E11D48','#0D9488','#EC4899','#84CC16'];
 function tColor(i: number) { return TECH_COLORS[i % TECH_COLORS.length]; }
 
-export default function GPSTrackingPage() {
+function LegacyGPSTrackingPage() {
   const { db } = useData();
   const L = useL();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -153,4 +155,9 @@ export default function GPSTrackingPage() {
       </Box>
     </Box>
   );
+}
+
+
+export default function GPSTrackingPageRouter() {
+  return IS_SOLO_EDITION ? <SoloGps /> : <LegacyGPSTrackingPage />;
 }

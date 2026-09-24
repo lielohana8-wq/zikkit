@@ -66,7 +66,15 @@ export interface Closing {
   balance?: number;
   balancePaidTo?: PaidTo;
   paymentMethod?: PaymentMethod;
-  materials?: number;     // optional raw cost, no commission math here
+  materials?: number;     // raw cost of parts for this job
+
+  // Revenue split — some jobs are pulled from other companies at a percentage.
+  source?: string;              // '' / 'My own' = our own lead, otherwise the company the job came from
+  sharePercent?: number;        // what WE keep, in percent (0-100)
+  materialsBeforeSplit?: boolean; // deduct materials before splitting (default from settings)
+  ourShare?: number;            // stored so history stays correct if the default % changes later
+  companyShare?: number;
+
   notes?: string;
   quoteId?: number;
   receiptId?: number;
@@ -76,6 +84,25 @@ export interface Closing {
   photos?: string[];
   createdBy?: string;
   status?: 'open' | 'done';
+  reviewRequestedAt?: string;
+  created: string;
+}
+
+/** A review request sent to a customer after a job is closed. */
+export interface ReviewRequest {
+  id: number;
+  customerId?: number;
+  client: string;
+  phone?: string;
+  email?: string;
+  closingId?: number;
+  jobId?: number;
+  channel: 'sms' | 'email';
+  status: 'sent' | 'failed' | 'clicked';
+  error?: string;
+  rating?: number;        // if the customer tells us afterwards
+  note?: string;
+  sentAt: string;
   created: string;
 }
 

@@ -1,4 +1,6 @@
 'use client';
+import { IS_SOLO_EDITION } from '@/lib/region';
+import SoloLeads from '@/features/solo/pages/SoloLeads';
 
 import { useL } from '@/hooks/useL';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -27,7 +29,7 @@ const SOURCE_OPTIONS: { key: LeadSource | 'all'; label: string; he: string; icon
   { key: 'manual', label: 'ידני', he: 'ידני', icon: '✏️' },
 ];
 
-export default function LeadsPage() {
+function LegacyLeadsPage() {
   const { db, saveData, cfg } = useData();
   const L = useL();
   const { lang } = useLanguage();
@@ -354,4 +356,9 @@ export default function LeadsPage() {
       </ModalBase>
     </Box>
   );
+}
+
+
+export default function LeadsPageRouter() {
+  return IS_SOLO_EDITION ? <SoloLeads /> : <LegacyLeadsPage />;
 }

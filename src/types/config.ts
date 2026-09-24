@@ -40,6 +40,14 @@ export interface BusinessConfig {
   numbering_start?: number;  // default 1000
   payment_instructions?: string; // e.g. e-Transfer email
   solo_setup_done?: boolean;
+
+  // Revenue split defaults (jobs pulled from other companies)
+  default_share_percent?: number;   // what we keep by default, e.g. 30
+  materials_before_split?: boolean; // deduct materials before splitting
+  job_sources?: string[];           // companies we take work from
+  // Reviews
+  google_review_url?: string;
+  review_message?: string;
   quote_footer?: string;
   receipt_footer?: string;
   sms_templates?: Record<string, string>;

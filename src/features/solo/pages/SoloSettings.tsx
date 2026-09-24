@@ -1,20 +1,22 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Box, Typography, Button, Paper, Stack, TextField, InputAdornment, Alert } from '@mui/material';
+import { Box, Typography, Button, Paper, Stack, TextField, InputAdornment, Alert, Switch, FormControlLabel, Autocomplete } from '@mui/material';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { LogoUpload } from '@/components/shared/LogoUpload';
 import { zikkitColors as c } from '@/styles/theme';
-import { REGION_DEFAULTS } from '@/lib/region';
+import { REGION, REGION_DEFAULTS } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useSolo } from '../useSolo';
 import type { BusinessConfig } from '@/types';
 
-const FIELDS: Array<keyof BusinessConfig> = ['biz_name', 'biz_phone', 'biz_email', 'biz_address', 'biz_city', 'biz_province', 'biz_postal', 'biz_website', 'tax_rate', 'tax_label', 'tax_number', 'quote_prefix', 'receipt_prefix', 'numbering_start', 'quote_footer', 'receipt_footer', 'payment_instructions'];
+const CURRENCIES = [{ value: 'CAD', label: 'CAD $ — Canadian dollar' }, { value: 'USD', label: 'USD $ — US dollar' }, { value: 'ILS', label: 'ILS ₪ — Israeli shekel' }];
+
+const FIELDS: Array<keyof BusinessConfig> = ['currency', 'timezone', 'biz_name', 'biz_phone', 'biz_email', 'biz_address', 'biz_city', 'biz_province', 'biz_postal', 'biz_website', 'tax_rate', 'tax_label', 'tax_number', 'quote_prefix', 'receipt_prefix', 'numbering_start', 'quote_footer', 'receipt_footer', 'payment_instructions'];
 
 export default function SoloSettings() {
-  const { cfg, saveCfg } = useSolo();
+  const { cfg, saveCfg, regionMismatch } = useSolo();
   const { logout } = useAuth();
   const { toast } = useToast();
   const params = useSearchParams();
@@ -26,11 +28,14 @@ export default function SoloSettings() {
   useEffect(() => {
     const next: BusinessConfig = {};
     for (const k of FIELDS) (next as Record<string, unknown>)[k] = (cfg as Record<string, unknown>)[k];
-    if (next.tax_rate == null) next.tax_rate = REGION_DEFAULTS.taxRate;
-    if (!next.tax_label) next.tax_label = REGION_DEFAULTS.taxLabel;
+    // A config carried over from another region must not pre-fill Israeli VAT / ILS here
+    const mismatch = Boolean(cfg.region) && cfg.region !== REGION;
+    if (mismatch || next.tax_rate == null) next.tax_rate = REGION_DEFAULTS.taxRate;
+    if (mismatch || !next.tax_label) next.tax_label = REGION_DEFAULTS.taxLabel;
+    if (mismatch || !next.currency) next.currency = REGION_DEFAULTS.currency;
     if (!next.biz_province) next.biz_province = 'ON';
     setForm(next);
-  }, [cfg]);
+  }, [cfg, regionMismatch]);
 
   const set = (k: keyof BusinessConfig, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -38,7 +43,7 @@ export default function SoloSettings() {
     if (!form.biz_name?.trim()) { toast('Business name is required', '#ff4d6d'); return; }
     setSaving(true);
     try {
-      await saveCfg({ ...form, tax_rate: Number(form.tax_rate) || 0, numbering_start: Number(form.numbering_start) || 1000, currency: cfg.currency || REGION_DEFAULTS.currency, region: (cfg.region || 'CA') as BusinessConfig['region'], lang: 'en', timezone: cfg.timezone || REGION_DEFAULTS.timezone, solo_setup_done: true, setup_done: true });
+      await saveCfg({ ...form, tax_rate: Number(form.tax_rate) || 0, numbering_start: Number(form.numbering_start) || 1000, default_share_percent: form.default_share_percent == null || form.default_share_percent === ('' as unknown) ? 100 : Math.max(0, Math.min(100, Number(form.default_share_percent))), currency: form.currency || REGION_DEFAULTS.currency, region: REGION as BusinessConfig['region'], lang: 'en', timezone: REGION_DEFAULTS.timezone, solo_setup_done: true, setup_done: true });
       toast('Settings saved');
       if (setup) router.replace('/dashboard');
     } finally { setSaving(false); }
@@ -48,6 +53,7 @@ export default function SoloSettings() {
     <Box className="zk-fade-up" sx={{ maxWidth: 760 }}>
       <SectionHeader title={setup ? 'Welcome — set up your business' : 'Settings'} subtitle={setup ? 'This takes a minute and makes your quotes and receipts look right.' : 'Business details printed on quotes and receipts'} actions={<Button variant="contained" onClick={save} disabled={saving}>{saving ? 'Saving…' : setup ? 'Save & start' : 'Save'}</Button>} />
       {setup && <Alert severity="info" sx={{ mb: 2 }}>You can change all of this later from Settings.</Alert>}
+      {regionMismatch && <Alert severity="warning" sx={{ mb: 2 }}>This business was set up in another Zikkit region ({String(cfg.region)}), so it still carries that currency and tax. Amounts are shown in {REGION_DEFAULTS.currency} here — press Save to store the {REGION} settings on the business.</Alert>}
 
       <Section title="Business">
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="flex-start">
@@ -69,12 +75,36 @@ export default function SoloSettings() {
         </Stack>
       </Section>
 
-      <Section title="Tax">
+      <Section title="Money & tax">
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 1.5 }}>
+          <TextField select label="Currency" value={form.currency || REGION_DEFAULTS.currency} onChange={(e) => set('currency', e.target.value)} sx={{ minWidth: 240 }} SelectProps={{ native: true }} InputLabelProps={{ shrink: true }}>
+            {CURRENCIES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </TextField>
+        </Stack>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <TextField label="Tax rate" type="number" value={form.tax_rate ?? ''} onChange={(e) => set('tax_rate', e.target.value)} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} sx={{ width: 140 }} />
           <TextField label="Tax label" value={form.tax_label || ''} onChange={(e) => set('tax_label', e.target.value)} sx={{ width: 140 }} helperText="HST / GST / GST+PST" />
           <TextField label={REGION_DEFAULTS.taxNumberLabel} value={form.tax_number || ''} onChange={(e) => set('tax_number', e.target.value)} fullWidth helperText="Printed on documents when set. Required once you register for GST/HST." />
         </Stack>
+      </Section>
+
+      <Section title="Commission & job sources">
+        <Typography sx={{ fontSize: 12.5, color: c.text3, mb: 1.5 }}>Some jobs come from other companies that take a cut. This is only the default — you set the percentage per job.</Typography>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+          <TextField label="We keep by default" type="number" value={form.default_share_percent ?? 100} onChange={(e) => set('default_share_percent', e.target.value)} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} sx={{ width: 190 }} helperText="100% = our own jobs" />
+          <FormControlLabel control={<Switch checked={form.materials_before_split !== false} onChange={(e) => set('materials_before_split', e.target.checked)} />} label={<Typography sx={{ fontSize: 13 }}>Take materials off the top, before the split</Typography>} />
+        </Stack>
+        <Autocomplete
+          multiple freeSolo options={[]} value={form.job_sources || []}
+          onChange={(_, v) => set('job_sources', (v as string[]).map((x) => x.trim()).filter(Boolean))}
+          renderInput={(p) => <TextField {...p} label="Companies we take work from" placeholder="Type a name and press Enter" helperText="These show up in the job and closing pickers" />}
+          sx={{ mt: 2 }}
+        />
+      </Section>
+
+      <Section title="Reviews">
+        <TextField label="Google review link" value={form.google_review_url || ''} onChange={(e) => set('google_review_url', e.target.value)} fullWidth placeholder="https://g.page/r/..." helperText="Google Business Profile → Ask for reviews → copy link. Sent to the customer after a job is closed." />
+        <TextField label="Review message" value={form.review_message || ''} onChange={(e) => set('review_message', e.target.value)} fullWidth multiline minRows={2} sx={{ mt: 1.5 }} placeholder="Thanks for choosing us! If we did a good job, a quick Google review really helps: {link}" helperText="{link} is replaced with your review link, {name} with the customer's name." />
       </Section>
 
       <Section title="Documents">

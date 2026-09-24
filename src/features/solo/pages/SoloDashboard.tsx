@@ -9,12 +9,13 @@ import { formatMoney, formatDateLocal } from '@/lib/region';
 import { useSolo, weekRange, toDateKey } from '../useSolo';
 import { Stat, StatusChip } from '../components/SoloUI';
 import { seesMoney } from '../roles';
+import { splitOf } from '../split';
 import { CloseJobDialog } from '../components/CloseJobDialog';
 import { useState } from 'react';
 import type { Job } from '@/types';
 
 export default function SoloDashboard() {
-  const { cfg, customers, quotes, receipts, closings, jobs, currency, role, user, technicians } = useSolo();
+  const { cfg, customers, quotes, receipts, closings, jobs, currency, role, user, technicians, regionMismatch } = useSolo();
   const router = useRouter();
   const [closing, setClosing] = useState<Job | null>(null);
   const money = seesMoney(role);
@@ -23,6 +24,8 @@ export default function SoloDashboard() {
   const sk = toDateKey(start), ek = toDateKey(end);
   const weekClosings = useMemo(() => closings.filter((x) => x.date >= sk && x.date <= ek), [closings, sk, ek]);
   const weekTotal = weekClosings.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+  const weekOurShare = weekClosings.reduce((s, x) => s + splitOf(x).ourShare, 0);
+  const hasSplits = weekClosings.some((x) => x.source || (x.materials || 0) > 0);
   const monthKey = toDateKey(new Date()).slice(0, 7);
   const monthTotal = closings.filter((x) => x.date.startsWith(monthKey)).reduce((s, x) => s + (Number(x.amount) || 0), 0);
   const openQuotes = quotes.filter((q) => q.status === 'sent' || q.status === 'viewed');
@@ -67,6 +70,12 @@ export default function SoloDashboard() {
     <Box className="zk-fade-up">
       <SectionHeader title={`${greeting}${cfg.biz_name ? ` — ${cfg.biz_name}` : ''}`} subtitle={new Date().toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' })} />
 
+      {regionMismatch && (
+        <Paper onClick={() => router.push('/settings')} sx={{ p: 2, borderRadius: 3, mb: 2.5, border: '1px solid #D97706', bgcolor: 'rgba(217,119,6,0.08)', cursor: 'pointer' }}>
+          <Typography sx={{ fontWeight: 800, fontSize: 13 }}>This account belongs to another region ({cfg.region})</Typography>
+          <Typography sx={{ fontSize: 12, color: c.text2 }}>Amounts are shown in {currency} using Canadian defaults. Open Settings to convert this business — or sign out and use a separate account for your Canadian work.</Typography>
+        </Paper>
+      )}
       <Stack direction="row" spacing={1} sx={{ mb: 2.5, flexWrap: 'wrap', gap: 1 }}>
         <Button variant="contained" startIcon={<Add />} onClick={() => router.push('/quotes')}>New quote</Button>
         <Button variant="outlined" onClick={() => router.push('/jobs')}>🔧 Jobs{todayJobs.length ? ` · ${todayJobs.length} today` : ''}</Button>
@@ -77,6 +86,7 @@ export default function SoloDashboard() {
       <Stack direction="row" sx={{ mb: 3, flexWrap: 'wrap', gap: 1.5 }}>
         {money ? <>
           <Stat label="Closed this week" value={formatMoney(weekTotal, currency)} sub={`${weekClosings.length} deal${weekClosings.length === 1 ? '' : 's'} · Mon–Sun`} color={c.accent} />
+          {hasSplits && <Stat label="Our share this week" value={formatMoney(weekOurShare, currency)} sub="after splits and materials" color="#059669" />}
           <Stat label="Closed this month" value={formatMoney(monthTotal, currency)} />
           <Stat label="Quotes awaiting answer" value={formatMoney(openQuotes.reduce((s, q) => s + (q.total || 0), 0), currency)} sub={`${openQuotes.length} open`} color="#2563EB" />
           <Stat label="Receipts outstanding" value={formatMoney(outstandingSum, currency)} sub={`${outstanding.length} unpaid`} color={outstandingSum > 0 ? '#DC2626' : undefined} />

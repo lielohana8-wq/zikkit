@@ -1,4 +1,6 @@
 'use client';
+import { IS_SOLO_EDITION } from '@/lib/region';
+import SoloReviews from '@/features/solo/pages/SoloReviews';
 import { useState, useMemo } from 'react';
 import { Box, Typography, Button, TextField, Switch, FormControlLabel, Chip, Paper, Tabs, Tab, Rating, LinearProgress, Avatar, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { Star, TrendingUp, Send, Settings, ThumbUp, ThumbDown } from '@mui/icons-material';
@@ -10,7 +12,7 @@ import { formatDate } from '@/lib/formatters';
 
 interface Review { id: number; jobId: number; client: string; rating: number; comment: string; date: string; replied?: boolean; replyText?: string; platform?: string; shared?: boolean }
 
-export default function ReviewsPage() {
+function LegacyReviewsPage() {
   const { db, saveData } = useData();
   const { toast } = useToast();
   const [tab, setTab] = useState(0);
@@ -111,4 +113,9 @@ export default function ReviewsPage() {
       )}
     </Box>
   );
+}
+
+
+export default function ReviewsPageRouter() {
+  return IS_SOLO_EDITION ? <SoloReviews /> : <LegacyReviewsPage />;
 }

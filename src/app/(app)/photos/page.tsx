@@ -1,4 +1,6 @@
 'use client';
+import { IS_SOLO_EDITION } from '@/lib/region';
+import SoloPhotos from '@/features/solo/pages/SoloPhotos';
 import { useState, useMemo } from 'react';
 import { Box, Typography, Button, Paper, Chip, IconButton, TextField, Select, MenuItem, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Grid } from '@mui/material';
 import { CameraAlt, Compare, AutoAwesome, Download, Delete, Visibility } from '@mui/icons-material';
@@ -9,7 +11,7 @@ import { formatDate } from '@/lib/formatters';
 
 interface PhotoSet { id: number; jobId: number; client: string; date: string; before: string[]; after: string[]; aiReport?: string; notes?: string }
 
-export default function PhotosPage() {
+function LegacyPhotosPage() {
   const { db } = useData();
   const { toast } = useToast();
   const [viewSet, setViewSet] = useState<PhotoSet | null>(null);
@@ -82,4 +84,9 @@ export default function PhotosPage() {
       </Dialog>
     </Box>
   );
+}
+
+
+export default function PhotosPageRouter() {
+  return IS_SOLO_EDITION ? <SoloPhotos /> : <LegacyPhotosPage />;
 }

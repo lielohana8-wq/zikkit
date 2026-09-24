@@ -53,6 +53,9 @@ export interface Job {
   quoteSignedAt?: string;
   // Solo edition fields
   techUid?: string;       // Firebase uid of the assigned technician (rules scope on this)
+  // `source` above doubles as the company this job was pulled from ('' = our own)
+  sharePercent?: number;        // what we keep, in percent — carried into the closing
+  materialsBeforeSplit?: boolean;
   customerId?: number;
   jobType?: string;
   quoteId?: number;
