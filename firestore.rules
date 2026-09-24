@@ -1,10 +1,4 @@
 rules_version = '2';
-// ─────────────────────────────────────────────────────────────────────────────
-// SHARED-PROJECT rules: CA runs on the SAME Firebase project as IL.
-// Legacy top-level paths stay exactly as permissive as before (so the IL app and
-// its bot routes keep working); the new per-record subcollections are role-scoped.
-// Deploy: copy over firestore.rules → firebase deploy --only firestore:rules,storage
-// ─────────────────────────────────────────────────────────────────────────────
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -33,10 +27,16 @@ service cloud.firestore {
       allow read, write: if signedIn() && request.auth.uid == userId;
     }
 
-    // LEGACY (unchanged): the IL client still reads other businesses at tech login
+    match /super_admins/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+    }
+
+    // Business = tenant. The owner's uid IS the business id.
     match /businesses/{bizId} {
-      allow read: if signedIn();
-      allow write: if signedIn();
+      allow read: if canAccess(bizId);
+      allow create: if isOwner(bizId);
+      allow update: if isStaff(bizId);
+      allow delete: if isOwner(bizId) || isSuperAdmin();
 
       // Membership — a team member registers themself once tech_lookup points at this business.
       // The role stored here MUST equal the role the owner set in tech_lookup (no self-promotion).
@@ -77,10 +77,14 @@ service cloud.firestore {
       }
     }
 
+    // Email → business lookup for team members (owner writes when inviting; members read at login)
     match /tech_lookup/{lookupKey} {
-      allow read, write: if signedIn();
+      allow read: if signedIn();
+      allow create, update: if signedIn() && (request.resource.data.bizId == request.auth.uid || isSuperAdmin());
+      allow delete: if signedIn() && (resource.data.bizId == request.auth.uid || isSuperAdmin());
     }
 
+    // Team invitations: public read by unguessable token; owner writes; the invitee may mark it accepted
     match /invites/{token} {
       allow read: if true;
       allow create: if signedIn() && request.resource.data.bizId == request.auth.uid;
@@ -88,22 +92,20 @@ service cloud.firestore {
       allow update: if signedIn() && (resource.data.bizId == request.auth.uid || request.auth.token.email.lower() == resource.data.email);
     }
 
-    match /super_admins/{userId} {
-      allow read: if signedIn() && request.auth.uid == userId;
-    }
-
+    // Customer-facing snapshots (quotes / receipts). World-readable by unguessable token; written by the business.
     match /public_portals/{token} {
       allow read: if true;
-      allow write: if signedIn();
+      allow create, update, delete: if signedIn();
     }
 
-    // LEGACY (unchanged): voice/SMS routes still hit these without auth
-    match /bot_conversations/{callId} {
-      allow read, write: if true;
-    }
     match /phone_lookup/{phoneNumber} {
       allow read: if true;
       allow write: if signedIn();
+    }
+
+    // Server-side only (voice/SMS routes use the admin SDK).
+    match /bot_conversations/{callId} {
+      allow read, write: if false;
     }
 
     match /agreements/{agreementId} {

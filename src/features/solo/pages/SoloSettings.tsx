@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Typography, Button, Paper, Stack, TextField, InputAdornment, Alert, Switch, FormControlLabel, IconButton, Divider } from '@mui/material';
 import { Add, Delete } from '@mui/icons-material';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -14,7 +14,19 @@ import type { BusinessConfig } from '@/types';
 
 const CURRENCIES = [{ value: 'CAD', label: 'CAD $ — Canadian dollar' }, { value: 'USD', label: 'USD $ — US dollar' }, { value: 'ILS', label: 'ILS ₪ — Israeli shekel' }];
 
-const FIELDS: Array<keyof BusinessConfig> = ['currency', 'timezone', 'biz_name', 'biz_phone', 'biz_email', 'biz_address', 'biz_city', 'biz_province', 'biz_postal', 'biz_website', 'tax_rate', 'tax_label', 'tax_number', 'quote_prefix', 'receipt_prefix', 'numbering_start', 'quote_footer', 'receipt_footer', 'payment_instructions'];
+const FIELDS: Array<keyof BusinessConfig> = ['currency', 'timezone', 'biz_name', 'biz_phone', 'biz_email', 'biz_address', 'biz_city', 'biz_province', 'biz_postal', 'biz_website', 'tax_rate', 'tax_label', 'tax_number', 'quote_prefix', 'receipt_prefix', 'numbering_start', 'quote_footer', 'receipt_footer', 'payment_instructions', 'default_share_percent', 'materials_before_split', 'google_review_url', 'review_message'];
+
+/** One company row while it is being edited — the percentage stays a string so typing never fights the input. */
+interface RateRow { name: string; sharePercent: string; materialsBeforeSplit: boolean }
+
+function ratesFromConfig(cfg: BusinessConfig): RateRow[] {
+  if (cfg.source_rates?.length) {
+    return cfg.source_rates.map((r) => ({ name: r.name || '', sharePercent: String(r.sharePercent ?? ''), materialsBeforeSplit: r.materialsBeforeSplit !== false }));
+  }
+  // Companies used to be a plain list of names — give each one a row with the default cut.
+  const pct = cfg.default_share_percent == null || cfg.default_share_percent >= 100 ? 30 : Number(cfg.default_share_percent);
+  return (cfg.job_sources || []).filter(Boolean).map((name) => ({ name, sharePercent: String(pct), materialsBeforeSplit: cfg.materials_before_split !== false }));
+}
 
 export default function SoloSettings() {
   const { cfg, saveCfg, regionMismatch } = useSolo();
@@ -24,9 +36,18 @@ export default function SoloSettings() {
   const router = useRouter();
   const setup = params?.get('setup') === '1';
   const [form, setForm] = useState<BusinessConfig>({});
+  const [rates, setRates] = useState<RateRow[]>([]);
   const [saving, setSaving] = useState(false);
+  /**
+   * `cfg` is a new object on every Firestore snapshot. Re-filling the form from
+   * it while someone is typing wipes their edits, so once the form is touched it
+   * belongs to the user until they save.
+   */
+  const dirty = useRef(false);
+  const touch = () => { dirty.current = true; };
 
   useEffect(() => {
+    if (dirty.current) return; // the user is editing — their values win until they save
     const next: BusinessConfig = {};
     for (const k of FIELDS) (next as Record<string, unknown>)[k] = (cfg as Record<string, unknown>)[k];
     // A config carried over from another region must not pre-fill Israeli VAT / ILS here
@@ -35,28 +56,26 @@ export default function SoloSettings() {
     if (mismatch || !next.tax_label) next.tax_label = REGION_DEFAULTS.taxLabel;
     if (mismatch || !next.currency) next.currency = REGION_DEFAULTS.currency;
     if (!next.biz_province) next.biz_province = 'ON';
-    // Companies used to be a plain list of names — give each one a row with the default cut.
-    if (!next.source_rates?.length && cfg.job_sources?.length) {
-      const pct = cfg.default_share_percent == null || cfg.default_share_percent >= 100 ? 30 : Number(cfg.default_share_percent);
-      next.source_rates = cfg.job_sources.filter(Boolean).map((name) => ({ name, sharePercent: pct, materialsBeforeSplit: cfg.materials_before_split !== false }));
-    }
-    if (!next.source_rates) next.source_rates = [];
+    if (next.default_share_percent == null) next.default_share_percent = 100;
     setForm(next);
+    setRates(ratesFromConfig(cfg));
   }, [cfg, regionMismatch]);
 
-  const set = (k: keyof BusinessConfig, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k: keyof BusinessConfig, v: unknown) => { touch(); setForm((f) => ({ ...f, [k]: v })); };
   /** Edit one company's row in place. */
-  const setRate = (i: number, patch: Partial<{ name: string; sharePercent: number; materialsBeforeSplit: boolean }>) =>
-    setForm((f) => ({ ...f, source_rates: (f.source_rates || []).map((r, x) => (x === i ? { ...r, ...patch } : r)) }));
+  const setRate = (i: number, patch: Partial<RateRow>) => { touch(); setRates((rs) => rs.map((r, x) => (x === i ? { ...r, ...patch } : r))); };
+  const addRate = () => { touch(); setRates((rs) => [...rs, { name: '', sharePercent: '30', materialsBeforeSplit: true }]); };
+  const removeRate = (i: number) => { touch(); setRates((rs) => rs.filter((_, x) => x !== i)); };
 
   const save = async () => {
     if (!form.biz_name?.trim()) { toast('Business name is required', '#ff4d6d'); return; }
     setSaving(true);
     try {
-      const source_rates = (form.source_rates || [])
+      const source_rates = rates
         .map((r) => ({ name: (r.name || '').trim(), sharePercent: Math.max(0, Math.min(100, Number(r.sharePercent) || 0)), materialsBeforeSplit: r.materialsBeforeSplit !== false }))
         .filter((r) => r.name);
       await saveCfg({ ...form, source_rates, job_sources: source_rates.map((r) => r.name), tax_rate: Number(form.tax_rate) || 0, numbering_start: Number(form.numbering_start) || 1000, default_share_percent: form.default_share_percent == null || form.default_share_percent === ('' as unknown) ? 100 : Math.max(0, Math.min(100, Number(form.default_share_percent))), currency: form.currency || REGION_DEFAULTS.currency, region: REGION as BusinessConfig['region'], lang: 'en', timezone: REGION_DEFAULTS.timezone, solo_setup_done: true, setup_done: true });
+      dirty.current = false;
       toast('Settings saved');
       if (setup) router.replace('/dashboard');
     } finally { setSaving(false); }
@@ -105,33 +124,36 @@ export default function SoloSettings() {
         <Typography sx={{ fontSize: 12.5, color: c.text3, mb: 1.5 }}>Each company that sends you work keeps a different cut. Set it once here and every job from that company starts with the right percentage — you can still change it on the job itself.</Typography>
 
         <Stack spacing={1}>
-          <Stack direction="row" spacing={1} sx={{ px: 0.5 }}>
-            <Typography sx={{ fontSize: 11, color: c.text3, flex: 1 }}>Company</Typography>
-            <Typography sx={{ fontSize: 11, color: c.text3, width: 110, textAlign: 'center' }}>We keep</Typography>
-            <Typography sx={{ fontSize: 11, color: c.text3, width: 128, textAlign: 'center' }}>Materials first</Typography>
-            <Box sx={{ width: 40 }} />
-          </Stack>
-          {(form.source_rates || []).map((row, i) => (
-            <Stack key={i} direction="row" spacing={1} alignItems="center">
-              <TextField
-                size="small" fullWidth placeholder="Company name" value={row.name}
-                onChange={(e) => setRate(i, { name: e.target.value })}
-              />
-              <TextField
-                size="small" type="number" value={row.sharePercent} sx={{ width: 110 }}
-                onChange={(e) => setRate(i, { sharePercent: Math.max(0, Math.min(100, Number(e.target.value))) })}
-                InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
-              />
-              <Box sx={{ width: 128, textAlign: 'center' }}>
-                <Switch size="small" checked={row.materialsBeforeSplit !== false} onChange={(e) => setRate(i, { materialsBeforeSplit: e.target.checked })} />
-              </Box>
-              <IconButton size="small" color="error" onClick={() => set('source_rates', (form.source_rates || []).filter((_, x) => x !== i))}><Delete fontSize="small" /></IconButton>
-            </Stack>
-          ))}
+          {rates.map((row, i) => {
+            const pct = Math.max(0, Math.min(100, Number(row.sharePercent) || 0));
+            return (
+              <Paper key={i} variant="outlined" sx={{ p: 1.25, borderRadius: 2.5 }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} alignItems={{ sm: 'center' }}>
+                  <TextField size="small" label="Company" placeholder="Who sends you the work" value={row.name} onChange={(e) => setRate(i, { name: e.target.value })} sx={{ flex: 1 }} />
+                  <TextField
+                    size="small" label="We keep" type="number" value={row.sharePercent}
+                    onChange={(e) => setRate(i, { sharePercent: e.target.value })}
+                    onBlur={() => setRate(i, { sharePercent: String(pct) })}
+                    InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
+                    inputProps={{ min: 0, max: 100 }} sx={{ width: 130 }}
+                  />
+                  <Typography sx={{ fontSize: 12.5, color: c.text2, minWidth: 150 }}>
+                    {row.name ? `${row.name} keeps ` : 'They keep '}<b>{100 - pct}%</b>
+                  </Typography>
+                  <IconButton size="small" color="error" onClick={() => removeRate(i)}><Delete fontSize="small" /></IconButton>
+                </Stack>
+                <FormControlLabel
+                  sx={{ ml: 0.5, mt: 0.25 }}
+                  control={<Switch size="small" checked={row.materialsBeforeSplit} onChange={(e) => setRate(i, { materialsBeforeSplit: e.target.checked })} />}
+                  label={<Typography sx={{ fontSize: 12, color: c.text3 }}>Materials come off the top, before the split</Typography>}
+                />
+              </Paper>
+            );
+          })}
           <Box>
-            <Button size="small" startIcon={<Add />} onClick={() => set('source_rates', [...(form.source_rates || []), { name: '', sharePercent: 30, materialsBeforeSplit: true }])}>Add company</Button>
+            <Button size="small" startIcon={<Add />} onClick={addRate}>Add company</Button>
           </Box>
-          {(form.source_rates || []).length === 0 && (
+          {rates.length === 0 && (
             <Typography sx={{ fontSize: 12.5, color: c.text3 }}>No companies yet — add the ones you pull work from. Jobs you find yourself stay at 100%.</Typography>
           )}
         </Stack>
