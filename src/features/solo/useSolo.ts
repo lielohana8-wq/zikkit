@@ -9,7 +9,7 @@ import { newId } from '@/lib/data/collections';
 import { REGION, REGION_DEFAULTS, getBaseUrl, normalizePhone } from '@/lib/region';
 import type { Customer, Receipt, Closing, Quote, QuoteItem, ReceiptItem, BusinessConfig, Job, User, Product, Lead, ReviewRequest } from '@/types';
 import { soloRoleOf } from './roles';
-import { splitDefaults, sourcesFrom } from './split';
+import { splitDefaults, sourceRatesFrom } from './split';
 
 export type DocKind = 'quote' | 'receipt';
 
@@ -87,7 +87,8 @@ export function useSolo() {
 
   /** Revenue-split defaults and the list of companies we take work from. */
   const defaults = useMemo(() => splitDefaults(cfg), [cfg]);
-  const sources = useMemo(() => sourcesFrom(cfg, closings, jobs), [cfg, closings, jobs]);
+  const sourceRates = useMemo(() => sourceRatesFrom(cfg, closings, jobs), [cfg, closings, jobs]);
+  const sources = useMemo(() => sourceRates.map((r) => r.name), [sourceRates]);
 
   const upsertCustomer = useCallback(async (c: Partial<Customer> & { name: string }): Promise<Customer> => {
     const now = new Date().toISOString();
@@ -166,7 +167,7 @@ export function useSolo() {
 
   return {
     ...data, bizId, user, uid, role, customers, quotes, receipts, closings, jobs, team, technicians,
-    products, leads, reviews, presence, sources, defaults,
+    products, leads, reviews, presence, sources, sourceRates, defaults,
     saveJob, saveMember, saveProduct, saveLead, saveReview, currency, taxRate, taxLabel, regionMismatch,
     customerById, upsertCustomer, ensureCustomer, saveQuote, saveReceipt, saveClosing, deleteItem,
     publish, nextDocNumber, receiptFromQuote,

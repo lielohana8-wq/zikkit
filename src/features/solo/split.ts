@@ -66,8 +66,47 @@ export function splitOf(x: Closing): SplitResult {
 
 export const OWN_SOURCE = 'My own';
 
-/** Source list for pickers: settings + whatever has actually been used. */
+/** A company we take work from, and the cut we keep on its jobs. */
+export interface SourceRate { name: string; sharePercent: number; materialsBeforeSplit?: boolean }
+
+/**
+ * Every company we know about, each with its own percentage:
+ * the rates saved in settings, plus any company that has actually appeared on a
+ * job or closing (so nothing typed in the field is ever lost from the picker).
+ */
+export function sourceRatesFrom(cfg: BusinessConfig, closings: Closing[] = [], jobs: Array<{ source?: string; sharePercent?: number }> = []): SourceRate[] {
+  const fallback = splitDefaults(cfg);
+  const byName = new Map<string, SourceRate>();
+  for (const r of cfg.source_rates || []) {
+    const name = (r?.name || '').trim();
+    if (!name || name === OWN_SOURCE) continue;
+    byName.set(name.toLowerCase(), { name, sharePercent: clampPct(r.sharePercent, fallback.sharePercent), materialsBeforeSplit: r.materialsBeforeSplit !== false });
+  }
+  for (const name of cfg.job_sources || []) { // legacy names carry the global default
+    const n = (name || '').trim();
+    if (n && n !== OWN_SOURCE && !byName.has(n.toLowerCase())) byName.set(n.toLowerCase(), { name: n, sharePercent: fallback.sharePercent, materialsBeforeSplit: fallback.materialsBeforeSplit });
+  }
+  for (const x of [...closings, ...jobs]) {
+    const n = (x.source || '').trim();
+    if (!n || n === OWN_SOURCE || byName.has(n.toLowerCase())) continue;
+    byName.set(n.toLowerCase(), { name: n, sharePercent: clampPct(x.sharePercent, fallback.sharePercent), materialsBeforeSplit: fallback.materialsBeforeSplit });
+  }
+  return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The rate saved for a company, or the business default when it's new. */
+export function rateFor(name: string, rates: SourceRate[], cfg: BusinessConfig): SourceRate {
+  const fallback = splitDefaults(cfg);
+  const hit = rates.find((r) => r.name.toLowerCase() === (name || '').trim().toLowerCase());
+  return hit || { name, sharePercent: fallback.sharePercent >= 100 ? 30 : fallback.sharePercent, materialsBeforeSplit: fallback.materialsBeforeSplit };
+}
+
+function clampPct(v: unknown, fallback: number): number {
+  const n = Number(v);
+  return isNaN(n) ? fallback : Math.max(0, Math.min(100, n));
+}
+
+/** Names only — for autocompletes. */
 export function sourcesFrom(cfg: BusinessConfig, closings: Closing[], jobs: Array<{ source?: string }> = []): string[] {
-  const used = [...closings.map((x) => x.source), ...jobs.map((j) => j.source)].filter((s): s is string => Boolean(s && s !== OWN_SOURCE));
-  return Array.from(new Set([...(cfg.job_sources || []), ...used])).sort((a, b) => a.localeCompare(b));
+  return sourceRatesFrom(cfg, closings, jobs).map((r) => r.name);
 }

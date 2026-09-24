@@ -23,7 +23,7 @@ interface Draft { id?: number; date: string; customer: CustomerPickerValue; jobT
 const DEFAULT_JOB_TYPES = ['Chimney sweep', 'Chimney repair', 'Chimney cap / liner', 'Garage door spring', 'Garage door opener', 'Garage door install', 'Inspection', 'Service call', 'Other'];
 
 export default function SoloClosings() {
-  const { closings: allClosings, customers, currency, saveClosing, deleteItem, ensureCustomer, role, uid, technicians, sources, defaults } = useSolo();
+  const { closings: allClosings, customers, currency, saveClosing, deleteItem, ensureCustomer, role, uid, technicians, sources, sourceRates, defaults } = useSolo();
   const isTech = role === 'technician';
   const seesSplit = !isTech;
   const [techFilter, setTechFilter] = useState<string>('');
@@ -193,7 +193,7 @@ export default function SoloClosings() {
               </Paper>
               {seesSplit && (
                 <>
-                  <SplitEditor value={draft.split} onChange={(split) => setDraft({ ...draft, split })} sources={sources} compact />
+                  <SplitEditor value={draft.split} onChange={(split) => setDraft({ ...draft, split })} rates={sourceRates} compact />
                   <SplitBreakdown amount={draft.amount || 0} materials={draft.materials || 0} split={draft.split} currency={currency} dense />
                 </>
               )}

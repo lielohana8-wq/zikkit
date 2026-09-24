@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Box, Typography, Button, Paper, Stack, TextField, InputAdornment, Alert, Switch, FormControlLabel, Autocomplete } from '@mui/material';
+import { Box, Typography, Button, Paper, Stack, TextField, InputAdornment, Alert, Switch, FormControlLabel, IconButton, Divider } from '@mui/material';
+import { Add, Delete } from '@mui/icons-material';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { LogoUpload } from '@/components/shared/LogoUpload';
@@ -34,16 +35,28 @@ export default function SoloSettings() {
     if (mismatch || !next.tax_label) next.tax_label = REGION_DEFAULTS.taxLabel;
     if (mismatch || !next.currency) next.currency = REGION_DEFAULTS.currency;
     if (!next.biz_province) next.biz_province = 'ON';
+    // Companies used to be a plain list of names — give each one a row with the default cut.
+    if (!next.source_rates?.length && cfg.job_sources?.length) {
+      const pct = cfg.default_share_percent == null || cfg.default_share_percent >= 100 ? 30 : Number(cfg.default_share_percent);
+      next.source_rates = cfg.job_sources.filter(Boolean).map((name) => ({ name, sharePercent: pct, materialsBeforeSplit: cfg.materials_before_split !== false }));
+    }
+    if (!next.source_rates) next.source_rates = [];
     setForm(next);
   }, [cfg, regionMismatch]);
 
   const set = (k: keyof BusinessConfig, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
+  /** Edit one company's row in place. */
+  const setRate = (i: number, patch: Partial<{ name: string; sharePercent: number; materialsBeforeSplit: boolean }>) =>
+    setForm((f) => ({ ...f, source_rates: (f.source_rates || []).map((r, x) => (x === i ? { ...r, ...patch } : r)) }));
 
   const save = async () => {
     if (!form.biz_name?.trim()) { toast('Business name is required', '#ff4d6d'); return; }
     setSaving(true);
     try {
-      await saveCfg({ ...form, tax_rate: Number(form.tax_rate) || 0, numbering_start: Number(form.numbering_start) || 1000, default_share_percent: form.default_share_percent == null || form.default_share_percent === ('' as unknown) ? 100 : Math.max(0, Math.min(100, Number(form.default_share_percent))), currency: form.currency || REGION_DEFAULTS.currency, region: REGION as BusinessConfig['region'], lang: 'en', timezone: REGION_DEFAULTS.timezone, solo_setup_done: true, setup_done: true });
+      const source_rates = (form.source_rates || [])
+        .map((r) => ({ name: (r.name || '').trim(), sharePercent: Math.max(0, Math.min(100, Number(r.sharePercent) || 0)), materialsBeforeSplit: r.materialsBeforeSplit !== false }))
+        .filter((r) => r.name);
+      await saveCfg({ ...form, source_rates, job_sources: source_rates.map((r) => r.name), tax_rate: Number(form.tax_rate) || 0, numbering_start: Number(form.numbering_start) || 1000, default_share_percent: form.default_share_percent == null || form.default_share_percent === ('' as unknown) ? 100 : Math.max(0, Math.min(100, Number(form.default_share_percent))), currency: form.currency || REGION_DEFAULTS.currency, region: REGION as BusinessConfig['region'], lang: 'en', timezone: REGION_DEFAULTS.timezone, solo_setup_done: true, setup_done: true });
       toast('Settings saved');
       if (setup) router.replace('/dashboard');
     } finally { setSaving(false); }
@@ -89,17 +102,46 @@ export default function SoloSettings() {
       </Section>
 
       <Section title="Commission & job sources">
-        <Typography sx={{ fontSize: 12.5, color: c.text3, mb: 1.5 }}>Some jobs come from other companies that take a cut. This is only the default — you set the percentage per job.</Typography>
+        <Typography sx={{ fontSize: 12.5, color: c.text3, mb: 1.5 }}>Each company that sends you work keeps a different cut. Set it once here and every job from that company starts with the right percentage — you can still change it on the job itself.</Typography>
+
+        <Stack spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ px: 0.5 }}>
+            <Typography sx={{ fontSize: 11, color: c.text3, flex: 1 }}>Company</Typography>
+            <Typography sx={{ fontSize: 11, color: c.text3, width: 110, textAlign: 'center' }}>We keep</Typography>
+            <Typography sx={{ fontSize: 11, color: c.text3, width: 128, textAlign: 'center' }}>Materials first</Typography>
+            <Box sx={{ width: 40 }} />
+          </Stack>
+          {(form.source_rates || []).map((row, i) => (
+            <Stack key={i} direction="row" spacing={1} alignItems="center">
+              <TextField
+                size="small" fullWidth placeholder="Company name" value={row.name}
+                onChange={(e) => setRate(i, { name: e.target.value })}
+              />
+              <TextField
+                size="small" type="number" value={row.sharePercent} sx={{ width: 110 }}
+                onChange={(e) => setRate(i, { sharePercent: Math.max(0, Math.min(100, Number(e.target.value))) })}
+                InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
+              />
+              <Box sx={{ width: 128, textAlign: 'center' }}>
+                <Switch size="small" checked={row.materialsBeforeSplit !== false} onChange={(e) => setRate(i, { materialsBeforeSplit: e.target.checked })} />
+              </Box>
+              <IconButton size="small" color="error" onClick={() => set('source_rates', (form.source_rates || []).filter((_, x) => x !== i))}><Delete fontSize="small" /></IconButton>
+            </Stack>
+          ))}
+          <Box>
+            <Button size="small" startIcon={<Add />} onClick={() => set('source_rates', [...(form.source_rates || []), { name: '', sharePercent: 30, materialsBeforeSplit: true }])}>Add company</Button>
+          </Box>
+          {(form.source_rates || []).length === 0 && (
+            <Typography sx={{ fontSize: 12.5, color: c.text3 }}>No companies yet — add the ones you pull work from. Jobs you find yourself stay at 100%.</Typography>
+          )}
+        </Stack>
+
+        <Divider sx={{ my: 2.5 }} />
+        <Typography sx={{ fontSize: 12.5, color: c.text3, mb: 1.5 }}>Used for a company that isn&apos;t in the list yet:</Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
-          <TextField label="We keep by default" type="number" value={form.default_share_percent ?? 100} onChange={(e) => set('default_share_percent', e.target.value)} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} sx={{ width: 190 }} helperText="100% = our own jobs" />
+          <TextField label="Default we keep" type="number" value={form.default_share_percent ?? 100} onChange={(e) => set('default_share_percent', e.target.value)} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} sx={{ width: 190 }} helperText="100% = our own jobs" />
           <FormControlLabel control={<Switch checked={form.materials_before_split !== false} onChange={(e) => set('materials_before_split', e.target.checked)} />} label={<Typography sx={{ fontSize: 13 }}>Take materials off the top, before the split</Typography>} />
         </Stack>
-        <Autocomplete
-          multiple freeSolo options={[]} value={form.job_sources || []}
-          onChange={(_, v) => set('job_sources', (v as string[]).map((x) => x.trim()).filter(Boolean))}
-          renderInput={(p) => <TextField {...p} label="Companies we take work from" placeholder="Type a name and press Enter" helperText="These show up in the job and closing pickers" />}
-          sx={{ mt: 2 }}
-        />
       </Section>
 
       <Section title="Reviews">

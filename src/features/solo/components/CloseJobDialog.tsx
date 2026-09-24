@@ -16,7 +16,7 @@ import type { Job, Closing, PaidTo, PaymentMethod } from '@/types';
  * marks the job completed. Used by technicians (their own jobs) and by staff.
  */
 export function CloseJobDialog({ job, onClose, onClosed }: { job: Job; onClose: () => void; onClosed?: (closing: Closing) => void }) {
-  const { currency, saveClosing, saveJob, uid, user, role, technicians, sources, defaults } = useSolo();
+  const { currency, saveClosing, saveJob, uid, user, role, technicians, sources, sourceRates, defaults } = useSolo();
   const seesSplit = role !== 'technician';
   const { toast } = useToast();
   const [amount, setAmount] = useState<number>(job.quoteTotal || job.revenue || 0);
@@ -102,7 +102,7 @@ export function CloseJobDialog({ job, onClose, onClosed }: { job: Job; onClose: 
           </Paper>
           {seesSplit && (
             <Stack spacing={1.25}>
-              <SplitEditor value={split} onChange={setSplit} sources={sources} compact />
+              <SplitEditor value={split} onChange={setSplit} rates={sourceRates} compact />
               <SplitBreakdown amount={amount} materials={materials} split={split} currency={currency} dense />
             </Stack>
           )}

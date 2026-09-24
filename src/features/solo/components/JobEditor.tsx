@@ -23,7 +23,7 @@ interface Draft { customer: CustomerPickerValue; jobType: string; date: string; 
 
 /** Create / edit a job. Shared by the Jobs list and the Schedule. */
 export function JobEditorDialog({ job, preset, onClose, onSaved }: { job?: Job; preset?: JobPreset; onClose: () => void; onSaved?: (job: Job) => void }) {
-  const { jobs, customers, quotes, technicians, currency, uid, role, sources, defaults, saveJob, ensureCustomer, saveQuote } = useSolo();
+  const { jobs, customers, quotes, technicians, currency, uid, role, sources, sourceRates, defaults, saveJob, ensureCustomer, saveQuote } = useSolo();
   const seesSplit = role !== 'technician';
   const { toast } = useToast();
   const today = toDateKey(new Date());
@@ -83,7 +83,7 @@ export function JobEditorDialog({ job, preset, onClose, onSaved }: { job?: Job; 
           <SelectField label="Technician" value={draft.techUid} onChange={(v) => setDraft({ ...draft, techUid: v })} options={[{ value: '', label: 'Unassigned' }, ...joined.map((t) => ({ value: t.uid as string, label: t.name }))]} />
           {technicians.some((t) => !t.uid) && <Typography sx={{ fontSize: 11, color: c.text3, mt: -1 }}>Technicians who haven't accepted their invite yet can't be assigned.</Typography>}
           {job && <SelectField label="Status" value={draft.status} onChange={(v) => setDraft({ ...draft, status: v })} options={JOB_STATUSES} />}
-          {seesSplit && <SplitEditor value={draft.split} onChange={(split) => setDraft({ ...draft, split })} sources={sources} />}
+          {seesSplit && <SplitEditor value={draft.split} onChange={(split) => setDraft({ ...draft, split })} rates={sourceRates} />}
           <TextField label="Notes for the technician" value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} multiline minRows={2} fullWidth />
         </Stack>
       </DialogContent>

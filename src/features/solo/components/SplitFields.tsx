@@ -2,7 +2,7 @@
 import { Box, Typography, Stack, TextField, InputAdornment, Autocomplete, Switch, FormControlLabel, Paper, Chip } from '@mui/material';
 import { zikkitColors as c } from '@/styles/theme';
 import { formatMoney } from '@/lib/region';
-import { computeSplit, OWN_SOURCE, type SplitResult } from '../split';
+import { computeSplit, OWN_SOURCE, type SplitResult, type SourceRate } from '../split';
 
 export interface SplitValue { source: string; sharePercent: number; materialsBeforeSplit: boolean }
 
@@ -10,20 +10,29 @@ export interface SplitValue { source: string; sharePercent: number; materialsBef
  * Where the job came from and how the money is divided. Shown on jobs and on
  * closings; hidden from technicians entirely (they never see percentages).
  */
-export function SplitEditor({ value, onChange, sources, compact }: { value: SplitValue; onChange: (v: SplitValue) => void; sources: string[]; compact?: boolean }) {
+export function SplitEditor({ value, onChange, rates, compact }: { value: SplitValue; onChange: (v: SplitValue) => void; rates: SourceRate[]; compact?: boolean }) {
   const own = !value.source || value.source === OWN_SOURCE;
+  /** Picking a company pulls in the percentage saved for that company. */
+  const pick = (name: string) => {
+    const source = (name || '').trim() || OWN_SOURCE;
+    if (source === OWN_SOURCE) { onChange({ ...value, source, sharePercent: 100 }); return; }
+    const rate = rates.find((r) => r.name.toLowerCase() === source.toLowerCase());
+    onChange({
+      ...value, source,
+      sharePercent: rate ? rate.sharePercent : (value.sharePercent >= 100 ? 30 : value.sharePercent),
+      materialsBeforeSplit: rate ? rate.materialsBeforeSplit !== false : value.materialsBeforeSplit,
+    });
+  };
   return (
     <Stack spacing={1.25}>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
         <Autocomplete
           freeSolo size={compact ? 'small' : 'medium'} sx={{ flex: 1, minWidth: 180 }}
-          options={[OWN_SOURCE, ...sources]}
+          options={[OWN_SOURCE, ...rates.map((r) => r.name)]}
           value={value.source || OWN_SOURCE}
           onInputChange={(_, v, reason) => { if (reason === 'input') onChange({ ...value, source: v }); }}
-          onChange={(_, v) => {
-            const source = (typeof v === 'string' ? v : '') || OWN_SOURCE;
-            onChange({ ...value, source, sharePercent: source === OWN_SOURCE ? 100 : (value.sharePercent >= 100 ? 30 : value.sharePercent) });
-          }}
+          onBlur={() => pick(value.source)}
+          onChange={(_, v) => pick(typeof v === 'string' ? v : '')}
           renderInput={(p) => <TextField {...p} label="Job came from" placeholder="My own, or a company name" />}
         />
         <TextField

@@ -44,7 +44,9 @@ export interface BusinessConfig {
   // Revenue split defaults (jobs pulled from other companies)
   default_share_percent?: number;   // what we keep by default, e.g. 30
   materials_before_split?: boolean; // deduct materials before splitting
-  job_sources?: string[];           // companies we take work from
+  job_sources?: string[];           // legacy: plain list of company names
+  /** Companies we take work from, each with its own cut. */
+  source_rates?: Array<{ name: string; sharePercent: number; materialsBeforeSplit?: boolean }>;
   // Reviews
   google_review_url?: string;
   review_message?: string;
