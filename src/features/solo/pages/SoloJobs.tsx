@@ -9,6 +9,7 @@ import { zikkitColors as c } from '@/styles/theme';
 import { formatMoney, formatDateLocal } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { useSolo, toDateKey } from '../useSolo';
+import { isFieldRole } from '../roles';
 import { CloseJobDialog } from '../components/CloseJobDialog';
 import { JobEditorDialog, JOB_STATUS_LABEL as STATUS_LABEL, type JobPreset } from '../components/JobEditor';
 import type { Job, JobStatus } from '@/types';
@@ -20,23 +21,25 @@ const dayLabel = (key: string) => {
 };
 
 export default function SoloJobs() {
-  const { jobs, quotes, technicians, currency, role, uid, saveJob, deleteItem } = useSolo();
+  const { jobs, quotes, technicians, assignees, assigneeOf, currency, role, uid, saveJob, deleteItem } = useSolo();
   const { toast } = useToast();
-  const isTech = role === 'technician';
+  const isTech = isFieldRole(role);
   const params = useSearchParams();
   const [view, setView] = useState<'upcoming' | 'today' | 'done' | 'all'>('upcoming');
+  const [onlyMine, setOnlyMine] = useState(false);
   const [editing, setEditing] = useState<{ job?: Job; preset?: JobPreset } | null>(null);
   const [closing, setClosing] = useState<Job | null>(null);
   const [menu, setMenu] = useState<{ el: HTMLElement; j: Job } | null>(null);
 
   const today = toDateKey(new Date());
   const list = useMemo(() => jobs.filter((j) => {
+    if (onlyMine && j.techUid !== uid) return false;
     const done = j.status === 'completed' || j.status === 'cancelled';
     if (view === 'today') return (j.scheduledDate || '') === today && !done;
     if (view === 'done') return done;
     if (view === 'all') return true;
     return !done && (j.scheduledDate || '9999') >= today;
-  }), [jobs, view, today]);
+  }), [jobs, view, today, onlyMine, uid]);
 
   const grouped = useMemo(() => {
     const m = new Map<string, Job[]>();
@@ -57,7 +60,11 @@ export default function SoloJobs() {
     if (status === 'in_progress') patch.startedAt = new Date().toISOString();
     await saveJob({ ...j, ...patch }); toast(STATUS_LABEL[status] || status);
   };
-  const assign = async (j: Job, techUid: string) => { const t = technicians.find((x) => x.uid === techUid); await saveJob({ ...j, techUid: techUid || undefined, tech: t?.name || undefined }); toast(t ? `Assigned to ${t.name}` : 'Unassigned'); };
+  const assign = async (j: Job, techUid: string) => {
+    const t = assigneeOf(techUid);
+    await saveJob({ ...j, techUid: techUid || undefined, tech: t?.name || undefined, assigneeRole: t?.role });
+    toast(t ? `Assigned to ${t.name}` : 'Unassigned');
+  };
 
   const mapsUrl = (addr?: string) => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr || '')}`;
 
@@ -66,6 +73,7 @@ export default function SoloJobs() {
       <SectionHeader title={isTech ? 'My jobs' : 'Jobs'} subtitle={`${list.length} ${view === 'done' ? 'finished' : 'scheduled'}`} actions={!isTech ? <Button variant="contained" startIcon={<Add />} onClick={() => setEditing({ preset: {} })}>New job</Button> : undefined} />
       <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
         {([['today', 'Today'], ['upcoming', 'Upcoming'], ['done', 'Done'], ['all', 'All']] as const).map(([v, l]) => <Chip key={v} label={l} onClick={() => setView(v)} color={view === v ? 'primary' : 'default'} variant={view === v ? 'filled' : 'outlined'} size="small" />)}
+        {!isTech && assignees.length > 1 && <Chip label="Only mine" size="small" onClick={() => setOnlyMine(!onlyMine)} color={onlyMine ? 'primary' : 'default'} variant={onlyMine ? 'filled' : 'outlined'} />}
       </Stack>
 
       {!isTech && acceptedQuotes.length > 0 && view !== 'done' && (
@@ -117,7 +125,7 @@ export default function SoloJobs() {
         {menu && [
           <MenuItem key="edit" onClick={() => { setEditing({ job: menu.j }); setMenu(null); }}><Edit fontSize="small" sx={{ mr: 1 }} />Edit</MenuItem>,
           <Divider key="d0" />,
-          ...technicians.map((t) => <MenuItem key={t.uid || t.id} disabled={!t.uid} onClick={() => { assign(menu.j, t.uid!); setMenu(null); }}>👷 {t.name}{!t.uid ? ' (not joined yet)' : ''}{menu.j.techUid === t.uid ? ' ✓' : ''}</MenuItem>),
+          ...assignees.map((t) => <MenuItem key={t.uid} onClick={() => { assign(menu.j, t.uid); setMenu(null); }}>{t.role === 'owner' ? '👑' : t.role === 'partner' ? '🤝' : '👷'} {t.name}{t.isMe ? ' (me)' : ''}{menu.j.techUid === t.uid ? ' ✓' : ''}</MenuItem>),
           <MenuItem key="unassign" onClick={() => { assign(menu.j, ''); setMenu(null); }}>Unassign</MenuItem>,
           <Divider key="d1" />,
           <MenuItem key="cancel" onClick={() => { setStatus(menu.j, 'cancelled'); setMenu(null); }}><Cancel fontSize="small" sx={{ mr: 1 }} />Cancel job</MenuItem>,

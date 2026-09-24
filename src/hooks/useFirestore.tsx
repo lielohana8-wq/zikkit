@@ -12,7 +12,7 @@ import { drainInbox, backupLegacyBlob } from '@/lib/data/inbox';
 import type { BusinessDatabase, BusinessConfig, SoloRole } from '@/types';
 
 export interface DataScope { role: SoloRole | null; uid: string | null }
-/** Collections a technician may read (filtered by techUid). Everything else stays out of their client entirely. */
+/** Collections a field user (technician or partner) may read — filtered by techUid. Everything else stays out of their client entirely. */
 const TECH_COLLECTIONS = ['jobs', 'closings'] as const;
 
 /**
@@ -133,7 +133,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ---- business document: cfg + inbox + registered collections ------------------
-  const isTech = scope.role === 'technician';
+  const isTech = scope.role === 'technician' || scope.role === 'partner';
   const techUid = isTech ? scope.uid : null;
 
   useEffect(() => {
@@ -204,7 +204,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const nextState: BusinessDatabase = { ...prev };
     const work: Array<{ key: string; upserts: DataItem[]; deletes: string[] }> = [];
 
-    const techOnly = scopeRef.current.role === 'technician';
+    const techOnly = scopeRef.current.role === 'technician' || scopeRef.current.role === 'partner';
     for (const [key, value] of Object.entries(data || {})) {
       if (!Array.isArray(value)) continue;
       if (!isValidCollectionKey(key)) { console.warn('[Zikkit] ignoring invalid collection key', key); continue; }

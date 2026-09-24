@@ -103,7 +103,7 @@ export default function SoloReports() {
       rows.push([], [title, 'Jobs', 'Gross', 'Our share']);
       for (const [k, v] of data) rows.push([k, String(v.count), v.gross.toFixed(2), v.ours.toFixed(2)]);
     };
-    section('By source', bySource); section('By job type', byType); section('By technician', byTech);
+    section('By source', bySource); section('By job type', byType); section('By person', byTech);
     const csv = rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `report-${range.from}-to-${range.to}.csv`; a.click(); URL.revokeObjectURL(a.href);
@@ -173,7 +173,7 @@ export default function SoloReports() {
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
         <Table title="Where the work came from" data={bySource} empty="Nothing closed in this period." />
         <Table title="By job type" data={byType} empty="Nothing closed in this period." />
-        <Table title="By technician" data={byTech} empty="Nothing closed in this period." />
+        <Table title="By person" data={byTech} empty="Nothing closed in this period." />
         <Paper sx={{ p: 2, borderRadius: 3, border: `1px solid ${c.border}` }}>
           <Typography sx={{ fontWeight: 800, fontSize: 13, mb: 1 }}>Quotes & collection</Typography>
           <Row label="Quotes sent" value={String(quoteStats.sent)} />

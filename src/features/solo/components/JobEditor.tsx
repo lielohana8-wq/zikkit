@@ -6,6 +6,7 @@ import { formatMoney } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { newId } from '@/lib/data/collections';
 import { useSolo, toDateKey } from '../useSolo';
+import { isFieldRole } from '../roles';
 import { CustomerPicker, SelectField, type CustomerPickerValue } from './SoloUI';
 import { SplitEditor, type SplitValue } from './SplitFields';
 import { OWN_SOURCE } from '../split';
@@ -23,8 +24,8 @@ interface Draft { customer: CustomerPickerValue; jobType: string; date: string; 
 
 /** Create / edit a job. Shared by the Jobs list and the Schedule. */
 export function JobEditorDialog({ job, preset, onClose, onSaved }: { job?: Job; preset?: JobPreset; onClose: () => void; onSaved?: (job: Job) => void }) {
-  const { jobs, customers, quotes, technicians, currency, uid, role, sources, sourceRates, defaults, saveJob, ensureCustomer, saveQuote } = useSolo();
-  const seesSplit = role !== 'technician';
+  const { jobs, customers, quotes, technicians, assignees, currency, uid, role, sources, sourceRates, defaults, saveJob, ensureCustomer, saveQuote } = useSolo();
+  const seesSplit = !isFieldRole(role);
   const { toast } = useToast();
   const today = toDateKey(new Date());
   const [saving, setSaving] = useState(false);
@@ -38,7 +39,7 @@ export function JobEditorDialog({ job, preset, onClose, onSaved }: { job?: Job; 
 
   const jobTypes = useMemo(() => Array.from(new Set([...jobs.map((x) => x.jobType || '').filter(Boolean), ...DEFAULT_JOB_TYPES])), [jobs]);
   const acceptedQuotes = useMemo(() => quotes.filter((q) => (q.status === 'accepted' || q.status === 'approved') && !jobs.some((j) => j.quoteId === q.id && j.id !== job?.id)), [quotes, jobs, job?.id]);
-  const joined = technicians.filter((t) => t.uid);
+  const joined = assignees;
 
   const fromQuote = (qid: number) => {
     const q = quotes.find((x) => x.id === qid); if (!q) return;
@@ -51,12 +52,13 @@ export function JobEditorDialog({ job, preset, onClose, onSaved }: { job?: Job; 
     setSaving(true);
     try {
       const cust = await ensureCustomer(draft.customer.name, draft.customer.phone, draft.customer.email, draft.customer.address);
-      const tech = joined.find((t) => t.uid === draft.techUid);
+      const who = joined.find((t) => t.uid === draft.techUid);
       const next: Job = {
         ...(job || {}),
         id: job?.id ?? newId(), client: draft.customer.name.trim(), phone: cust?.phone || draft.customer.phone, email: draft.customer.email, address: draft.customer.address,
         customerId: cust?.id, jobType: draft.jobType.trim() || 'Job', desc: draft.jobType.trim() || 'Job', status: draft.status,
-        scheduledDate: draft.date, scheduledTime: draft.time, duration: draft.duration, techUid: draft.techUid || undefined, tech: tech?.name || undefined,
+        scheduledDate: draft.date, scheduledTime: draft.time, duration: draft.duration, techUid: draft.techUid || undefined, tech: who?.name || undefined,
+        assigneeRole: who?.role,
         notes: draft.notes, quoteId: draft.quoteId, quoteTotal: draft.quoteTotal, createdBy: job?.createdBy || uid || undefined, created: job?.created || new Date().toISOString(),
         source: draft.split.source === OWN_SOURCE ? '' : draft.split.source, sharePercent: draft.split.sharePercent, materialsBeforeSplit: draft.split.materialsBeforeSplit,
       };

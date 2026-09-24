@@ -6,6 +6,7 @@ import { formatMoney } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { newId } from '@/lib/data/collections';
 import { useSolo, round2, toDateKey } from '../useSolo';
+import { isFieldRole } from '../roles';
 import { SelectField, PAYMENT_METHODS, PAID_TO } from './SoloUI';
 import { SplitEditor, SplitBreakdown, type SplitValue } from './SplitFields';
 import { computeSplit, OWN_SOURCE } from '../split';
@@ -16,8 +17,8 @@ import type { Job, Closing, PaidTo, PaymentMethod } from '@/types';
  * marks the job completed. Used by technicians (their own jobs) and by staff.
  */
 export function CloseJobDialog({ job, onClose, onClosed }: { job: Job; onClose: () => void; onClosed?: (closing: Closing) => void }) {
-  const { currency, saveClosing, saveJob, uid, user, role, technicians, sources, sourceRates, defaults } = useSolo();
-  const seesSplit = role !== 'technician';
+  const { currency, saveClosing, saveJob, uid, user, role, assignees, assigneeOf, sources, sourceRates, defaults } = useSolo();
+  const seesSplit = !isFieldRole(role);
   const { toast } = useToast();
   const [amount, setAmount] = useState<number>(job.quoteTotal || job.revenue || 0);
   const [deposit, setDeposit] = useState<number>(0);
@@ -60,8 +61,11 @@ export function CloseJobDialog({ job, onClose, onClosed }: { job: Job; onClose: 
     if (!amount) { toast('Enter the closed amount', '#ff4d6d'); return; }
     setSaving(true);
     try {
-      const techUid = role === 'technician' ? (uid || undefined) : (job.techUid || uid || undefined);
-      const techName = role === 'technician' ? (user?.name || '') : (job.tech || technicians.find((t) => t.uid === job.techUid)?.name || user?.name || '');
+      // Whoever the job belongs to owns the closing; a field user can only close their own.
+      const techUid = role === 'technician' || role === 'partner' ? (uid || undefined) : (job.techUid || uid || undefined);
+      const who = assigneeOf(techUid);
+      const techName = who?.name || job.tech || user?.name || '';
+      const assigneeRole = who?.role || job.assigneeRole || (role === 'owner' ? 'owner' : role === 'partner' ? 'partner' : 'technician');
       const s = computeSplit({ amount, materials, sharePercent: split.sharePercent, materialsBeforeSplit: split.materialsBeforeSplit });
       const closing: Closing = {
         id: newId(), date: toDateKey(new Date()), customerId: job.customerId, client: job.client, phone: job.phone, address: job.address,
@@ -69,7 +73,7 @@ export function CloseJobDialog({ job, onClose, onClosed }: { job: Job; onClose: 
         paymentMethod: paymentMethod || undefined, materials: round2(materials || 0), notes, jobId: job.id, quoteId: job.quoteId,
         source: split.source === OWN_SOURCE ? '' : split.source, sharePercent: s.sharePercent, materialsBeforeSplit: split.materialsBeforeSplit,
         ourShare: s.ourShare, companyShare: s.companyShare,
-        techUid, techName, photos, createdBy: uid || undefined, status: balancePaidTo === 'none' && balance > 0 ? 'open' : 'done', created: new Date().toISOString(),
+        techUid, techName, assigneeRole, photos, createdBy: uid || undefined, status: balancePaidTo === 'none' && balance > 0 ? 'open' : 'done', created: new Date().toISOString(),
       };
       await saveClosing(closing);
       await saveJob({ ...job, status: 'completed', completedAt: new Date().toISOString(), closingId: closing.id, revenue: closing.amount });

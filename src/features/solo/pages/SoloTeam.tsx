@@ -20,7 +20,7 @@ import type { User, SoloRole, Invite } from '@/types';
  * they sign up with the invited email and land straight in this business.
  */
 export default function SoloTeam() {
-  const { team, bizId, cfg, db, saveMember, deleteItem } = useSolo();
+  const { team, bizId, cfg, db, user, saveMember, deleteItem } = useSolo();
   const { toast } = useToast();
   const [draft, setDraft] = useState<{ id?: number; name: string; email: string; phone: string; role: SoloRole; color?: string } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -88,6 +88,20 @@ export default function SoloTeam() {
   return (
     <Box className="zk-fade-up">
       <SectionHeader title="Team" subtitle={`${team.length} member${team.length === 1 ? '' : 's'}`} actions={<Button variant="contained" startIcon={<Add />} onClick={() => setDraft({ name: '', email: '', phone: '', role: 'technician' })}>Invite member</Button>} />
+
+      {!team.some((u) => u.email?.includes('+field@')) && (
+        <Paper sx={{ p: 1.75, borderRadius: 3, border: `1px solid ${c.border}`, mb: 2, bgcolor: c.surface2 }}>
+          <Typography sx={{ fontWeight: 800, fontSize: 13 }}>Want a field login for yourself?</Typography>
+          <Typography sx={{ fontSize: 12.5, color: c.text2, mt: 0.3 }}>
+            Your owner account sees the whole business. A second login shows only the jobs assigned to you — handy on site. It uses a &ldquo;+field&rdquo; version of your own email, so the invite lands in the same inbox.
+          </Typography>
+          <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => {
+            const base = (user?.email || cfg.biz_email || '').trim();
+            const alias = base.includes('@') ? `${base.split('@')[0]}+field@${base.split('@')[1]}` : '';
+            setDraft({ name: `${(user?.name || 'Me').split(' ')[0]} (field)`, email: alias, phone: cfg.biz_phone || '', role: 'technician' });
+          }}>Create my field login</Button>
+        </Paper>
+      )}
 
       {team.length === 0 ? (
         <EmptyState icon="👷" title="Just you for now" subtitle="Invite a technician, a partner or a dispatcher. Each gets a personal link and signs up with the email you enter." actionLabel="Invite member" onAction={() => setDraft({ name: '', email: '', phone: '', role: 'technician' })} />

@@ -81,6 +81,8 @@ export interface Closing {
   jobId?: number;
   techUid?: string;       // who closed it (rules scope on this)
   techName?: string;
+  /** Owner/partner closings belong to the company; technician closings are tagged to that person. */
+  assigneeRole?: 'owner' | 'partner' | 'dispatcher' | 'technician';
   photos?: string[];
   createdBy?: string;
   status?: 'open' | 'done';

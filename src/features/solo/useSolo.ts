@@ -13,6 +13,18 @@ import { splitDefaults, sourceRatesFrom } from './split';
 
 export type DocKind = 'quote' | 'receipt';
 
+/** Someone a job can be assigned to. */
+export interface Assignee {
+  uid: string;
+  name: string;
+  role: 'owner' | 'partner' | 'dispatcher' | 'technician';
+  color?: string;
+  phone?: string;
+  email?: string;
+  /** True when this is the signed-in user. */
+  isMe: boolean;
+}
+
 export function round2(n: number): number { return Math.round((n + Number.EPSILON) * 100) / 100; }
 
 export function computeTotals(items: Array<{ qty: number; price: number }>, discount = 0, taxRate = 0) {
@@ -65,6 +77,33 @@ export function useSolo() {
   /** Team members (everyone in `users` except the owner). Technicians never see this (scoped provider). */
   const team = useMemo(() => ((db.users || []) as User[]).filter((u) => u.role !== 'owner' && u.role !== 'super_admin'), [db.users]);
   const technicians = useMemo(() => team.filter((u) => (u.role === 'technician' || u.role === 'tech') && u.active !== false), [team]);
+
+  /**
+   * Everyone a job can be given to — the owner included. The owner has no row in
+   * `users`, but their Firebase uid IS the business id, so that is their handle.
+   * Work done by the owner or a partner belongs to the company; technician work
+   * is simply tagged to that person.
+   */
+  const assignees = useMemo(() => {
+    const ownerRecord = ((db.users || []) as User[]).find((u) => u.role === 'owner' || u.role === 'super_admin');
+    const out: Assignee[] = [];
+    if (bizId) {
+      const mine = uid === bizId;
+      out.push({
+        uid: bizId, role: 'owner', isMe: mine,
+        name: (mine && user?.name) || ownerRecord?.name || cfg.biz_name || 'Owner',
+        phone: ownerRecord?.phone || cfg.biz_phone, email: ownerRecord?.email || cfg.biz_email,
+      });
+    }
+    for (const t of team) {
+      if (!t.uid || t.active === false) continue;
+      const r = t.role === 'partner' ? 'partner' : t.role === 'dispatcher' ? 'dispatcher' : 'technician';
+      out.push({ uid: t.uid, role: r, name: t.name, color: t.color, phone: t.phone, email: t.email, isMe: t.uid === uid });
+    }
+    return out;
+  }, [team, db.users, bizId, uid, user?.name, cfg.biz_name, cfg.biz_phone, cfg.biz_email]);
+
+  const assigneeOf = useCallback((assigneeUid?: string | null) => (assigneeUid ? assignees.find((a) => a.uid === assigneeUid) : undefined), [assignees]);
   const products = useMemo(() => ((db.products || []) as Product[]).slice().sort((a, b) => (a.category || '').localeCompare(b.category || '') || (a.name || '').localeCompare(b.name || '')), [db.products]);
   const leads = useMemo(() => ((db.leads || []) as Lead[]).slice().sort((a, b) => (b.created || '').localeCompare(a.created || '')), [db.leads]);
   const reviews = useMemo(() => ((db.reviews || []) as ReviewRequest[]).slice().sort((a, b) => (b.sentAt || '').localeCompare(a.sentAt || '')), [db.reviews]);
@@ -167,7 +206,7 @@ export function useSolo() {
 
   return {
     ...data, bizId, user, uid, role, customers, quotes, receipts, closings, jobs, team, technicians,
-    products, leads, reviews, presence, sources, sourceRates, defaults,
+    products, leads, reviews, presence, sources, sourceRates, defaults, assignees, assigneeOf,
     saveJob, saveMember, saveProduct, saveLead, saveReview, currency, taxRate, taxLabel, regionMismatch,
     customerById, upsertCustomer, ensureCustomer, saveQuote, saveReceipt, saveClosing, deleteItem,
     publish, nextDocNumber, receiptFromQuote,

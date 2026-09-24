@@ -1,13 +1,14 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Typography, Button, Chip, IconButton, Stack, Paper, Dialog, DialogTitle, DialogContent, DialogActions, Divider, useMediaQuery } from '@mui/material';
-import { ChevronLeft, ChevronRight, Add, Phone, Navigation, CheckCircle, Edit } from '@mui/icons-material';
+import { ChevronLeft, ChevronRight, Add, Phone, Navigation, CheckCircle, Edit, Send } from '@mui/icons-material';
 import { zikkitColors as c } from '@/styles/theme';
 import { formatMoney } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { useSolo, weekRange, toDateKey } from '../useSolo';
-import { colorForUid } from '../roles';
+import { colorForUid, isFieldRole } from '../roles';
 import { JobEditorDialog, JOB_STATUS_LABEL, type JobPreset } from '../components/JobEditor';
+import { DispatchDialog } from '../components/DispatchDialog';
 import { CloseJobDialog } from '../components/CloseJobDialog';
 import type { Job } from '@/types';
 
@@ -31,13 +32,14 @@ const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.get
 interface DragState { job: Job; kind: 'move' | 'resize'; startX: number; startY: number; origMin: number; origDur: number; dayIdx: number; curMin: number; curDur: number; curDay: number; moved: boolean }
 
 export default function SoloSchedule() {
-  const { jobs, technicians, team, role, uid, currency, saveJob } = useSolo();
+  const { jobs, technicians, team, assignees, assigneeOf, role, uid, currency, saveJob, cfg } = useSolo();
   const { toast } = useToast();
-  const isTech = role === 'technician';
+  const isTech = isFieldRole(role);
   const isMobile = useMediaQuery('(max-width:700px)');
   const [view, setView] = useState<'week' | 'day'>(isMobile ? 'day' : 'week');
   const [anchor, setAnchor] = useState<Date>(() => new Date());
   const [techFilter, setTechFilter] = useState<string>('');
+  const [dispatchOpen, setDispatchOpen] = useState(false);
   const [selected, setSelected] = useState<Job | null>(null);
   const [editing, setEditing] = useState<{ job?: Job; preset?: JobPreset } | null>(null);
   const [closing, setClosing] = useState<Job | null>(null);
@@ -58,8 +60,8 @@ export default function SoloSchedule() {
   const colorOf = useCallback((j: Job) => {
     if (!j.techUid) return '#6B7280';
     const member = team.find((t) => t.uid === j.techUid);
-    return colorForUid(j.techUid, member?.color);
-  }, [team]);
+    return colorForUid(j.techUid, member?.color || assigneeOf(j.techUid)?.color);
+  }, [team, assigneeOf]);
 
   const visible = useMemo(() => jobs.filter((j) => j.status !== 'cancelled' && dayKeys.includes(j.scheduledDate || '') && (!techFilter || (techFilter === 'unassigned' ? !j.techUid : j.techUid === techFilter))), [jobs, dayKeys, techFilter]);
   const unscheduled = useMemo(() => jobs.filter((j) => !j.scheduledDate && j.status !== 'completed' && j.status !== 'cancelled'), [jobs]);
@@ -119,6 +121,7 @@ export default function SoloSchedule() {
         <Stack direction="row" spacing={1} alignItems="center">
           <Chip label="Day" size="small" onClick={() => setView('day')} color={view === 'day' ? 'primary' : 'default'} variant={view === 'day' ? 'filled' : 'outlined'} />
           <Chip label="Week" size="small" onClick={() => setView('week')} color={view === 'week' ? 'primary' : 'default'} variant={view === 'week' ? 'filled' : 'outlined'} />
+          {!isTech && <Button size="small" startIcon={<Send />} onClick={() => setDispatchOpen(true)}>Send tomorrow</Button>}
           {!isTech && <Button variant="contained" size="small" startIcon={<Add />} onClick={() => setEditing({ preset: { date: toDateKey(anchor) } })}>New job</Button>}
         </Stack>
       </Stack>
@@ -126,7 +129,7 @@ export default function SoloSchedule() {
       {!isTech && (
         <Stack direction="row" spacing={1} sx={{ mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
           <Chip label="Everyone" size="small" onClick={() => setTechFilter('')} variant={!techFilter ? 'filled' : 'outlined'} color={!techFilter ? 'primary' : 'default'} />
-          {technicians.filter((t) => t.uid).map((t) => <Chip key={t.uid} size="small" label={t.name} onClick={() => setTechFilter(t.uid as string)} variant={techFilter === t.uid ? 'filled' : 'outlined'} sx={{ borderColor: colorForUid(t.uid, t.color), color: techFilter === t.uid ? '#fff' : colorForUid(t.uid, t.color), bgcolor: techFilter === t.uid ? colorForUid(t.uid, t.color) : 'transparent', fontWeight: 700 }} icon={<Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: colorForUid(t.uid, t.color), ml: '6px !important' }} />} />)}
+          {assignees.map((t) => <Chip key={t.uid} size="small" label={`${t.name}${t.isMe ? ' (me)' : ''}`} onClick={() => setTechFilter(t.uid)} variant={techFilter === t.uid ? 'filled' : 'outlined'} sx={{ borderColor: colorForUid(t.uid, t.color), color: techFilter === t.uid ? '#fff' : colorForUid(t.uid, t.color), bgcolor: techFilter === t.uid ? colorForUid(t.uid, t.color) : 'transparent', fontWeight: 700 }} icon={<Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: colorForUid(t.uid, t.color), ml: '6px !important' }} />} />)}
           <Chip label="Unassigned" size="small" onClick={() => setTechFilter('unassigned')} variant={techFilter === 'unassigned' ? 'filled' : 'outlined'} />
           {unscheduled.length > 0 && <Chip label={`${unscheduled.length} unscheduled`} size="small" color="warning" onClick={() => setEditing({ job: unscheduled[0] })} />}
         </Stack>
@@ -213,6 +216,7 @@ export default function SoloSchedule() {
         )}
       </Dialog>
 
+      {dispatchOpen && <DispatchDialog onClose={() => setDispatchOpen(false)} />}
       {editing && <JobEditorDialog job={editing.job} preset={editing.preset} onClose={() => { setEditing(null); setSelected(null); }} />}
       {closing && <CloseJobDialog job={closing} onClose={() => { setClosing(null); setSelected(null); }} />}
     </Box>

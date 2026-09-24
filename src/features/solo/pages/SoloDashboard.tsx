@@ -8,9 +8,10 @@ import { zikkitColors as c } from '@/styles/theme';
 import { formatMoney, formatDateLocal } from '@/lib/region';
 import { useSolo, weekRange, toDateKey } from '../useSolo';
 import { Stat, StatusChip } from '../components/SoloUI';
-import { seesMoney } from '../roles';
+import { seesMoney, isFieldRole } from '../roles';
 import { splitOf } from '../split';
 import { CloseJobDialog } from '../components/CloseJobDialog';
+import { DispatchDialog } from '../components/DispatchDialog';
 import { useState } from 'react';
 import type { Job } from '@/types';
 
@@ -18,6 +19,7 @@ export default function SoloDashboard() {
   const { cfg, customers, quotes, receipts, closings, jobs, currency, role, user, technicians, regionMismatch } = useSolo();
   const router = useRouter();
   const [closing, setClosing] = useState<Job | null>(null);
+  const [dispatch, setDispatch] = useState(false);
   const money = seesMoney(role);
 
   const { start, end } = weekRange(new Date());
@@ -41,7 +43,7 @@ export default function SoloDashboard() {
 
   const greeting = (() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; })();
 
-  if (role === 'technician') {
+  if (isFieldRole(role)) {
     return (
       <Box className="zk-fade-up">
         <SectionHeader title={`${greeting}, ${(user?.name || '').split(' ')[0]}`} subtitle={new Date().toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' })} />
@@ -79,6 +81,7 @@ export default function SoloDashboard() {
       <Stack direction="row" spacing={1} sx={{ mb: 2.5, flexWrap: 'wrap', gap: 1 }}>
         <Button variant="contained" startIcon={<Add />} onClick={() => router.push('/quotes')}>New quote</Button>
         <Button variant="outlined" onClick={() => router.push('/jobs')}>🔧 Jobs{todayJobs.length ? ` · ${todayJobs.length} today` : ''}</Button>
+        <Button variant="outlined" onClick={() => setDispatch(true)}>📲 Send tomorrow&apos;s jobs</Button>
         <Button variant="outlined" startIcon={<CheckCircle />} onClick={() => router.push('/closings')}>Log closing</Button>
         <Button variant="outlined" startIcon={<PersonAdd />} onClick={() => router.push('/customers')}>Add customer</Button>
       </Stack>
@@ -122,6 +125,7 @@ export default function SoloDashboard() {
           {quotes.length === 0 ? <Typography sx={{ fontSize: 13, color: c.text3 }}>No quotes yet.</Typography> : quotes.slice(0, 6).map((q) => <Line key={q.id} onClick={() => router.push('/quotes')} left={`${q.number || 'Q-' + q.id} · ${q.client}`} right={<Stack direction="row" spacing={1} alignItems="center"><StatusChip status={q.status} /><b>{formatMoney(q.total, currency)}</b></Stack>} />)}
         </Paper>
       </Box>
+      {dispatch && <DispatchDialog onClose={() => setDispatch(false)} />}
       {cfg.tax_rate == null && <Chip label="Tip: set your tax rate and GST/HST number in Settings so documents come out right." onClick={() => router.push('/settings')} sx={{ mt: 2 }} />}
     </Box>
   );

@@ -9,6 +9,7 @@ import { formatMoney, formatDateLocal } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { newId } from '@/lib/data/collections';
 import { useSolo, weekRange, toDateKey, round2 } from '../useSolo';
+import { isFieldRole } from '../roles';
 import { Stat, SelectField, PAYMENT_METHODS, PAID_TO, paidToLabel, paymentLabel, CustomerPicker, type CustomerPickerValue } from '../components/SoloUI';
 import { SplitEditor, SplitBreakdown, SplitChip, type SplitValue } from '../components/SplitFields';
 import { computeSplit, splitOf, OWN_SOURCE } from '../split';
@@ -24,7 +25,7 @@ const DEFAULT_JOB_TYPES = ['Chimney sweep', 'Chimney repair', 'Chimney cap / lin
 
 export default function SoloClosings() {
   const { closings: allClosings, customers, currency, saveClosing, deleteItem, ensureCustomer, role, uid, technicians, sources, sourceRates, defaults } = useSolo();
-  const isTech = role === 'technician';
+  const isTech = isFieldRole(role);
   const seesSplit = !isTech;
   const [techFilter, setTechFilter] = useState<string>('');
   const [sourceFilter, setSourceFilter] = useState<string>('');

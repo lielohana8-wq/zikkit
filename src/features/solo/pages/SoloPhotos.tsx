@@ -8,6 +8,7 @@ import { zikkitColors as c } from '@/styles/theme';
 import { formatDateLocal, formatMoney } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { useSolo } from '../useSolo';
+import { isFieldRole } from '../roles';
 import { readResizedPhotos } from '../photos';
 
 /**
@@ -23,7 +24,7 @@ export default function SoloPhotos() {
   const [search, setSearch] = useState('');
   const [viewer, setViewer] = useState<{ album: Album; index: number } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const isTech = role === 'technician';
+  const isTech = isFieldRole(role);
 
   const albums = useMemo(() => {
     const out: Album[] = [];

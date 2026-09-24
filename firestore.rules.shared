@@ -15,9 +15,10 @@ service cloud.firestore {
     function memberDoc(bizId) { return get(/databases/$(database)/documents/businesses/$(bizId)/members/$(request.auth.uid)); }
     function isMember(bizId) { return signedIn() && exists(/databases/$(database)/documents/businesses/$(bizId)/members/$(request.auth.uid)); }
     function memberRole(bizId) { return memberDoc(bizId).data.role; }
-    // Staff = owner, partner, dispatcher (and legacy manager). Technicians are scoped to their own records.
-    function isStaff(bizId) { return isOwner(bizId) || isSuperAdmin() || (isMember(bizId) && memberRole(bizId) in ['partner', 'dispatcher', 'manager']); }
-    function isTech(bizId) { return isMember(bizId) && memberRole(bizId) in ['technician', 'tech']; }
+    // Staff = owner and dispatcher (and legacy manager). Field roles — technician AND partner —
+    // only ever read or write records assigned to them.
+    function isStaff(bizId) { return isOwner(bizId) || isSuperAdmin() || (isMember(bizId) && memberRole(bizId) in ['dispatcher', 'manager']); }
+    function isTech(bizId) { return isMember(bizId) && memberRole(bizId) in ['technician', 'tech', 'partner']; }
     function canAccess(bizId) { return isStaff(bizId) || isTech(bizId); }
     function lookup() { return get(/databases/$(database)/documents/tech_lookup/$(emailKey())); }
     function lookupPointsHere(bizId) {
