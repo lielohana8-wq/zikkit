@@ -29,6 +29,35 @@ const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')
 const snap = (min: number) => Math.round(min / SNAP) * SNAP;
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 
+/**
+ * Two jobs at the same hour must sit side by side, not on top of each other.
+ * Classic calendar packing: walk the day in start order, drop each job into the
+ * first lane that is free, and close the group when a gap appears — every job in
+ * a group then shares the same number of lanes, so the columns line up.
+ */
+function packOverlaps(list: Job[]): Map<number, { lane: number; lanes: number }> {
+  const out = new Map<number, { lane: number; lanes: number }>();
+  const sorted = [...list].sort((a, b) => toMin(a.scheduledTime) - toMin(b.scheduledTime) || (b.duration || 60) - (a.duration || 60));
+  let group: Job[] = [];
+  let laneEnds: number[] = [];
+  const closeGroup = () => {
+    const lanes = Math.max(1, laneEnds.length);
+    for (const j of group) { const cur = out.get(j.id); if (cur) out.set(j.id, { lane: cur.lane, lanes }); }
+    group = []; laneEnds = [];
+  };
+  for (const j of sorted) {
+    const start = toMin(j.scheduledTime);
+    const end = start + Math.max(15, j.duration || 60);
+    if (laneEnds.length > 0 && start >= Math.max(...laneEnds)) closeGroup();
+    let lane = laneEnds.findIndex((e) => e <= start);
+    if (lane === -1) { lane = laneEnds.length; laneEnds.push(end); } else { laneEnds[lane] = end; }
+    group.push(j);
+    out.set(j.id, { lane, lanes: 1 });
+  }
+  closeGroup();
+  return out;
+}
+
 interface DragState { job: Job; kind: 'move' | 'resize'; startX: number; startY: number; origMin: number; origDur: number; dayIdx: number; curMin: number; curDur: number; curDay: number; moved: boolean }
 
 export default function SoloSchedule() {
@@ -160,33 +189,40 @@ export default function SoloSchedule() {
             </Box>
             {/* day columns */}
             <Box ref={gridRef} sx={{ gridColumn: `2 / span ${days.length}`, display: 'grid', gridTemplateColumns: `repeat(${days.length}, 1fr)`, position: 'relative' }}>
-              {days.map((_, di) => (
+              {days.map((_, di) => {
+                const dayJobs = visible.filter((j) => j.scheduledDate === dayKeys[di]);
+                const layout = packOverlaps(dayJobs);
+                return (
                 <Box key={dayKeys[di]} onClick={(e) => onGridClick(e, di)} sx={{ position: 'relative', borderLeft: `1px solid ${c.border}`, cursor: isTech ? 'default' : 'copy', bgcolor: dayKeys[di] === todayKey ? 'rgba(79,70,229,0.03)' : 'transparent',
                   backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent ${HOUR_H - 1}px, ${c.border} ${HOUR_H - 1}px, ${c.border} ${HOUR_H}px)` }}>
                   {dayKeys[di] === todayKey && nowMin >= DAY_START * 60 && nowMin <= DAY_END * 60 && <Box sx={{ position: 'absolute', left: 0, right: 0, top: ((nowMin - DAY_START * 60) / 60) * HOUR_H, height: 2, bgcolor: '#DC2626', zIndex: 3, '&::before': { content: '""', position: 'absolute', left: -4, top: -3, width: 8, height: 8, borderRadius: '50%', bgcolor: '#DC2626' } }} />}
-                  {visible.filter((j) => j.scheduledDate === dayKeys[di]).map((j) => {
+                  {dayJobs.map((j) => {
                     const isDragging = drag?.job.id === j.id;
                     const startMin = isDragging && drag.kind === 'move' ? drag.curMin : toMin(j.scheduledTime);
                     const dur = isDragging && drag.kind === 'resize' ? drag.curDur : (j.duration || 60);
                     const dayShift = isDragging && drag.kind === 'move' ? drag.curDay - di : 0;
                     const color = colorOf(j); const done = j.status === 'completed';
                     const canDrag = !done && !isTech; // technicians: read-only calendar
+                    // The one being dragged goes full width so it stays readable under the finger.
+                    const slot = isDragging ? { lane: 0, lanes: 1 } : (layout.get(j.id) || { lane: 0, lanes: 1 });
+                    const slotW = 100 / slot.lanes;
                     return (
                       <Box key={j.id} onPointerDown={(e) => canDrag ? onPointerDown(e, j, 'move') : undefined} onClick={(e) => { e.stopPropagation(); if (draggedRef.current) { draggedRef.current = false; return; } setSelected(j); }}
-                        sx={{ position: 'absolute', left: 3, right: 3, top: ((startMin - DAY_START * 60) / 60) * HOUR_H, height: Math.max(22, (dur / 60) * HOUR_H - 2), zIndex: isDragging ? 10 : 2,
+                        sx={{ position: 'absolute', left: `calc(${slot.lane * slotW}% + 2px)`, width: `calc(${slotW}% - 4px)`, top: ((startMin - DAY_START * 60) / 60) * HOUR_H, height: Math.max(22, (dur / 60) * HOUR_H - 2), zIndex: isDragging ? 10 : 2 + slot.lane,
                           transform: dayShift ? `translateX(calc(${dayShift} * (100% + 6px)))` : undefined, transition: isDragging ? 'none' : 'box-shadow .15s',
                           borderRadius: 2, overflow: 'hidden', cursor: canDrag ? 'grab' : 'pointer', touchAction: 'none',
                           bgcolor: done ? '#F3F4F6' : `${color}1A`, borderLeft: `4px solid ${done ? '#9CA3AF' : color}`, color: done ? '#6B7280' : c.text,
                           boxShadow: isDragging ? '0 10px 24px rgba(0,0,0,.18)' : 'none', opacity: isDragging ? 0.92 : 1, p: '4px 6px' }}>
                         <Typography sx={{ fontSize: 12, fontWeight: 800, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textDecoration: done ? 'line-through' : 'none' }}>{toHHMM(startMin)} {j.client}</Typography>
-                        {dur >= 45 && <Typography sx={{ fontSize: 11, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: done ? '#6B7280' : c.text2 }}>{j.jobType || j.desc}{!isTech && j.tech ? ` · ${j.tech}` : ''}</Typography>}
-                        {dur >= 75 && j.address && <Typography sx={{ fontSize: 10, color: c.text3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.address}</Typography>}
+                        {dur >= 45 && slot.lanes < 3 && <Typography sx={{ fontSize: 11, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: done ? '#6B7280' : c.text2 }}>{j.jobType || j.desc}{!isTech && j.tech ? ` · ${j.tech}` : ''}</Typography>}
+                        {dur >= 75 && slot.lanes === 1 && j.address && <Typography sx={{ fontSize: 10, color: c.text3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.address}</Typography>}
                         {canDrag && <Box onPointerDown={(e) => onPointerDown(e, j, 'resize')} sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 8, cursor: 'ns-resize', '&::after': { content: '""', position: 'absolute', left: '50%', bottom: 2, width: 24, height: 3, ml: '-12px', borderRadius: 2, bgcolor: color, opacity: .5 } }} />}
                       </Box>
                     );
                   })}
                 </Box>
-              ))}
+                );
+              })}
             </Box>
           </Box>
         </Box>

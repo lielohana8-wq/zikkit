@@ -15,11 +15,13 @@ service cloud.firestore {
     function memberDoc(bizId) { return get(/databases/$(database)/documents/businesses/$(bizId)/members/$(request.auth.uid)); }
     function isMember(bizId) { return signedIn() && exists(/databases/$(database)/documents/businesses/$(bizId)/members/$(request.auth.uid)); }
     function memberRole(bizId) { return memberDoc(bizId).data.role; }
-    // Staff = owner and dispatcher (and legacy manager). Field roles — technician AND partner —
-    // only ever read or write records assigned to them.
-    function isStaff(bizId) { return isOwner(bizId) || isSuperAdmin() || (isMember(bizId) && memberRole(bizId) in ['dispatcher', 'manager']); }
+    // Only the owner (and a legacy manager) runs the whole business.
+    // Field roles — technician AND partner — read and write only records assigned to them.
+    // The office role — dispatcher — touches leads and nothing else.
+    function isStaff(bizId) { return isOwner(bizId) || isSuperAdmin() || (isMember(bizId) && memberRole(bizId) == 'manager'); }
     function isTech(bizId) { return isMember(bizId) && memberRole(bizId) in ['technician', 'tech', 'partner']; }
-    function canAccess(bizId) { return isStaff(bizId) || isTech(bizId); }
+    function isOffice(bizId) { return isMember(bizId) && memberRole(bizId) == 'dispatcher'; }
+    function canAccess(bizId) { return isStaff(bizId) || isTech(bizId) || isOffice(bizId); }
     function lookup() { return get(/databases/$(database)/documents/tech_lookup/$(emailKey())); }
     function lookupPointsHere(bizId) {
       return signedIn() && request.auth.token.email != null
@@ -47,6 +49,11 @@ service cloud.firestore {
         allow delete: if isOwner(bizId) || isSuperAdmin() || request.auth.uid == uid;
       }
 
+      // Leads: the office writes these; nobody else in the field sees them
+      match /leads/{docId} {
+        allow read, write: if isStaff(bizId) || isOffice(bizId);
+      }
+
       // Jobs: staff see everything; technicians only jobs assigned to them (query must filter techUid == uid)
       match /jobs/{docId} {
         allow read: if isStaff(bizId) || (isTech(bizId) && ownsRecord());
@@ -70,7 +77,7 @@ service cloud.firestore {
 
       // Everything else (customers, quotes, receipts, products, users, counters, backups, …): staff only
       match /{sub}/{docId} {
-        allow read, write: if isStaff(bizId) && sub != 'members' && sub != 'jobs' && sub != 'closings' && sub != 'presence';
+        allow read, write: if isStaff(bizId) && sub != 'members' && sub != 'jobs' && sub != 'closings' && sub != 'presence' && sub != 'leads';
       }
       match /{sub}/{docId}/{rest=**} {
         allow read, write: if isStaff(bizId) && sub != 'members';

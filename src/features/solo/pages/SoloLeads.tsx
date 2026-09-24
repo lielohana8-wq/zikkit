@@ -10,6 +10,7 @@ import { formatMoney, formatDateLocal, normalizePhone } from '@/lib/region';
 import { useToast } from '@/hooks/useToast';
 import { newId } from '@/lib/data/collections';
 import { useSolo, toDateKey } from '../useSolo';
+import { isOffice } from '../roles';
 import { SelectField } from '../components/SoloUI';
 import type { Lead, LeadStatus } from '@/types';
 
@@ -35,7 +36,9 @@ const SOURCES = [
 interface Draft { id?: number; name: string; phone: string; email: string; address: string; desc: string; status: LeadStatus; source: string; value: number; followUpDate: string; notes: string; created?: string }
 
 export default function SoloLeads() {
-  const { leads, saveLead, deleteItem, ensureCustomer, currency } = useSolo();
+  const { leads, saveLead, deleteItem, ensureCustomer, currency, role } = useSolo();
+  /** The office role only ever touches leads — it cannot open customers, quotes or jobs. */
+  const officeOnly = isOffice(role);
   const { toast } = useToast();
   const router = useRouter();
   const [filter, setFilter] = useState<'open' | 'all' | LeadStatus>('open');
@@ -94,7 +97,7 @@ export default function SoloLeads() {
 
   return (
     <Box className="zk-fade-up">
-      <SectionHeader title="Leads" subtitle={`${open.length} open${pipeline > 0 ? ` · ${formatMoney(pipeline, currency)} potential` : ''}`} actions={<Button variant="contained" startIcon={<Add />} onClick={() => setDraft(newDraft())}>New lead</Button>} />
+      <SectionHeader title="Leads" subtitle={officeOnly ? `${open.length} open · write down every call` : `${open.length} open${pipeline > 0 ? ` · ${formatMoney(pipeline, currency)} potential` : ''}`} actions={<Button variant="contained" startIcon={<Add />} onClick={() => setDraft(newDraft())}>New lead</Button>} />
 
       {dueToday.length > 0 && (
         <Paper sx={{ p: 1.75, borderRadius: 3, mb: 2, border: '1px solid #D97706', bgcolor: 'rgba(217,119,6,0.07)' }}>
@@ -146,8 +149,10 @@ export default function SoloLeads() {
 
       <Menu open={!!menu} anchorEl={menu?.el} onClose={() => setMenu(null)}>
         {menu && [
-          <MenuItem key="quote" onClick={() => { const l = menu.l; setMenu(null); toQuote(l); }}><Description fontSize="small" sx={{ mr: 1 }} />Create quote</MenuItem>,
-          <MenuItem key="job" onClick={() => { const l = menu.l; setMenu(null); toJob(l); }}><Event fontSize="small" sx={{ mr: 1 }} />Book a job</MenuItem>,
+          ...(officeOnly ? [] : [
+            <MenuItem key="quote" onClick={() => { const l = menu.l; setMenu(null); toQuote(l); }}><Description fontSize="small" sx={{ mr: 1 }} />Create quote</MenuItem>,
+            <MenuItem key="job" onClick={() => { const l = menu.l; setMenu(null); toJob(l); }}><Event fontSize="small" sx={{ mr: 1 }} />Book a job</MenuItem>,
+          ]),
           <MenuItem key="edit" onClick={() => { setDraft(fromLead(menu.l)); setMenu(null); }}><Edit fontSize="small" sx={{ mr: 1 }} />Edit</MenuItem>,
           <Divider key="d" />,
           ...STATUSES.map((s) => <MenuItem key={s.value} onClick={() => { setStatus(menu.l, s.value); setMenu(null); }} disabled={menu.l.status === s.value}>{s.label}</MenuItem>),
@@ -182,7 +187,7 @@ export default function SoloLeads() {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDraft(null)}>Cancel</Button>
-          {draft?.id && <Button onClick={() => { const l = leads.find((x) => x.id === draft.id); if (l) { setDraft(null); toQuote(l); } }}>Create quote</Button>}
+          {draft?.id && !officeOnly && <Button onClick={() => { const l = leads.find((x) => x.id === draft.id); if (l) { setDraft(null); toQuote(l); } }}>Create quote</Button>}
           <Button variant="contained" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
         </DialogActions>
       </Dialog>

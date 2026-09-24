@@ -14,7 +14,7 @@ import { PWAInstall } from '@/components/ui/PWAInstall';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/useLanguage';
 import { IS_SOLO_EDITION } from '@/lib/region';
-import { ROLE_ROUTES, soloRoleOf } from '@/features/solo/roles';
+import { ROLE_ROUTES, roleHome, soloRoleOf } from '@/features/solo/roles';
 import dynamic from 'next/dynamic';
 const SetupWizard = dynamic(() => import('@/components/onboarding/SetupWizard'), { ssr: false });
 
@@ -70,7 +70,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!IS_SOLO_EDITION || !soloRole || !pathname) return;
     const base = '/' + pathname.split('/')[1];
-    if (!ROLE_ROUTES[soloRole].includes(base)) router.replace('/dashboard');
+    if (!ROLE_ROUTES[soloRole].includes(base)) router.replace(roleHome(soloRole));
   }, [soloRole, pathname, router]);
 
   if (IS_SOLO_EDITION && user && !soloRole) {

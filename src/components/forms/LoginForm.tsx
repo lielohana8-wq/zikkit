@@ -7,6 +7,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { useLanguage } from '@/hooks/useLanguage';
 import { getDefaultRoute } from '@/lib/permissions';
 import { IS_SOLO_EDITION } from '@/lib/region';
+import { roleHome, soloRoleOf } from '@/features/solo/roles';
 import { zikkitColors as c } from '@/styles/theme';
 
 export function LoginForm() {
@@ -22,7 +23,7 @@ export function LoginForm() {
 
   useEffect(() => {
     if (user) {
-      router.replace(IS_SOLO_EDITION ? '/dashboard' : getDefaultRoute(user.role));
+      router.replace(IS_SOLO_EDITION ? roleHome(soloRoleOf(user)) : getDefaultRoute(user.role));
     }
   }, [user, router]);
 

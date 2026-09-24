@@ -15,20 +15,26 @@ export const ROLE_LABELS: Record<SoloRole, string> = { owner: 'Owner', partner: 
 export const ROLE_DESCRIPTIONS: Record<SoloRole, string> = {
   owner: 'Everything, including team and settings',
   partner: 'Only their own jobs and closings — jobs they run belong to the company',
-  dispatcher: 'Customers, quotes, receipts, jobs and closings — no money totals on the dashboard',
+  dispatcher: 'Leads only — takes the calls and writes them down. No jobs, customers, prices or money.',
   technician: 'Only their own jobs and their own closings',
 };
 
-/** Staff run the business and see everything; field roles only ever see their own work. */
-export const isStaff = (r: SoloRole | null) => r === 'owner' || r === 'dispatcher';
+/** The owner runs the business and sees everything. */
+export const isStaff = (r: SoloRole | null) => r === 'owner';
+/** Field roles only ever see the work assigned to them. */
 export const isFieldRole = (r: SoloRole | null) => r === 'technician' || r === 'partner';
+/** The office takes calls: leads and nothing else — no jobs, no customers, no money. */
+export const isOffice = (r: SoloRole | null) => r === 'dispatcher';
 export const seesMoney = (r: SoloRole | null) => r === 'owner';
+
+/** Where each role lands after signing in. */
+export const roleHome = (r: SoloRole | null) => (r === 'dispatcher' ? '/leads' : '/dashboard');
 
 /** Routes each role may open; anything else redirects to the role home. */
 export const ROLE_ROUTES: Record<SoloRole, string[]> = {
   owner: ['/dashboard', '/schedule', '/jobs', '/leads', '/customers', '/quotes', '/receipts', '/closings', '/reports', '/products', '/photos', '/reviews', '/gps-tracking', '/team', '/settings'],
   partner: ['/dashboard', '/schedule', '/jobs', '/closings', '/photos'],
-  dispatcher: ['/dashboard', '/schedule', '/jobs', '/leads', '/customers', '/quotes', '/receipts', '/closings', '/products', '/photos', '/reviews', '/gps-tracking'],
+  dispatcher: ['/leads'],
   technician: ['/dashboard', '/schedule', '/jobs', '/closings', '/photos'],
 };
 
@@ -59,18 +65,7 @@ export const ROLE_NAV: Record<SoloRole, NavEntry[]> = {
     { key: 'photos', icon: '📷', label: 'Photos', href: '/photos' },
   ],
   dispatcher: [
-    { key: 'dashboard', icon: '📊', label: 'Dashboard', href: '/dashboard' },
-    { key: 'schedule', icon: '📅', label: 'Schedule', href: '/schedule' },
-    { key: 'jobs', icon: '🔧', label: 'Jobs', href: '/jobs' },
     { key: 'leads', icon: '📞', label: 'Leads', href: '/leads' },
-    { key: 'customers', icon: '🧑', label: 'Customers', href: '/customers' },
-    { key: 'quotes', icon: '📄', label: 'Quotes', href: '/quotes' },
-    { key: 'receipts', icon: '🧾', label: 'Receipts', href: '/receipts' },
-    { key: 'closings', icon: '✅', label: 'Closings', href: '/closings' },
-    { key: 'products', icon: '🏷️', label: 'Price book', href: '/products' },
-    { key: 'photos', icon: '📷', label: 'Photos', href: '/photos' },
-    { key: 'reviews', icon: '⭐', label: 'Reviews', href: '/reviews' },
-    { key: 'gps', icon: '🗺️', label: 'Live map', href: '/gps-tracking' },
   ],
   technician: [
     { key: 'dashboard', icon: '🏠', label: 'Today', href: '/dashboard' },

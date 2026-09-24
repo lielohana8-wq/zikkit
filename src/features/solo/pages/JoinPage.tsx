@@ -6,7 +6,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { zikkitColors as c } from '@/styles/theme';
-import { ROLE_LABELS } from '../roles';
+import { ROLE_LABELS, roleHome, soloRoleOf } from '../roles';
 import type { Invite } from '@/types';
 
 /** /join/<token> — a team member signs up with the exact email the owner invited. */
@@ -37,7 +37,7 @@ export default function JoinPage({ token }: { token: string }) {
       setMismatch(`You're signed in as ${signedEmail}, but this invite is for ${invite.email}. Sign out and use the invited email.`);
       return;
     }
-    if (user && String(user.role) !== 'pending') router.replace('/dashboard');
+    if (user && String(user.role) !== 'pending') router.replace(roleHome(soloRoleOf(user)));
   }, [invite, firebaseUser, user, router]);
 
   if (state === 'loading') return <Shell><CircularProgress size={26} /></Shell>;

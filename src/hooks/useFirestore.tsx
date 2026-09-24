@@ -14,6 +14,8 @@ import type { BusinessDatabase, BusinessConfig, SoloRole } from '@/types';
 export interface DataScope { role: SoloRole | null; uid: string | null }
 /** Collections a field user (technician or partner) may read — filtered by techUid. Everything else stays out of their client entirely. */
 const TECH_COLLECTIONS = ['jobs', 'closings'] as const;
+/** The office role handles incoming calls and nothing else. */
+const OFFICE_COLLECTIONS = ['leads'] as const;
 
 /**
  * DataProvider v2 — same public API as before (db / cfg / saveData / saveCfg),
@@ -134,6 +136,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // ---- business document: cfg + inbox + registered collections ------------------
   const isTech = scope.role === 'technician' || scope.role === 'partner';
+  const isOffice = scope.role === 'dispatcher';
   const techUid = isTech ? scope.uid : null;
 
   useEffect(() => {
@@ -145,13 +148,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     pendingFirst.current = new Set();
     setDb(defaultDb()); dbRef.current = defaultDb();
     if (isTech) { for (const key of TECH_COLLECTIONS) subscribe(id, key, techUid || undefined); }
+    else if (isOffice) { for (const key of OFFICE_COLLECTIONS) subscribe(id, key); }
     else { for (const key of KNOWN_COLLECTIONS) subscribe(id, key); subscribe(id, 'members'); subscribe(id, 'presence'); /* read-only: who has joined, and where they are (never written through saveData) */ }
 
     const unsubBiz = onSnapshot(doc(firestore, 'businesses', id), async (snap) => {
       const data = (snap.data() || {}) as Record<string, unknown>;
       const nextCfg = (data.cfg as BusinessConfig) || {};
       setCfg(nextCfg); cfgRef.current = nextCfg; mirrorCfg(nextCfg);
-      if (isTech) return; // technicians: config only — no extra collections, no migration
+      if (isTech || isOffice) return; // scoped roles: config only — no extra collections, no migration
 
       const registered = (data.dataCollections as string[]) || [];
       for (const key of registered) if (isValidCollectionKey(key)) { extraKeysRef.current.add(key); subscribe(id, key); }
@@ -178,7 +182,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       for (const unsub of listenersRef.current.values()) unsub();
       listenersRef.current.clear();
     };
-  }, [bizId, isTech, techUid, subscribe, toast]);
+  }, [bizId, isTech, isOffice, techUid, subscribe, toast]);
 
   // ---- writes ----------------------------------------------------------------------
   const commitUpserts = useCallback(async (id: string, key: string, upserts: DataItem[], deletes: string[]) => {
@@ -205,10 +209,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const work: Array<{ key: string; upserts: DataItem[]; deletes: string[] }> = [];
 
     const techOnly = scopeRef.current.role === 'technician' || scopeRef.current.role === 'partner';
+    const officeOnly = scopeRef.current.role === 'dispatcher';
     for (const [key, value] of Object.entries(data || {})) {
       if (!Array.isArray(value)) continue;
       if (!isValidCollectionKey(key)) { console.warn('[Zikkit] ignoring invalid collection key', key); continue; }
       if (techOnly && !(TECH_COLLECTIONS as readonly string[]).includes(key)) continue;
+      if (officeOnly && !(OFFICE_COLLECTIONS as readonly string[]).includes(key)) continue;
       const { diff, next } = diffCollection(prev[key] as DataItem[] | undefined, value as DataItem[]);
       nextState[key] = next;
       if (diff.upserts.length || diff.deletes.length) work.push({ key, ...diff });
